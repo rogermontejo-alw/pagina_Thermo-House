@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Shield, Hammer, Feather, Sparkles, Zap, Package } from 'lucide-react';
+import { Shield, Hammer, Feather, Sparkles, Zap, Package, Building2, Factory, Check } from 'lucide-react';
 import { getAllSolutions } from '@/app/actions/get-solutions';
 import { Solution } from '@/types';
 
@@ -117,120 +117,121 @@ export default function SystemsSection() {
                     </p>
 
                     {/* Selector de Tipo de Techo */}
-                    <div className="flex justify-center mb-12">
-                        <div className="inline-flex p-1 bg-slate-100 rounded-2xl shadow-inner">
+                    <div className="flex justify-center mb-16">
+                        <div className="inline-flex p-1.5 bg-slate-100 rounded-[2rem] shadow-inner border border-slate-200">
                             <button
                                 onClick={() => setRoofType('concrete')}
-                                className={`px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${roofType === 'concrete' ? 'bg-white text-primary shadow-md scale-105' : 'text-slate-500 hover:text-secondary'}`}
+                                className={`flex items-center gap-2 px-10 py-4 rounded-[1.5rem] text-sm font-black transition-all duration-500 ${roofType === 'concrete' ? 'bg-secondary text-white shadow-xl scale-105' : 'text-slate-500 hover:text-secondary'}`}
                             >
-                                Techo de Concreto
+                                <Building2 className="w-4 h-4" /> Techo de Concreto
                             </button>
                             <button
                                 onClick={() => setRoofType('sheet')}
-                                className={`px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${roofType === 'sheet' ? 'bg-white text-primary shadow-md scale-105' : 'text-slate-500 hover:text-secondary'}`}
+                                className={`flex items-center gap-2 px-10 py-4 rounded-[1.5rem] text-sm font-black transition-all duration-500 ${roofType === 'sheet' ? 'bg-secondary text-white shadow-xl scale-105' : 'text-slate-500 hover:text-secondary'}`}
                             >
-                                Techo de Lámina
+                                <Factory className="w-4 h-4" /> Techo de Lámina
                             </button>
                         </div>
                     </div>
                 </div>
 
                 {/* Systems Cards Grid */}
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12 md:mb-24">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
                     {filteredSolutions.map((sys) => {
                         const Icon = getIcon(sys.internal_id);
-                        return (
-                            <div key={sys.id} className="group bg-white rounded-3xl p-8 border border-slate-200 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-700" />
+                        const isPremium = sys.internal_id === 'th-forte' || sys.internal_id === 'th-ingles';
+                        const isBestSeller = sys.internal_id === 'th-light';
 
-                                <div className="relative z-10">
-                                    <div className="bg-primary/10 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:bg-primary group-hover:rotate-6 transition-all duration-300">
-                                        <Icon className="w-7 h-7 text-primary group-hover:text-white transition-colors" />
+                        return (
+                            <div key={sys.id} className={`group bg-white rounded-[2.5rem] p-10 border-2 transition-all duration-500 relative overflow-hidden flex flex-col ${isPremium ? 'border-primary/20 shadow-xl' : 'border-slate-100 hover:border-slate-200 shadow-sm hover:shadow-2xl'}`}>
+                                {isBestSeller && (
+                                    <div className="absolute top-0 right-0 bg-primary text-white text-[10px] font-black px-6 py-2 rounded-bl-3xl shadow-lg uppercase tracking-widest z-10">Más Vendido</div>
+                                )}
+                                {isPremium && (
+                                    <div className="absolute top-0 right-0 bg-secondary text-white text-[10px] font-black px-6 py-2 rounded-bl-3xl shadow-lg uppercase tracking-widest z-10">Grado Experto</div>
+                                )}
+
+                                <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
+
+                                <div className="relative z-10 flex flex-col h-full">
+                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-8 shadow-lg transition-all duration-500 ${isPremium ? 'bg-secondary text-white rotate-3 scale-110' : 'bg-slate-50 text-primary group-hover:bg-primary group-hover:text-white group-hover:-rotate-3'}`}>
+                                        <Icon className="w-8 h-8" />
                                     </div>
 
-                                    <h3 className="text-xl font-bold text-secondary mb-2">{sys.title}</h3>
-                                    <p className="text-sm font-bold text-primary mb-4 uppercase tracking-wider">{sys.grosor || 'Espesor Estándar'}</p>
+                                    <h3 className="text-2xl font-black text-secondary mb-1 uppercase tracking-tighter">{sys.title}</h3>
+                                    <p className="text-[10px] font-black text-primary mb-6 uppercase tracking-[0.2em] opacity-80">{sys.grosor || 'Espesor Estándar'}</p>
 
-                                    <ul className="space-y-4 mb-8">
-                                        <li className="flex items-start gap-3 text-sm text-slate-600 font-medium">
-                                            <div className="bg-primary/20 p-1 rounded-md mt-0.5">
-                                                <Shield className="w-3.5 h-3.5 text-primary" />
-                                            </div>
-                                            <span>{sys.beneficio_principal}</span>
-                                        </li>
-                                        <li className="flex items-start gap-3 text-sm text-slate-600 font-medium italic">
-                                            <div className="bg-primary/20 p-1 rounded-md mt-0.5">
-                                                <Sparkles className="w-3.5 h-3.5 text-primary" />
-                                            </div>
-                                            <span>{sys.detalle_costo_beneficio?.split('.')[0]}</span>
-                                        </li>
-                                        {sys.internal_id !== 'th-fix' && (
-                                            <li className="flex items-start gap-3 text-sm text-slate-600 font-medium">
-                                                <div className="bg-primary/20 p-1 rounded-md mt-0.5">
-                                                    <Zap className="w-3.5 h-3.5 text-primary" />
+                                    <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 mb-8 flex-grow">
+                                        <ul className="space-y-4">
+                                            <li className="flex items-start gap-3 text-[13px] text-slate-600 font-bold leading-tight">
+                                                <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                    <Check className="w-3 h-3 text-green-600 stroke-[4]" />
                                                 </div>
-                                                <span>Ahorro Eléctrico Garantizado</span>
+                                                <span>{sys.beneficio_principal}</span>
                                             </li>
-                                        )}
-                                        {(sys.internal_id === 'th-forte' || sys.internal_id === 'th-ingles' || sys.internal_id === 'th-3-4') && (
-                                            <li className="flex items-start gap-3 text-sm text-slate-600 font-medium">
-                                                <div className="bg-primary/20 p-1 rounded-md mt-0.5">
-                                                    <Package className="w-3.5 h-3.5 text-primary" />
-                                                </div>
-                                                <span>{sys.category === 'sheet' ? 'Elimina Ruido de Lluvia' : 'Protección Estructural Máxima'}</span>
+                                            <li className="flex items-start gap-3 text-[12px] text-slate-500 font-medium italic leading-relaxed">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-slate-300 flex-shrink-0 mt-2" />
+                                                <span>{sys.detalle_costo_beneficio?.split('.')[0]}</span>
                                             </li>
-                                        )}
-                                    </ul>
+                                            {sys.internal_id !== 'th-fix' && (
+                                                <li className="flex items-start gap-3 text-[12px] text-primary font-black uppercase tracking-tighter">
+                                                    <Zap className="w-4 h-4" /> Ahorro Eléctrico Máximo
+                                                </li>
+                                            )}
+                                        </ul>
+                                    </div>
 
                                     <button
                                         onClick={() => document.getElementById('cotizador')?.scrollIntoView({ behavior: 'smooth' })}
-                                        className="w-full py-4 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-primary transition-all shadow-lg active:scale-95"
+                                        className={`w-full py-5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${isPremium ? 'bg-primary text-white hover:bg-orange-600' : 'bg-secondary text-white hover:bg-slate-800'}`}
                                     >
                                         Cotizar este Sistema
                                     </button>
                                 </div>
+                                {isPremium && <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-secondary via-primary to-secondary" />}
                             </div>
                         );
                     })}
                 </div>
 
                 {/* Comparison Table */}
-                <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-                    <div className="p-8 bg-slate-50 border-b border-slate-200">
-                        <h3 className="text-2xl font-bold text-secondary text-center uppercase tracking-tighter">Ficha Técnica Comparativa ({roofType === 'concrete' ? 'Concreto' : 'Lámina'})</h3>
+                <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden">
+                    <div className="p-10 bg-secondary border-b border-white/5 relative overflow-hidden text-center">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full -mr-32 -mt-32 blur-3xl" />
+                        <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Comparativa Técnica {roofType === 'concrete' ? 'Concreto' : 'Lámina'}</h3>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm whitespace-nowrap">
-                            <thead className="bg-white">
+                            <thead className="bg-slate-50 border-b border-slate-100">
                                 <tr>
-                                    <th className="p-6 font-black text-slate-400 uppercase text-[10px] tracking-widest">Característica</th>
+                                    <th className="p-8 font-black text-slate-400 uppercase text-[10px] tracking-widest">Atributo</th>
                                     {filteredSolutions.map(sys => (
-                                        <th key={sys.id} className="p-6 font-bold text-secondary border-l border-slate-100">{sys.title}</th>
+                                        <th key={sys.id} className="p-8 font-black text-secondary border-l border-slate-100 uppercase tracking-tighter text-sm">{sys.title}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                <tr>
-                                    <td className="p-6 font-bold text-slate-700 bg-slate-50/50">Espesor final</td>
-                                    {filteredSolutions.map(sys => <td key={sys.id} className="p-6 text-slate-600 border-l border-slate-100">{sys.grosor || 'Estándar'}</td>)}
+                                <tr className="hover:bg-slate-50/50 transition-colors">
+                                    <td className="p-8 font-black text-slate-700 bg-slate-50/10">ESPESOR FINAL</td>
+                                    {filteredSolutions.map(sys => <td key={sys.id} className="p-8 text-primary font-black border-l border-slate-100">{sys.grosor || '1000 micras'}</td>)}
                                 </tr>
-                                <tr>
-                                    <td className="p-6 font-bold text-slate-700 bg-slate-50/50">Beneficio Principal</td>
-                                    {filteredSolutions.map(sys => <td key={sys.id} className="p-6 text-slate-600 border-l border-slate-100 text-xs text-wrap max-w-[150px]">{sys.beneficio_principal || 'N/A'}</td>)}
+                                <tr className="hover:bg-slate-50/50 transition-colors">
+                                    <td className="p-8 font-black text-slate-700 bg-slate-50/10">VALOR AGREGADO</td>
+                                    {filteredSolutions.map(sys => <td key={sys.id} className="p-8 text-slate-600 border-l border-slate-100 text-xs text-wrap max-w-[180px] font-medium leading-relaxed uppercase">{sys.beneficio_principal || 'N/A'}</td>)}
                                 </tr>
-                                <tr>
-                                    <td className="p-6 font-bold text-slate-700 bg-slate-50/50">Garantía / Duración</td>
+                                <tr className="hover:bg-slate-50/50 transition-colors">
+                                    <td className="p-8 font-black text-slate-700 bg-slate-50/10">OBJETIVO CLAVE</td>
                                     {filteredSolutions.map(sys => (
-                                        <td key={sys.id} className="p-6 text-slate-600 border-l border-slate-100 text-xs text-wrap max-w-[200px]">
-                                            {sys.detalle_costo_beneficio?.split('.')[1] || 'Protección Extendida'}
+                                        <td key={sys.id} className="p-8 text-slate-600 border-l border-slate-100 text-xs text-wrap max-w-[200px] leading-relaxed">
+                                            {sys.detalle_costo_beneficio?.split('.')[1] || 'Protección de alta durabilidad contra intemperie extrema.'}
                                         </td>
                                     ))}
                                 </tr>
-                                <tr>
-                                    <td className="p-6 font-bold text-slate-700 bg-slate-50/50">Aplicación</td>
+                                <tr className="hover:bg-slate-50/50 transition-colors">
+                                    <td className="p-8 font-black text-slate-700 bg-slate-50/10">ESPECIALIDAD</td>
                                     {filteredSolutions.map(sys => (
-                                        <td key={sys.id} className="p-6 text-slate-600 border-l border-slate-100 text-xs">
-                                            {sys.category === 'sheet' ? 'Exclusivo Lámina' : (sys.category === 'concrete' ? 'Exclusivo Concreto' : 'Multisuperficie')}
+                                        <td key={sys.id} className="p-8 text-slate-600 border-l border-slate-100 text-[10px] font-bold uppercase tracking-widest">
+                                            {sys.category === 'sheet' ? 'Siderúrgicos' : (sys.category === 'concrete' ? 'Estructural' : 'Híbrido')}
                                         </td>
                                     ))}
                                 </tr>

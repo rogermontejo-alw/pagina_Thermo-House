@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Shield, Zap, Droplets, Loader2, Phone, ArrowRight, RotateCcw, Sparkles, Package, MapPin, CheckCircle2 } from 'lucide-react';
+import { Check, Shield, Zap, Droplets, Loader2, Phone, ArrowRight, RotateCcw, Sparkles, Package, MapPin, CheckCircle2, Building2, Factory } from 'lucide-react';
 import { calculateQuote } from '@/app/actions/calculate-quote';
 import { saveQuote } from '@/app/actions/save-quote';
 import { getAllSolutions } from '@/app/actions/get-solutions';
@@ -186,23 +186,31 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                         <div className="w-2 h-6 bg-primary rounded-full" />
                                         PRÓXIMO PASO: TIPO DE TECHO
                                     </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <button onClick={() => setRoofType('concrete')} className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-4 group ${roofType === 'concrete' ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10' : 'border-slate-100 hover:border-slate-300 bg-slate-50'}`}>
-                                            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                                                <div className="w-8 h-8 bg-slate-300 rounded" />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <button onClick={() => setRoofType('concrete')} className={`relative p-8 rounded-[2rem] border-2 transition-all flex flex-col items-center gap-5 group overflow-hidden ${roofType === 'concrete' ? 'border-primary bg-primary/5 shadow-2xl scale-[1.02]' : 'border-slate-100 hover:border-slate-300 bg-white hover:shadow-xl'}`}>
+                                            {roofType === 'concrete' && <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full -mr-10 -mt-10" />}
+                                            <div className={`w-20 h-20 rounded-3xl flex items-center justify-center shadow-lg transition-all duration-500 ${roofType === 'concrete' ? 'bg-primary text-white rotate-3' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:rotate-3'}`}>
+                                                <Building2 className="w-10 h-10" />
                                             </div>
-                                            <div className="text-center">
-                                                <span className="block font-black text-secondary text-lg">LOSA DE CONCRETO</span>
-                                                <span className="text-xs text-slate-500 font-medium">Casas, departamentos y comercios</span>
+                                            <div className="text-center space-y-2">
+                                                <span className="block font-black text-secondary text-xl tracking-tighter">LOSA DE CONCRETO</span>
+                                                <p className="text-[11px] text-slate-500 font-medium px-4">Ideal para casas habitacionales, departamentos y comercios urbanos.</p>
+                                            </div>
+                                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${roofType === 'concrete' ? 'border-primary bg-primary text-white scale-110' : 'border-slate-200'}`}>
+                                                {roofType === 'concrete' && <Check className="w-4 h-4" />}
                                             </div>
                                         </button>
-                                        <button onClick={() => setRoofType('sheet')} className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-4 group ${roofType === 'sheet' ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10' : 'border-slate-100 hover:border-slate-300 bg-slate-50'}`}>
-                                            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                                                <Zap className="w-8 h-8 text-primary" />
+                                        <button onClick={() => setRoofType('sheet')} className={`relative p-8 rounded-[2rem] border-2 transition-all flex flex-col items-center gap-5 group overflow-hidden ${roofType === 'sheet' ? 'border-primary bg-primary/5 shadow-2xl scale-[1.02]' : 'border-slate-100 hover:border-slate-300 bg-white hover:shadow-xl'}`}>
+                                            {roofType === 'sheet' && <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full -mr-10 -mt-10" />}
+                                            <div className={`w-20 h-20 rounded-3xl flex items-center justify-center shadow-lg transition-all duration-500 ${roofType === 'sheet' ? 'bg-primary text-white -rotate-3' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:-rotate-3'}`}>
+                                                <Factory className="w-10 h-10" />
                                             </div>
-                                            <div className="text-center">
-                                                <span className="block font-black text-secondary text-lg">TECHO DE LÁMINA</span>
-                                                <span className="text-xs text-slate-500 font-medium">Bodegas, industrias y anexos</span>
+                                            <div className="text-center space-y-2">
+                                                <span className="block font-black text-secondary text-xl tracking-tighter">TECHO DE LÁMINA</span>
+                                                <p className="text-[11px] text-slate-500 font-medium px-4">Bodegas industriales, anexos metálicos y proyectos de gran escala.</p>
+                                            </div>
+                                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${roofType === 'sheet' ? 'border-primary bg-primary text-white scale-110' : 'border-slate-200'}`}>
+                                                {roofType === 'sheet' && <Check className="w-4 h-4" />}
                                             </div>
                                         </button>
                                     </div>
@@ -217,28 +225,57 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                     ELITE SYSTEMS: SELECCIONA TU NIVEL DE PROTECCIÓN
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    {currentSolutions.map((sol) => (
-                                        <button key={sol.id} onClick={() => handleSolutionSelect(sol.internal_id)} className={`relative p-6 rounded-3xl border-2 text-left transition-all h-full flex flex-col group ${selectedSolutionId === sol.internal_id ? 'border-primary bg-primary/5 shadow-2xl ring-4 ring-primary/10' : 'border-slate-100 hover:border-slate-200 bg-white'}`}>
-                                            {(sol.internal_id === 'th-forte' || sol.internal_id === 'th-ingles') && (
-                                                <span className="absolute top-4 right-4 bg-secondary text-white text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-tighter">Premium</span>
-                                            )}
-                                            <div className="mb-4">{getIcon(sol.internal_id)}</div>
-                                            <h4 className="text-xl font-black text-secondary mb-3 leading-none">{sol.title}</h4>
-                                            <ul className="space-y-2 mb-6">
-                                                {getSolutionFeatures(sol).slice(0, 3).map((f, i) => (
-                                                    <li key={i} className="flex items-start text-[11px] text-slate-500 gap-2 font-medium">
-                                                        <Check className="w-3.5 h-3.5 text-green-500 mt-0.5 flex-shrink-0" />
-                                                        {f}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                            <div className="mt-auto pt-4 border-t border-slate-100">
-                                                <span className={`text-[10px] font-bold uppercase tracking-widest ${selectedSolutionId === sol.internal_id ? 'text-primary' : 'text-slate-400 group-hover:text-secondary'}`}>
-                                                    {selectedSolutionId === sol.internal_id ? 'SELECCIONADO ✓' : 'SELECCIONAR'}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    ))}
+                                    {currentSolutions.map((sol) => {
+                                        const isPremium = sol.internal_id === 'th-forte' || sol.internal_id === 'th-ingles';
+                                        const isBestSeller = sol.internal_id === 'th-light';
+                                        const isSelected = selectedSolutionId === sol.internal_id;
+
+                                        return (
+                                            <button
+                                                key={sol.id}
+                                                onClick={() => handleSolutionSelect(sol.internal_id)}
+                                                className={`relative p-8 rounded-[2.5rem] border-2 text-left transition-all h-full flex flex-col group overflow-hidden ${isSelected ? 'border-primary bg-primary/5 shadow-2xl ring-4 ring-primary/10 scale-[1.02]' : 'border-slate-100 hover:border-slate-200 bg-white hover:shadow-xl'}`}
+                                            >
+                                                {isBestSeller && (
+                                                    <div className="absolute -top-1 -right-1 bg-primary text-white text-[9px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-widest z-10">Best Seller</div>
+                                                )}
+                                                {isPremium && (
+                                                    <div className="absolute -top-1 -right-1 bg-secondary text-white text-[9px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-widest z-10">Experto</div>
+                                                )}
+
+                                                <div className={`mb-6 w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${isSelected ? 'bg-primary text-white' : 'bg-slate-50 text-primary group-hover:bg-primary group-hover:text-white'}`}>
+                                                    {getIcon(sol.internal_id)}
+                                                </div>
+
+                                                <div className="space-y-1 mb-6">
+                                                    <h4 className="text-2xl font-black text-secondary leading-none uppercase tracking-tighter">{sol.title}</h4>
+                                                    <p className="text-[10px] text-primary font-bold uppercase tracking-widest opacity-70">SISTEMA {isPremium ? 'PROFESIONAL' : 'VITAL'}</p>
+                                                </div>
+
+                                                <ul className="space-y-3 mb-8 flex-grow">
+                                                    {getSolutionFeatures(sol).slice(0, 3).map((f, i) => (
+                                                        <li key={i} className="flex items-start text-xs text-slate-600 gap-2.5 font-medium leading-normal">
+                                                            <div className={`mt-1 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${isSelected ? 'bg-primary/20 text-primary' : 'bg-green-50 text-green-500'}`}>
+                                                                <Check className="w-2.5 h-2.5 stroke-[4]" />
+                                                            </div>
+                                                            {f}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+
+                                                <div className={`mt-auto pt-6 border-t ${isSelected ? 'border-primary/20' : 'border-slate-100'}`}>
+                                                    <div className={`flex items-center justify-between text-[10px] font-bold uppercase tracking-widest ${isSelected ? 'text-primary' : 'text-slate-400 group-hover:text-secondary'}`}>
+                                                        <span>{isSelected ? 'SISTEMA SELECCIONADO' : 'VER PRESUPUESTO'}</span>
+                                                        <ArrowRight className={`w-3 h-3 transition-transform ${isSelected ? 'translate-x-1' : 'group-hover:translate-x-1'}`} />
+                                                    </div>
+                                                </div>
+
+                                                {isPremium && isSelected && (
+                                                    <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-secondary via-primary to-secondary" />
+                                                )}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
 
                                 {selectedSolutionId && (
