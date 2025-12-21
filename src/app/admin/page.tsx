@@ -90,6 +90,7 @@ export default function AdminDashboard() {
         const updates = {
             status: selectedLeadForDetail.status,
             solution_id: selectedLeadForDetail.solution_id,
+            precio_total_contado: Number(selectedLeadForDetail.precio_total_contado),
             fecha_nacimiento: selectedLeadForDetail.fecha_nacimiento || null,
             factura: selectedLeadForDetail.factura || false,
             notas: selectedLeadForDetail.notas || ''
@@ -643,6 +644,19 @@ export default function AdminDashboard() {
                                                 <option key={p.id} value={p.id}>{p.title} ({p.ciudad})</option>
                                             ))}
                                         </select>
+                                    </div>
+                                    <div className="space-y-1 md:col-span-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">PRECIO FINAL DE CIERRE ($)</label>
+                                        <div className="relative">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                                            <input
+                                                type="number"
+                                                className="w-full pl-8 pr-4 py-4 bg-white border border-primary/20 rounded-xl text-lg font-black text-secondary outline-none focus:ring-4 focus:ring-primary/10 shadow-sm"
+                                                value={selectedLeadForDetail.precio_total_contado}
+                                                onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, precio_total_contado: e.target.value })}
+                                            />
+                                        </div>
+                                        <p className="text-[9px] text-slate-400 font-bold mt-1 px-1 italic">* Modifica este campo si el precio pactado fue diferente al cotizado automáticamente.</p>
                                     </div>
                                 </div>
                             </div>
