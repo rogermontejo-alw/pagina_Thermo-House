@@ -292,7 +292,12 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                 )}
 
                 {currentStep === 'result' && (
-                    <motion.div key="result" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12">
+                    <motion.div
+                        key="result"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="space-y-12 py-10 md:py-20"
+                    >
                         <div className="bg-white rounded-3xl p-6 md:p-12 border border-slate-100 shadow-xl relative overflow-hidden text-center">
                             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-orange-400 to-amber-300" />
                             <div className="inline-flex items-center gap-2 bg-green-50 text-green-600 px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold mb-3 md:mb-4 border border-green-100 uppercase tracking-widest">
@@ -302,8 +307,8 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                             <p className="text-slate-500 text-xs md:text-xl mt-2">Tu proyecto de <strong>{initialArea}m²</strong> en <strong>{city || address || 'tu ubicación'}</strong></p>
                         </div>
 
-                        <div className="grid md:grid-cols-3 gap-4 items-stretch">
-                            <div className="bg-white rounded-3xl shadow-2xl flex flex-col transition-all border border-slate-100 overflow-hidden">
+                        <div className="grid md:grid-cols-3 gap-6 items-stretch">
+                            <div className="bg-white rounded-3xl shadow-2xl flex flex-col transition-all border border-slate-100 overflow-hidden min-h-[550px]">
                                 <div className="p-5 md:p-8 pb-0">
                                     <div className="text-primary font-bold text-[9px] uppercase tracking-widest mb-1 flex items-center gap-1"><Check className="w-3 h-3" /> Pago Contado</div>
                                     <h4 className="text-xl md:text-2xl lg:text-3xl font-black text-secondary">{selectedSolution?.title}</h4>
@@ -329,7 +334,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                 </button>
                             </div>
 
-                            <div className="bg-white rounded-3xl shadow-2xl border-2 border-primary/20 flex flex-col relative overflow-hidden">
+                            <div className="bg-white rounded-3xl shadow-2xl border-2 border-primary/20 flex flex-col relative overflow-hidden min-h-[550px]">
                                 <div className="p-5 md:p-8 pb-0">
                                     <div className="text-primary font-bold text-[9px] uppercase tracking-widest mb-1 flex items-center gap-1"><Zap className="w-3 h-3 fill-primary" /> Pago a 12 MSI</div>
                                     <h4 className="text-xl md:text-2xl lg:text-3xl font-black text-secondary">{selectedSolution?.title}</h4>
@@ -354,7 +359,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                             </div>
 
                             {upsellQuote ? (
-                                <div className="bg-secondary rounded-3xl shadow-2xl relative flex flex-col overflow-hidden">
+                                <div className="bg-secondary rounded-3xl shadow-2xl relative flex flex-col overflow-hidden min-h-[550px]">
                                     <div className="p-5 md:p-8 pb-0">
                                         <div className="text-primary font-bold text-[9px] uppercase tracking-widest mb-1 flex items-center gap-1"><Shield className="w-3 h-3" /> Nivel Superior</div>
                                         <h4 className="text-xl md:text-2xl lg:text-3xl font-black text-white">{upsellQuote.title}</h4>
@@ -397,7 +402,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                         <h3 className="text-3xl md:text-4xl font-black text-secondary uppercase tracking-tighter leading-none">¡Gracias por <br /> <span className="text-primary">Considerarnos!</span></h3>
                         <p className="text-slate-500 font-medium text-base md:text-lg">Tu cotización ha sido registrada con éxito.</p>
                         <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-slate-600 font-bold text-sm">En breve uno de nuestros especialistas te enviará la información detallada al medio de contacto que nos proporcionaste.</p></div>
-                        <button onClick={() => { setShowSuccessModal(false); setCurrentStep('selection'); }} className="w-full bg-secondary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all">Entendido</button>
+                        <button onClick={() => { window.location.href = '/'; }} className="w-full bg-secondary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all">Entendido</button>
                     </motion.div>
                 </div>
             )}
