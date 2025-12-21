@@ -9,7 +9,8 @@ import { useRouter } from 'next/navigation';
 import {
     Users, TrendingUp, Calendar, MapPin, Phone, ExternalLink, Search, Filter,
     CheckCircle2, Clock, AlertCircle, ChevronRight, LogOut, UserPlus, Trash2,
-    Shield, Mail, UserCircle, Package, Edit3, Plus, Globe, Save, X, Key, Building2
+    Shield, Mail, UserCircle, Package, Edit3, Plus, Globe, Save, X, Key, Building2,
+    Download, CheckSquare, Square
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -21,6 +22,9 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
+
+    // Selection state
+    const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
 
     // User Creation State
     const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'editor' as 'admin' | 'editor', ciudad: 'Mérida' });
@@ -134,6 +138,57 @@ export default function AdminDashboard() {
         router.push('/admin/login');
     };
 
+    const toggleLeadSelection = (id: string) => {
+        const newSelection = new Set(selectedLeads);
+        if (newSelection.has(id)) newSelection.delete(id);
+        else newSelection.add(id);
+        setSelectedLeads(newSelection);
+    };
+
+    const handleSelectAll = (filteredLeads: any[]) => {
+        if (selectedLeads.size === filteredLeads.length) {
+            setSelectedLeads(new Set());
+        } else {
+            setSelectedLeads(new Set(filteredLeads.map(q => q.id)));
+        }
+    };
+
+    const exportToCSV = () => {
+        const leadsToExport = quotes.filter(q => selectedLeads.has(q.id));
+        if (leadsToExport.length === 0) {
+            alert('Por favor selecciona al menos un registro para exportar.');
+            return;
+        }
+
+        const headers = ['Fecha', 'Cliente', 'WhatsApp', 'Email', 'Ciudad', 'Area (m2)', 'Sistema', 'Precio Contado', 'Estado'];
+        const rows = leadsToExport.map(q => [
+            new Date(q.created_at).toLocaleDateString(),
+            q.contact_info.name,
+            q.contact_info.phone,
+            q.contact_info.email || 'N/A',
+            q.ciudad,
+            q.area,
+            q.soluciones_precios?.title || 'Personalizado',
+            Math.round(q.precio_total_contado),
+            q.status
+        ]);
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `leads_thermohouse_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     const filteredQuotes = quotes.filter(q => {
         const matchesSearch = q.contact_info.name.toLowerCase().includes(searchTerm.toLowerCase()) || q.ciudad.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'All' || q.status === statusFilter;
@@ -171,9 +226,20 @@ export default function AdminDashboard() {
                 {activeTab === 'quotes' && (
                     <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden min-h-[600px]">
                         <div className="p-6 border-b border-slate-50 flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-50/50">
-                            <div className="relative w-full md:w-96">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                <input type="text" placeholder="Buscar cliente..." className="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/10 transition-all text-sm font-medium" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                            <div className="flex gap-4 items-center flex-1 w-full">
+                                <div className="relative flex-1 md:max-w-md">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <input type="text" placeholder="Buscar cliente o ciudad..." className="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/10 transition-all text-sm font-medium" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                                </div>
+                                {selectedLeads.size > 0 && (
+                                    <button
+                                        onClick={exportToCSV}
+                                        className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20"
+                                    >
+                                        <Download className="w-4 h-4" />
+                                        Exportar {selectedLeads.size} Seleccionado(s)
+                                    </button>
+                                )}
                             </div>
                             <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
                                 {['All', 'Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado'].map(status => (
@@ -186,22 +252,46 @@ export default function AdminDashboard() {
                             <table className="w-full text-left">
                                 <thead className="bg-slate-50 text-[10px] uppercase font-black text-slate-400 tracking-widest border-b border-slate-100">
                                     <tr>
+                                        <th className="px-8 py-5 w-10">
+                                            <button
+                                                onClick={() => handleSelectAll(filteredQuotes)}
+                                                className="p-1 hover:bg-slate-200 rounded-md transition-colors"
+                                            >
+                                                {selectedLeads.size === filteredQuotes.length && filteredQuotes.length > 0 ? (
+                                                    <CheckSquare className="w-4 h-4 text-primary" />
+                                                ) : (
+                                                    <Square className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                        </th>
                                         <th className="px-8 py-5">Fecha</th>
                                         <th className="px-8 py-5">Cliente</th>
                                         <th className="px-8 py-5">Proyecto</th>
                                         <th className="px-8 py-5">Presupuesto</th>
                                         <th className="px-8 py-5">Estado</th>
-                                        <th className="px-8 py-5 text-right">Acción</th>
+                                        <th className="px-8 py-5 text-right">Canal</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
                                     {loading ? (
-                                        <tr><td colSpan={6} className="px-8 py-20 text-center text-slate-300 font-black uppercase tracking-widest text-sm animate-pulse">Sincronizando Leads...</td></tr>
+                                        <tr><td colSpan={7} className="px-8 py-20 text-center text-slate-300 font-black uppercase tracking-widest text-sm animate-pulse">Sincronizando Leads...</td></tr>
                                     ) : filteredQuotes.length === 0 ? (
-                                        <tr><td colSpan={6} className="px-8 py-20 text-center text-slate-300 font-bold italic">No se encontraron registros en {session.ciudad === 'Todas' ? 'el sistema' : session.ciudad}</td></tr>
+                                        <tr><td colSpan={7} className="px-8 py-20 text-center text-slate-300 font-bold italic">No se encontraron registros en {session.ciudad === 'Todas' ? 'el sistema' : session.ciudad}</td></tr>
                                     ) : (
                                         filteredQuotes.map(q => (
-                                            <tr key={q.id} className="hover:bg-slate-50/50 transition-colors group">
+                                            <tr key={q.id} className={`hover:bg-slate-50/50 transition-colors group ${selectedLeads.has(q.id) ? 'bg-primary/[0.02]' : ''}`}>
+                                                <td className="px-8 py-5">
+                                                    <button
+                                                        onClick={() => toggleLeadSelection(q.id)}
+                                                        className="p-1 hover:bg-slate-200 rounded-md transition-colors"
+                                                    >
+                                                        {selectedLeads.has(q.id) ? (
+                                                            <CheckSquare className="w-4 h-4 text-primary" />
+                                                        ) : (
+                                                            <Square className="w-4 h-4" />
+                                                        )}
+                                                    </button>
+                                                </td>
                                                 <td className="px-8 py-5 text-xs font-bold text-slate-400">{new Date(q.created_at).toLocaleDateString()}</td>
                                                 <td className="px-8 py-5">
                                                     <div className="font-black text-secondary text-sm group-hover:text-primary transition-colors">{q.contact_info.name}</div>
@@ -223,7 +313,10 @@ export default function AdminDashboard() {
                                                 <td className="px-8 py-5 text-right">
                                                     <div className="flex justify-end gap-2">
                                                         {q.google_maps_link && (
-                                                            <a href={q.google_maps_link} target="_blank" className="p-2.5 bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"><ExternalLink className="w-4 h-4" /></a>
+                                                            <a href={q.google_maps_link} target="_blank" className="p-2 bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"><ExternalLink className="w-4 h-4" /></a>
+                                                        )}
+                                                        {q.contact_info.phone && (
+                                                            <a href={`https://wa.me/52${q.contact_info.phone}`} target="_blank" className="p-2 bg-green-50 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all shadow-sm"><Phone className="w-4 h-4" /></a>
                                                         )}
                                                     </div>
                                                 </td>
