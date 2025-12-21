@@ -29,6 +29,11 @@ export async function createLocation(locationData: { ciudad: string, estado: str
             return { success: false, message: 'No tienes permisos para modificar ubicaciones.' };
         }
 
+        const normCity = locationData.ciudad.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        if (normCity === 'merida') {
+            return { success: false, message: 'Mérida ya es una ciudad base y no necesita ser agregada como zona de operación.' };
+        }
+
         const { error } = await supabaseAdmin
             .from('ubicaciones')
             .insert(locationData);

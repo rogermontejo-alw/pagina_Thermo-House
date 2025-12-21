@@ -13,10 +13,11 @@ export async function getQuotes(cityFilter?: string) {
                     title,
                     internal_id
                 ),
-                admin_users!created_by (
+                advisor:admin_users!created_by (
                     name,
                     apellido,
                     telefono,
+                    email,
                     contacto_email
                 )
             `);

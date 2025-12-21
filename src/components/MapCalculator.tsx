@@ -127,15 +127,13 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
         return merged;
     })();
 
-    const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || dbMapsKey || '';
+    const GOOGLE_MAPS_API_KEY = dbMapsKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || '';
 
-    // Fetch key from DB if missing in env
+    // Fetch key from DB
     useEffect(() => {
-        if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && !process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY) {
-            getAppConfig('GOOGLE_MAPS_KEY').then(val => {
-                if (val) setDbMapsKey(val);
-            });
-        }
+        getAppConfig('GOOGLE_MAPS_KEY').then(val => {
+            if (val) setDbMapsKey(val);
+        });
     }, []);
 
     // Handle Auth Failure
@@ -386,11 +384,15 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
 
     return (
         <div className="w-full space-y-6 p-6 bg-white">
-            <Script
-                src={`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=drawing,geometry,places`}
-                onLoad={initMap}
-                strategy="afterInteractive"
-            />
+            {GOOGLE_MAPS_API_KEY ? (
+                <Script
+                    src={`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=drawing,geometry,places`}
+                    onLoad={initMap}
+                    strategy="afterInteractive"
+                />
+            ) : (
+                <div className="hidden">Loading Maps Key...</div>
+            )}
 
             {/* Header / Mode Switcher */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -657,6 +659,6 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                     {area > 0 && <span className="text-green-600 font-medium text-sm flex items-center gap-1">✓ Área capturada</span>}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
