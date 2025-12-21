@@ -10,11 +10,66 @@ export default function SystemsSection() {
     const [roofType, setRoofType] = useState<'concrete' | 'sheet'>('concrete');
 
     const fallbackSolutions: Solution[] = [
-        { id: '1', internal_id: 'th-fix', title: 'TH FIX', category: 'concrete', precio_contado_m2: 79, precio_msi_m2: 94, grosor: '1000 micras', beneficio_principal: 'Impermeabilidad y Reflectancia Básica', detalle_costo_beneficio: 'Sistema de mantenimiento preventivo. Protege contra filtraciones leves.', orden: 1 },
-        { id: '2', internal_id: 'th-light', title: 'TH LIGHT', category: 'concrete', precio_contado_m2: 119, precio_msi_m2: 142, grosor: '1/2 cm (5 mm)', beneficio_principal: 'Impermeabilidad Total y Aislamiento Inicial', detalle_costo_beneficio: 'Elimina goteras y genera ahorro energético.', orden: 2 },
-        { id: '3', internal_id: 'th-forte', title: 'TH FORTE', category: 'concrete', precio_contado_m2: 152, precio_msi_m2: 181, grosor: '1 cm (10 mm)', beneficio_principal: 'Aislamiento Térmico Óptimo', detalle_costo_beneficio: 'Reduce significativamente el uso de aire acondicionado.', orden: 3 },
-        { id: '4', internal_id: 'th-3-4', title: 'TH 3/4', category: 'sheet', precio_contado_m2: 186, precio_msi_m2: 221, grosor: '1.9 cm (19 mm)', beneficio_principal: 'Aislamiento Térmico/Acústico Alto', detalle_costo_beneficio: 'Especial para lámina y naves industriales.', orden: 4 },
-        { id: '5', internal_id: 'th-ingles', title: 'TH Inglés', category: 'sheet', precio_contado_m2: 200, precio_msi_m2: 238, grosor: '2.5 cm (25 mm)', beneficio_principal: 'Aislamiento Superior y Protección Máxima', detalle_costo_beneficio: 'El sistema más completo para techos de lámina.', orden: 5 },
+        {
+            id: '1',
+            internal_id: 'th-fix',
+            title: 'TH FIX',
+            category: 'concrete',
+            precio_contado_m2: 79,
+            precio_msi_m2: 94,
+            grosor: '1000 micras',
+            beneficio_principal: 'Protección Preventiva Avanzada',
+            detalle_costo_beneficio: 'Ideal para techos sin daños previos. Detiene la erosión y el calentamiento solar.',
+            orden: 1
+        },
+        {
+            id: '2',
+            internal_id: 'th-light',
+            title: 'TH LIGHT',
+            category: 'concrete',
+            precio_contado_m2: 119,
+            precio_msi_m2: 142,
+            grosor: '1/2 cm (5 mm)',
+            beneficio_principal: 'Impermeabilidad Total y Confort',
+            detalle_costo_beneficio: 'Elimina goteras y genera ahorro energético inmediato en aires acondicionados.',
+            orden: 2
+        },
+        {
+            id: '3',
+            internal_id: 'th-forte',
+            title: 'TH FORTE',
+            category: 'concrete',
+            precio_contado_m2: 152,
+            precio_msi_m2: 181,
+            grosor: '1 cm (10 mm)',
+            beneficio_principal: 'Aislamiento Térmico de Alto Nivel',
+            detalle_costo_beneficio: 'Reduce drásticamente la temperatura interior. El sistema más vendido por su relación ahorro/confort.',
+            orden: 3
+        },
+        {
+            id: '4',
+            internal_id: 'th-3-4',
+            title: 'TH 3/4',
+            category: 'sheet',
+            precio_contado_m2: 186,
+            precio_msi_m2: 221,
+            grosor: '1.9 cm (19 mm)',
+            beneficio_principal: 'Blindaje Térmico y Silenciador',
+            detalle_costo_beneficio: 'Especial para naves y hogares con lámina. Reduce el ruido de lluvia hasta un 70%.',
+            orden: 4
+        },
+        {
+            id: '5',
+            internal_id: 'th-ingles',
+            title: 'TH Inglés',
+            category: 'sheet',
+            precio_contado_m2: 200,
+            precio_msi_m2: 238,
+            grosor: '2.5 cm (25 mm)',
+            beneficio_principal: 'Máxima Eficiencia Energética',
+            detalle_costo_beneficio: 'Transforma techos de lámina en superficies frías al tacto bajo el sol más intenso.',
+            orden: 5
+        },
     ];
 
     useEffect(() => {
@@ -96,19 +151,35 @@ export default function SystemsSection() {
                                     <h3 className="text-xl font-bold text-secondary mb-2">{sys.title}</h3>
                                     <p className="text-sm font-bold text-primary mb-4 uppercase tracking-wider">{sys.grosor || 'Espesor Estándar'}</p>
 
-                                    <ul className="space-y-3 mb-8">
-                                        <li className="flex items-start gap-2 text-sm text-slate-600 font-medium">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" />
+                                    <ul className="space-y-4 mb-8">
+                                        <li className="flex items-start gap-3 text-sm text-slate-600 font-medium">
+                                            <div className="bg-primary/20 p-1 rounded-md mt-0.5">
+                                                <Shield className="w-3.5 h-3.5 text-primary" />
+                                            </div>
                                             <span>{sys.beneficio_principal}</span>
                                         </li>
-                                        <li className="flex items-start gap-2 text-sm text-slate-600 font-medium">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" />
+                                        <li className="flex items-start gap-3 text-sm text-slate-600 font-medium italic">
+                                            <div className="bg-primary/20 p-1 rounded-md mt-0.5">
+                                                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                                            </div>
                                             <span>{sys.detalle_costo_beneficio?.split('.')[0]}</span>
                                         </li>
-                                        <li className="flex items-start gap-2 text-sm text-slate-600 font-medium">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" />
-                                            <span>{sys.category === 'both' ? 'Para Lámina y Concreto' : (sys.category === 'concrete' ? 'Especial para Concreto' : 'Especial para Lámina')}</span>
-                                        </li>
+                                        {sys.internal_id !== 'th-fix' && (
+                                            <li className="flex items-start gap-3 text-sm text-slate-600 font-medium">
+                                                <div className="bg-primary/20 p-1 rounded-md mt-0.5">
+                                                    <Zap className="w-3.5 h-3.5 text-primary" />
+                                                </div>
+                                                <span>Ahorro Eléctrico Garantizado</span>
+                                            </li>
+                                        )}
+                                        {(sys.internal_id === 'th-forte' || sys.internal_id === 'th-ingles' || sys.internal_id === 'th-3-4') && (
+                                            <li className="flex items-start gap-3 text-sm text-slate-600 font-medium">
+                                                <div className="bg-primary/20 p-1 rounded-md mt-0.5">
+                                                    <Package className="w-3.5 h-3.5 text-primary" />
+                                                </div>
+                                                <span>{sys.category === 'sheet' ? 'Elimina Ruido de Lluvia' : 'Protección Estructural Máxima'}</span>
+                                            </li>
+                                        )}
                                     </ul>
 
                                     <button
@@ -141,17 +212,25 @@ export default function SystemsSection() {
                             <tbody className="divide-y divide-slate-100">
                                 <tr>
                                     <td className="p-6 font-bold text-slate-700 bg-slate-50/50">Espesor final</td>
-                                    {filteredSolutions.map(sys => <td key={sys.id} className="p-6 text-slate-600 border-l border-slate-100">{sys.grosor}</td>)}
+                                    {filteredSolutions.map(sys => <td key={sys.id} className="p-6 text-slate-600 border-l border-slate-100">{sys.grosor || 'Estándar'}</td>)}
                                 </tr>
                                 <tr>
                                     <td className="p-6 font-bold text-slate-700 bg-slate-50/50">Beneficio Principal</td>
-                                    {filteredSolutions.map(sys => <td key={sys.id} className="p-6 text-slate-600 border-l border-slate-100 text-xs">{sys.beneficio_principal}</td>)}
+                                    {filteredSolutions.map(sys => <td key={sys.id} className="p-6 text-slate-600 border-l border-slate-100 text-xs text-wrap max-w-[150px]">{sys.beneficio_principal || 'N/A'}</td>)}
                                 </tr>
                                 <tr>
                                     <td className="p-6 font-bold text-slate-700 bg-slate-50/50">Garantía / Duración</td>
                                     {filteredSolutions.map(sys => (
                                         <td key={sys.id} className="p-6 text-slate-600 border-l border-slate-100 text-xs text-wrap max-w-[200px]">
                                             {sys.detalle_costo_beneficio?.split('.')[1] || 'Protección Extendida'}
+                                        </td>
+                                    ))}
+                                </tr>
+                                <tr>
+                                    <td className="p-6 font-bold text-slate-700 bg-slate-50/50">Aplicación</td>
+                                    {filteredSolutions.map(sys => (
+                                        <td key={sys.id} className="p-6 text-slate-600 border-l border-slate-100 text-xs">
+                                            {sys.category === 'sheet' ? 'Exclusivo Lámina' : (sys.category === 'concrete' ? 'Exclusivo Concreto' : 'Multisuperficie')}
                                         </td>
                                     ))}
                                 </tr>

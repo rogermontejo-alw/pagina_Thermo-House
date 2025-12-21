@@ -31,7 +31,7 @@ export default function TechComparisonSection() {
 
     return (
         <section className="py-12 md:py-24 bg-background">
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-3xl mx-auto mb-10 md:mb-16">
                     <h2 className="text-2xl sm:text-4xl font-bold text-secondary mb-4 md:mb-6">
                         La Solución Moderna vs. Lo Tradicional
@@ -41,32 +41,49 @@ export default function TechComparisonSection() {
                     </p>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden">
-                    <div className="grid grid-cols-1 md:grid-cols-12 border-b border-border bg-muted/30">
-                        <div className="p-4 md:p-6 md:col-span-3 font-bold text-secondary flex items-center text-xs md:text-sm">CARACTERÍSTICA</div>
-                        <div className="p-4 md:p-6 md:col-span-4 bg-secondary text-white font-bold flex items-center text-xs md:text-sm">
-                            POLIURETANO ESPREADO (THERMO HOUSE)
-                        </div>
-                        <div className="p-4 md:p-6 md:col-span-5 font-bold text-secondary flex items-center text-xs md:text-sm">
-                            SISTEMAS TRADICIONALES
-                        </div>
+                <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+                    {/* Desktop Header */}
+                    <div className="hidden md:grid grid-cols-12 border-b border-slate-200 bg-slate-50/50 uppercase tracking-widest text-[10px] font-black text-slate-400">
+                        <div className="p-6 col-span-3">Característica</div>
+                        <div className="p-6 col-span-4 border-l border-slate-100 bg-secondary text-white">Thermo House (Propuesta)</div>
+                        <div className="p-6 col-span-5 border-l border-slate-100">Sistemas Tradicionales</div>
                     </div>
 
-                    <div className="divide-y divide-border">
+                    <div className="divide-y divide-slate-100">
                         {comparisons.map((item, idx) => (
-                            <div key={idx} className="grid grid-cols-1 md:grid-cols-12 hover:bg-slate-50 transition-colors">
-                                <div className="p-4 md:p-6 md:col-span-3 font-semibold text-secondary flex items-center text-sm">
-                                    {item.feature}
+                            <div key={idx} className="flex flex-col md:grid md:grid-cols-12 hover:bg-slate-50/50 transition-colors">
+                                {/* Feature Title - Mobile Header */}
+                                <div className="p-4 md:p-6 md:col-span-3 font-bold text-secondary bg-slate-50 md:bg-transparent flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs md:hidden">
+                                        {idx + 1}
+                                    </div>
+                                    <span className="text-sm md:text-base">{item.feature}</span>
                                 </div>
 
-                                <div className="p-4 md:p-6 md:col-span-4 flex items-start gap-4">
-                                    <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                                    <p className="text-xs md:text-sm text-slate-700 leading-relaxed">{item.thermo}</p>
+                                {/* Thermo House Column */}
+                                <div className="p-5 md:p-6 md:col-span-4 border-t md:border-t-0 md:border-l border-slate-100 flex items-start gap-4">
+                                    <div className="flex-shrink-0 mt-1">
+                                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-tighter md:hidden">Thermo House</span>
+                                        <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                                            {item.thermo}
+                                        </p>
+                                    </div>
                                 </div>
 
-                                <div className="p-4 md:p-6 md:col-span-5 flex items-start gap-4">
-                                    <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                                    <p className="text-xs md:text-sm text-slate-500 leading-relaxed">{item.traditional}</p>
+                                {/* Traditional Column */}
+                                <div className="p-5 md:p-6 md:col-span-5 border-t md:border-t-0 md:border-l border-slate-100 flex items-start gap-4 bg-slate-50/30 md:bg-transparent">
+                                    <div className="flex-shrink-0 mt-1">
+                                        <XCircle className="w-5 h-5 text-red-400/70" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter md:hidden">Sistemas Tradicionales</span>
+                                        <p className="text-sm text-slate-500 leading-relaxed">
+                                            {item.traditional}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         ))}

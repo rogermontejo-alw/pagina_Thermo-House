@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import SystemsSection from '@/components/SystemsSection';
@@ -24,20 +25,64 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen font-sans selection:bg-primary/30 bg-slate-50/30">
+    <main className="min-h-screen font-sans selection:bg-primary/30 bg-slate-50/30 overflow-y-auto scroll-smooth scroll-snap-y">
       <Navbar />
-      <div className="max-w-[1440px] mx-auto shadow-2xl shadow-slate-200/50 bg-white min-h-screen">
-        <Hero />
+      <div className="max-w-[1440px] mx-auto shadow-2xl shadow-slate-200/50 bg-white min-h-screen scroll-snap-type-y-mandatory">
+        <section className="scroll-snap-align-start">
+          <Hero />
+        </section>
 
         <div className="max-w-5xl mx-auto space-y-0">
-          <SystemsSection />
-          <MethodSection />
-          <TechComparisonSection />
-          <WarrantySection />
+          <motion.section
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8 }}
+            className="scroll-snap-align-start"
+          >
+            <SystemsSection />
+          </motion.section>
+
+          <motion.section
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8 }}
+            className="scroll-snap-align-start"
+          >
+            <MethodSection />
+          </motion.section>
+
+          <motion.section
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8 }}
+            className="scroll-snap-align-start"
+          >
+            <TechComparisonSection />
+          </motion.section>
+
+          <motion.section
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8 }}
+            className="scroll-snap-align-start"
+          >
+            <WarrantySection />
+          </motion.section>
         </div>
 
         {/* Sección Cotizador */}
-        <section id="cotizador" className="py-12 md:py-24 relative px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t border-slate-100">
+        <motion.section
+          id="cotizador"
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8 }}
+          className="py-12 md:py-24 relative px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t border-slate-100 scroll-snap-align-start"
+        >
           <div className="space-y-6 md:space-y-12">
             <div className="text-center max-w-2xl mx-auto space-y-2 md:space-y-4">
               <h2 className="text-2xl sm:text-4xl font-black text-secondary tracking-tight">
@@ -63,10 +108,15 @@ export default function Home() {
               mapsLink={measurement.maps_link}
             />
           </div>
-        </section>
+        </motion.section>
 
         {/* Final Call to Action */}
-        <section className="dark-section py-12 md:py-20 text-center rounded-[3rem] mx-4 md:mx-12 mb-12">
+        <motion.section
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="dark-section py-12 md:py-20 text-center rounded-[3rem] mx-4 md:mx-12 mb-12 scroll-snap-align-start"
+        >
           <div className="max-w-3xl mx-auto px-4">
             <h2 className="text-2xl md:text-4xl font-black text-white mb-4">¿Preparado para la Tranquilidad?</h2>
             <p className="text-sm md:text-lg text-slate-300 mb-8 opacity-80">Permita que Thermo House proteja su hogar de por vida.</p>
@@ -77,9 +127,9 @@ export default function Home() {
               Obtenga su Cotización Gratis
             </button>
           </div>
-        </section>
+        </motion.section>
 
-        <footer className="bg-slate-950 py-12 border-t border-white/5 font-sans rounded-t-[3rem]">
+        <footer className="bg-slate-950 py-12 border-t border-white/5 font-sans rounded-t-[3rem] scroll-snap-align-end">
           <div className="max-w-5xl mx-auto px-4 text-center text-slate-500 text-xs tracking-widest uppercase">
             <p>© 2025 Thermo House. Protección Térmica Avanzada.</p>
           </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useTransition, useActionState } from 'react';
+import { useState, useEffect, useTransition, useActionState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Shield, Zap, Droplets, Loader2, Phone, ArrowRight, RotateCcw, Sparkles, Package } from 'lucide-react';
 import { calculateQuote } from '@/app/actions/calculate-quote';
@@ -24,13 +24,81 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
     const [contactData, setContactData] = useState({ phone: '', email: '' });
     const [allDbSolutions, setAllDbSolutions] = useState<Solution[]>([]);
     const [dbLoaded, setDbLoaded] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const isFirstRender = useRef(true);
+
+    // Auto-scroll on step change (but not on initial mount)
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        if (containerRef.current) {
+            containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, [currentStep]);
 
     const fallbackSolutions: Solution[] = [
-        { id: '1', internal_id: 'th-fix', title: 'TH FIX', category: 'concrete', precio_contado_m2: 79, precio_msi_m2: 94, grosor: '1000 micras', beneficio_principal: 'Sellado básico', detalle_costo_beneficio: 'Ideal para filtraciones leves.', orden: 1 },
-        { id: '2', internal_id: 'th-light', title: 'TH LIGHT', category: 'concrete', precio_contado_m2: 119, precio_msi_m2: 142, grosor: '5 mm', beneficio_principal: 'Impermeabilidad Total', detalle_costo_beneficio: 'Aislamiento inicial.', orden: 2 },
-        { id: '3', internal_id: 'th-forte', title: 'TH FORTE', category: 'concrete', precio_contado_m2: 152, precio_msi_m2: 181, grosor: '10 mm', beneficio_principal: 'Máxima Protección', detalle_costo_beneficio: 'Aislamiento térmico óptimo.', orden: 3 },
-        { id: '4', internal_id: 'th-3-4', title: 'TH 3/4', category: 'sheet', precio_contado_m2: 186, precio_msi_m2: 221, grosor: '19 mm', beneficio_principal: 'Térmico/Acústico', detalle_costo_beneficio: 'Especial lámina.', orden: 4 },
-        { id: '5', internal_id: 'th-ingles', title: 'TH Inglés', category: 'sheet', precio_contado_m2: 200, precio_msi_m2: 238, grosor: '25 mm', beneficio_principal: 'Aislamiento Superior', detalle_costo_beneficio: 'Confort total.', orden: 5 },
+        {
+            id: '1',
+            internal_id: 'th-fix',
+            title: 'TH FIX',
+            category: 'concrete',
+            precio_contado_m2: 79,
+            precio_msi_m2: 94,
+            grosor: '1000 micras',
+            beneficio_principal: 'Sellado básico y reflectividad',
+            detalle_costo_beneficio: 'Sistema de mantenimiento preventivo. Protege contra filtraciones leves.',
+            orden: 1
+        },
+        {
+            id: '2',
+            internal_id: 'th-light',
+            title: 'TH LIGHT',
+            category: 'concrete',
+            precio_contado_m2: 119,
+            precio_msi_m2: 142,
+            grosor: '5 mm',
+            beneficio_principal: 'Impermeabilidad Total Certificada',
+            detalle_costo_beneficio: 'Aislamiento inicial. Elimina goteras por completo.',
+            orden: 2
+        },
+        {
+            id: '3',
+            internal_id: 'th-forte',
+            title: 'TH FORTE',
+            category: 'concrete',
+            precio_contado_m2: 152,
+            precio_msi_m2: 181,
+            grosor: '10 mm',
+            beneficio_principal: 'Máxima Protección y Aislamiento',
+            detalle_costo_beneficio: 'Aislamiento térmico de alto rendimiento. Reduce climatización.',
+            orden: 3
+        },
+        {
+            id: '4',
+            internal_id: 'th-3-4',
+            title: 'TH 3/4',
+            category: 'sheet',
+            precio_contado_m2: 186,
+            precio_msi_m2: 221,
+            grosor: '19 mm',
+            beneficio_principal: 'Escudo Térmico y Acústico',
+            detalle_costo_beneficio: 'Especial para lámina. Elimina ruido de lluvia.',
+            orden: 4
+        },
+        {
+            id: '5',
+            internal_id: 'th-ingles',
+            title: 'TH Inglés',
+            category: 'sheet',
+            precio_contado_m2: 200,
+            precio_msi_m2: 238,
+            grosor: '25 mm',
+            beneficio_principal: 'Aislamiento Superior Industrial',
+            detalle_costo_beneficio: 'Máximo confort y ahorro energético total.',
+            orden: 5
+        },
     ];
 
     useEffect(() => {
@@ -113,17 +181,34 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
             if (!roofType) return false;
             return s.category === roofType || s.category === 'both';
         })
-        .map((s: Solution) => ({
-            id: s.internal_id,
-            title: s.title,
-            features: [
-                `Grosor: ${s.grosor || 'N/A'}`,
+        .map((s: Solution) => {
+            const isEconomic = s.internal_id === 'th-fix';
+            const isStandard = s.internal_id === 'th-light' || s.internal_id === 'th-3-4';
+            const features = [
+                `Espesor real: ${s.grosor || 'Constante'}`,
                 s.beneficio_principal || 'Protección Certificada',
-                s.detalle_costo_beneficio?.split('.')[0] || 'Garantía Thermo House'
-            ],
-            popular: s.internal_id === 'th-light' || s.internal_id === 'th-3-4',
-            premium: s.internal_id === 'th-forte' || s.internal_id === 'th-ingles'
-        }));
+                s.detalle_costo_beneficio?.split('.')[0] || 'Calidad Thermo House',
+            ];
+
+            // Add tiered benefits
+            if (!isEconomic) {
+                features.push(s.category === 'sheet' ? 'Elimina ruido de lluvia' : 'Aislamiento térmico activo');
+            }
+            if (!isEconomic && !isStandard) {
+                features.push('Doble barrera térmica');
+                features.push('Máximo ahorro en luz');
+            }
+
+            features.push('Garantía por escrito');
+
+            return {
+                id: s.internal_id,
+                title: s.title,
+                features,
+                popular: s.internal_id === 'th-light' || s.internal_id === 'th-3-4',
+                premium: s.internal_id === 'th-forte' || s.internal_id === 'th-ingles'
+            };
+        });
 
     const selectedSolution = currentSolutions.find(s => s.id === selectedSolutionId);
 
@@ -217,7 +302,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
     };
 
     return (
-        <div className="space-y-8 w-full max-w-5xl mx-auto">
+        <div ref={containerRef} className="space-y-8 w-full max-w-5xl mx-auto scroll-mt-24">
             <AnimatePresence mode="wait">
                 {/* STEP 1: SELECTION */}
                 {currentStep === 'selection' && (
@@ -448,11 +533,11 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                 </div>
 
                                 <div className="space-y-4 mb-4 md:mb-6 p-5 md:p-8">
-                                    <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-100">
-                                        <ul className="space-y-2">
-                                            {selectedSolution?.features.slice(0, 3).map((f, i) => (
-                                                <li key={i} className="flex items-center text-slate-600 text-xs md:text-sm lg:text-base gap-2 font-medium">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                                    <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-100 flex-grow">
+                                        <ul className="space-y-2.5">
+                                            {selectedSolution?.features.map((f, i) => (
+                                                <li key={i} className="flex items-start text-slate-600 text-xs md:text-sm gap-2 font-medium leading-tight">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0 mt-1.5" />
                                                     {f}
                                                 </li>
                                             ))}
