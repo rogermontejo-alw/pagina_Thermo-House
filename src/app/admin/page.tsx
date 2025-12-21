@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { getQuotes, updateQuote } from '@/app/actions/get-quotes';
 import { logoutAdmin, getAdminSession } from '@/app/actions/admin-auth';
 import { getAdminUsers, createAdminUser, deleteAdminUser, resetAdminPassword } from '@/app/actions/admin-users';
-import { getProducts, updateProduct, cloneProductToCity, deleteProduct } from '@/app/actions/admin-products';
+import { getProducts, updateProduct, cloneProductToCity, deleteProduct, createProduct } from '@/app/actions/admin-products';
 import { useRouter } from 'next/navigation';
 import {
     Users, TrendingUp, Calendar, MapPin, Phone, ExternalLink, Search, Filter,
@@ -39,6 +39,14 @@ export default function AdminDashboard() {
     // Client Detail Modal
     const [selectedLeadForDetail, setSelectedLeadForDetail] = useState<any>(null);
     const [isSavingDetail, setIsSavingDetail] = useState(false);
+
+    // Product Modal State
+    const [productModal, setProductModal] = useState<{
+        open: boolean;
+        type: 'edit' | 'create' | 'clone';
+        data: any;
+    }>({ open: false, type: 'edit', data: null });
+    const [isSavingProduct, setIsSavingProduct] = useState(false);
 
     const router = useRouter();
 
@@ -134,26 +142,46 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleSaveProduct = async () => {
-        if (!editForm) return;
-        const res = await updateProduct(editForm.id, {
-            precio_contado_m2: Number(editForm.precio_contado_m2),
-            precio_msi_m2: Number(editForm.precio_msi_m2),
-            title: editForm.title
-        });
-        if (res.success) {
-            setEditingProduct(null);
-            fetchData(session);
-        } else alert(res.message);
+    const handleSaveProductData = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSavingProduct(true);
+        const { data, type } = productModal;
+
+        let res;
+        if (type === 'edit') {
+            res = await updateProduct(data.id, {
+                precio_contado_m2: Number(data.precio_contado_m2),
+                precio_msi_m2: Number(data.precio_msi_m2),
+                title: data.title,
+                ciudad: data.ciudad,
+                internal_id: data.internal_id,
+                orden: Number(data.orden)
+            });
+        } else if (type === 'create' || type === 'clone') {
+            const { id, created_at, ...newData } = data;
+            res = await createProduct({
+                ...newData,
+                precio_contado_m2: Number(newData.precio_contado_m2),
+                precio_msi_m2: Number(newData.precio_msi_m2),
+                orden: Number(newData.orden || 0)
+            });
+        }
+
+        if (res?.success) {
+            await fetchData(session);
+            setProductModal({ ...productModal, open: false });
+        } else {
+            alert('Error: ' + res?.message);
+        }
+        setIsSavingProduct(false);
     };
 
-    const handleClone = async (prod: any) => {
-        const city = prompt('¿Para qué ciudad quieres crear este precio especial?', 'Chihuahua');
-        if (city) {
-            const res = await cloneProductToCity(prod, city);
-            if (res.success) fetchData(session);
-            else alert(res.message);
-        }
+    const handleClone = (prod: any) => {
+        setProductModal({
+            open: true,
+            type: 'clone',
+            data: { ...prod, ciudad: '' } // Clear city for user to input
+        });
     };
 
     const handleDeleteProduct = async (id: string) => {
@@ -404,76 +432,103 @@ export default function AdminDashboard() {
                 )}
 
                 {activeTab === 'prices' && (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-black text-secondary uppercase tracking-tight flex items-center gap-3">
-                                <Package className="w-6 h-6 text-primary" />
-                                Lista de Precios {session.ciudad !== 'Todas' ? `en ${session.ciudad}` : '(Global)'}
-                            </h2>
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h2 className="text-2xl font-black text-secondary uppercase tracking-tight flex items-center gap-3">
+                                    <Package className="w-6 h-6 text-primary" />
+                                    Lista de Tarifas Regionales
+                                </h2>
+                                <p className="text-slate-400 text-xs mt-1">Gestiona precios específicos por ciudad y sistema.</p>
+                            </div>
                             {session.role === 'admin' && (
-                                <div className="text-xs font-bold text-slate-400 bg-white border px-4 py-2 rounded-xl">Precios base autogenerados</div>
+                                <button
+                                    onClick={() => setProductModal({
+                                        open: true,
+                                        type: 'create',
+                                        data: { title: '', ciudad: '', precio_contado_m2: 0, precio_msi_m2: 0, internal_id: 'custom', orden: 0 }
+                                    })}
+                                    className="bg-primary text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Nuevo Producto / Ciudad
+                                </button>
                             )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {products.map(p => (
-                                <div key={p.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden group hover:border-primary/30 transition-all">
-                                    <div className="flex justify-between items-start mb-6">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                <Globe className="w-3 h-3 text-slate-400" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{p.ciudad}</span>
-                                            </div>
-                                            <h3 className="text-xl font-black text-secondary leading-none">{p.title}</h3>
-                                        </div>
-                                        {session.role === 'admin' && (
-                                            <div className="flex gap-1">
-                                                <button onClick={() => handleClone(p)} className="p-2.5 bg-slate-50 text-slate-400 hover:text-primary rounded-xl transition-all" title="Clonar para ciudad"><Plus className="w-5 h-5" /></button>
-                                                {p.ciudad !== 'General' && (
-                                                    <button onClick={() => handleDeleteProduct(p.id)} className="p-2.5 bg-red-50 text-red-300 hover:text-red-500 rounded-xl transition-all"><Trash2 className="w-5 h-5" /></button>
-                                                )}
-                                            </div>
+                        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead className="bg-slate-50 text-[10px] uppercase font-black text-slate-400 tracking-widest border-b border-slate-100">
+                                        <tr>
+                                            <th className="px-8 py-5">Ciudad</th>
+                                            <th className="px-8 py-5">Sistema</th>
+                                            <th className="px-8 py-5">Precio Contado</th>
+                                            <th className="px-8 py-5">Precio MSI</th>
+                                            <th className="px-8 py-5 text-right">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {products.length === 0 ? (
+                                            <tr><td colSpan={5} className="px-8 py-20 text-center text-slate-300 font-bold italic">No hay productos configurados</td></tr>
+                                        ) : (
+                                            products.map(p => (
+                                                <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                    <td className="px-8 py-5">
+                                                        <div className="flex items-center gap-2">
+                                                            <Globe className="w-3.5 h-3.5 text-slate-400" />
+                                                            <span className="text-sm font-black text-secondary">{p.ciudad}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-5">
+                                                        <div className="text-sm font-bold text-slate-700">{p.title}</div>
+                                                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{p.internal_id}</div>
+                                                    </td>
+                                                    <td className="px-8 py-5">
+                                                        <div className="text-sm font-black text-secondary">${p.precio_contado_m2}</div>
+                                                        <div className="text-[9px] text-slate-400 font-bold">Por m²</div>
+                                                    </td>
+                                                    <td className="px-8 py-5">
+                                                        <div className="text-sm font-black text-primary">${p.precio_msi_m2}</div>
+                                                        <div className="text-[9px] text-slate-400 font-bold">Por m²</div>
+                                                    </td>
+                                                    <td className="px-8 py-5 text-right">
+                                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                                            {session.role === 'admin' && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => setProductModal({ open: true, type: 'edit', data: p })}
+                                                                        className="p-2 bg-slate-50 text-slate-400 hover:text-secondary hover:bg-slate-100 rounded-xl transition-all"
+                                                                        title="Editar"
+                                                                    >
+                                                                        <Edit3 className="w-4 h-4" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleClone(p)}
+                                                                        className="p-2 bg-blue-50 text-blue-400 hover:text-blue-600 hover:bg-blue-100 rounded-xl transition-all"
+                                                                        title="Clonar para otra ciudad"
+                                                                    >
+                                                                        <Plus className="w-4 h-4" />
+                                                                    </button>
+                                                                    {p.ciudad !== 'General' && (
+                                                                        <button
+                                                                            onClick={() => handleDeleteProduct(p.id)}
+                                                                            className="p-2 bg-red-50 text-red-300 hover:text-red-500 hover:bg-red-100 rounded-xl transition-all"
+                                                                            title="Eliminar"
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4" />
+                                                                        </button>
+                                                                    )}
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
                                         )}
-                                    </div>
-
-                                    {editingProduct === p.id && session.role === 'admin' ? (
-                                        <div className="space-y-4 pt-2">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-1">
-                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Contado $/m²</label>
-                                                    <input type="number" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-secondary outline-none focus:ring-4 focus:ring-primary/10" value={editForm.precio_contado_m2} onChange={e => setEditForm({ ...editForm, precio_contado_m2: e.target.value })} />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">MSI $/m²</label>
-                                                    <input type="number" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-primary outline-none focus:ring-4 focus:ring-primary/10" value={editForm.precio_msi_m2} onChange={e => setEditForm({ ...editForm, precio_msi_m2: e.target.value })} />
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button onClick={handleSaveProduct} className="flex-1 bg-secondary text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 shadow-lg shadow-secondary/10">Guardar Cambios</button>
-                                                <button onClick={() => setEditingProduct(null)} className="p-3 bg-slate-100 text-slate-400 rounded-xl hover:bg-slate-200 transition-all"><X className="w-5 h-5" /></button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-5">
-                                            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contado</span>
-                                                    <span className="text-2xl font-black text-secondary">${p.precio_contado_m2}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Meses Sin Int.</span>
-                                                    <span className="text-2xl font-black text-primary">${p.precio_msi_m2}</span>
-                                                </div>
-                                            </div>
-                                            {session.role === 'admin' && (
-                                                <button onClick={() => { setEditingProduct(p.id); setEditForm(p); }} className="w-full py-4 border-2 border-slate-100 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest text-slate-400 hover:border-secondary hover:text-secondary transition-all flex items-center justify-center gap-2">
-                                                    <Edit3 className="w-3.5 h-3.5" /> Modificar Tarifas
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -678,6 +733,108 @@ export default function AdminDashboard() {
                             >
                                 {isSavingDetail ? <Clock className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                                 Actualizar Ficha de Cliente
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* Product Modal (Create/Edit/Clone) */}
+            {productModal.open && (
+                <div className="fixed inset-0 bg-secondary/80 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="bg-slate-50 p-8 border-b border-slate-100 flex justify-between items-center">
+                            <div>
+                                <h3 className="text-2xl font-black text-secondary uppercase tracking-tight flex items-center gap-3">
+                                    <Package className="w-7 h-7 text-primary" />
+                                    {productModal.type === 'create' ? 'Nuevo Producto' :
+                                        productModal.type === 'clone' ? 'Clonar Tarifa Regional' : 'Editar Producto'}
+                                </h3>
+                                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Configuración técnica</p>
+                            </div>
+                            <button onClick={() => setProductModal({ ...productModal, open: false })} className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all text-slate-400">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveProductData} className="p-8 space-y-6">
+                            <div className="grid grid-cols-1 gap-5">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ciudad o Región</label>
+                                    <select
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                        value={productModal.data.ciudad}
+                                        onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, ciudad: e.target.value } })}
+                                        required
+                                    >
+                                        <option value="" disabled>Selecciona una ciudad</option>
+                                        {CIUDADES_OPERACION.map(c => <option key={c} value={c}>{c}</option>)}
+                                        <option value="General">General (Global)</option>
+                                    </select>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre del Sistema</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="Ej: TH FORTE XL"
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                        value={productModal.data.title}
+                                        onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, title: e.target.value } })}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Precio Contado $/m²</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-black text-secondary outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                            value={productModal.data.precio_contado_m2}
+                                            onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, precio_contado_m2: e.target.value } })}
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Precio MSI $/m²</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-black text-primary outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                            value={productModal.data.precio_msi_m2}
+                                            onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, precio_msi_m2: e.target.value } })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">ID Interno</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black text-slate-400 outline-none uppercase"
+                                            value={productModal.data.internal_id}
+                                            onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, internal_id: e.target.value.toLowerCase() } })}
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Orden de Aparición</label>
+                                        <input
+                                            type="number"
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none"
+                                            value={productModal.data.orden}
+                                            onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, orden: e.target.value } })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                disabled={isSavingProduct}
+                                className="w-full bg-secondary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-secondary/20 flex items-center justify-center gap-3 active:scale-[0.98] mt-4"
+                            >
+                                {isSavingProduct ? <Clock className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                {productModal.type === 'edit' ? 'Actualizar Producto' : 'Crear Tarifa Tarifa'}
                             </button>
                         </form>
                     </div>

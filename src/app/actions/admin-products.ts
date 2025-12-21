@@ -65,6 +65,24 @@ export async function cloneProductToCity(product: any, newCity: string) {
     }
 }
 
+export async function createProduct(productData: any) {
+    try {
+        const session = await getAdminSession();
+        if (!session || session.role !== 'admin') {
+            return { success: false, message: 'No tienes permisos para crear productos.' };
+        }
+
+        const { error } = await supabaseAdmin
+            .from('soluciones_precios')
+            .insert(productData);
+
+        if (error) throw error;
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, message: err.message || 'Error al crear producto.' };
+    }
+}
+
 export async function deleteProduct(id: string) {
     try {
         const session = await getAdminSession();
