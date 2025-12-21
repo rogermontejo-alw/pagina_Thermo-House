@@ -10,8 +10,23 @@ drop table if exists public.soluciones_precios cascade;
 drop table if exists public.ubicaciones cascade;
 drop table if exists public.app_config cascade;
 
+-- 2.2 Tabla de Usuarios Administrativos (Si no existe)
+create table if not exists public.admin_users (
+  id uuid default uuid_generate_v4() primary key,
+  email text unique not null,
+  password text not null,
+  name text not null,
+  apellido text,
+  role text check (role in ('admin', 'editor')) default 'editor',
+  ciudad text default 'Todas',
+  base text,
+  telefono text,
+  contacto_email text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- 2.5 Tabla de Ubicaciones (Ciudades y Estados)
-create table public.ubicaciones (
+create table if not exists public.ubicaciones (
   id uuid default uuid_generate_v4() primary key,
   ciudad text not null,
   estado text not null,
@@ -19,24 +34,11 @@ create table public.ubicaciones (
   unique(ciudad, estado)
 );
 
--- Insertar ubicaciones iniciales
-insert into public.ubicaciones (ciudad, estado) values
-('Mérida', 'Yucatán'),
-('Cancún', 'Quintana Roo'),
-('Playa del Carmen', 'Quintana Roo'),
-('Campeche', 'Campeche'),
-('Villahermosa', 'Tabasco'),
-('Veracruz', 'Veracruz'),
-('Cuernavaca', 'Morelos'),
-('Chihuahua', 'Chihuahua'),
-('Ciudad Juárez', 'Chihuahua'),
-('Puebla', 'Puebla'),
-('Monterrey', 'Nuevo León');
-
 -- 3. Tabla de Productos (soluciones_precios)
-create table public.soluciones_precios (
+-- Se agrega columna 'ciudad' para tarifas regionales
+create table if not exists public.soluciones_precios (
   id uuid default uuid_generate_v4() primary key,
-  internal_id text not null unique,
+  internal_id text not null, -- Removido 'unique' para permitir mismo ID en diferentes ciudades
   title text not null,
   category text not null check (category in ('concrete', 'sheet', 'both')),
   precio_contado_m2 integer not null,
@@ -45,11 +47,12 @@ create table public.soluciones_precios (
   beneficio_principal text,
   detalle_costo_beneficio text,
   orden integer default 0,
+  ciudad text default 'Mérida', -- Nueva columna
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 -- 4. Tabla de Cotizaciones/Leads (cotizaciones)
-create table public.cotizaciones (
+create table if not exists public.cotizaciones (
   id uuid default uuid_generate_v4() primary key,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   address text,
@@ -65,7 +68,11 @@ create table public.cotizaciones (
   notas text,
   factura boolean default false,
   fecha_nacimiento date,
-  is_out_of_zone boolean default false
+  is_out_of_zone boolean default false,
+  created_by uuid references public.admin_users(id), -- Quién creó el lead (advisor o null si fue web)
+  manual_unit_price numeric, -- Precio personalizado por admin
+  postal_code text,
+  pricing_type text default 'contado'
 );
 
 -- 5. Tabla de Configuración (Para APIs y llaves - SEGURIDAD)

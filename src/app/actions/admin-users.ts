@@ -23,12 +23,31 @@ export async function getAdminUsers() {
     }
 }
 
-export async function createAdminUser(payload: { email: string; password: string; name: string; role: 'admin' | 'editor', ciudad?: string }) {
+export async function createAdminUser(payload: {
+    email: string;
+    password: string;
+    name: string;
+    apellido?: string;
+    role: 'admin' | 'editor';
+    ciudad?: string;
+    base?: string;
+    telefono?: string;
+    contacto_email?: string;
+}) {
     try {
         const session = await getAdminSession();
         if (!session || session.role !== 'admin') {
             return { success: false, message: 'No tienes permisos para crear usuarios.' };
         }
+
+        // Verificar correo único
+        const { data: existing } = await supabaseAdmin
+            .from('admin_users')
+            .select('id')
+            .eq('email', payload.email.trim())
+            .single();
+
+        if (existing) return { success: false, message: 'Este correo ya está registrado.' };
 
         const { error } = await supabaseAdmin
             .from('admin_users')
@@ -41,6 +60,46 @@ export async function createAdminUser(payload: { email: string; password: string
         return { success: true };
     } catch (err: any) {
         return { success: false, message: err.message || 'Error al crear usuario.' };
+    }
+}
+
+export async function updateAdminUser(id: string, payload: Partial<{
+    name: string;
+    apellido: string;
+    role: 'admin' | 'editor';
+    ciudad: string;
+    base: string;
+    telefono: string;
+    contacto_email: string;
+    email: string;
+    password?: string;
+}>) {
+    try {
+        const session = await getAdminSession();
+        if (!session || session.role !== 'admin') {
+            return { success: false, message: 'No tienes permisos para modificar usuarios.' };
+        }
+
+        // Verificar correo único si se está cambiando
+        if (payload.email) {
+            const { data: existing } = await supabaseAdmin
+                .from('admin_users')
+                .select('id')
+                .eq('email', payload.email.trim())
+                .neq('id', id)
+                .single();
+            if (existing) return { success: false, message: 'Este correo ya está registrado por otro usuario.' };
+        }
+
+        const { error } = await supabaseAdmin
+            .from('admin_users')
+            .update(payload)
+            .eq('id', id);
+
+        if (error) throw error;
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, message: err.message || 'Error al actualizar usuario.' };
     }
 }
 

@@ -1,6 +1,7 @@
 'use server';
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getAdminSession } from './admin-auth';
 
 export async function saveQuote(prevState: any, formData: FormData) {
     try {
@@ -17,6 +18,7 @@ export async function saveQuote(prevState: any, formData: FormData) {
             totalCash: Number(formData.get('totalCash')),
             totalMsi: Number(formData.get('totalMsi')),
             isOutOfZone: formData.get('isOutOfZone') === 'true',
+            postalCode: formData.get('postalCode') as string,
         };
 
         // Basic Validation
@@ -102,6 +104,10 @@ export async function saveQuote(prevState: any, formData: FormData) {
             hour12: false
         }).format(new Date()).replace(/,/g, '').replace(' ', 'T');
 
+        // Detect creator (if logged in)
+        const session = await getAdminSession();
+        const createdBy = session?.id || null;
+
         // Insert into DB
         const { error: insertError } = await supabaseAdmin.from('cotizaciones').insert({
             address: rawData.address || 'Pendiente',
@@ -120,7 +126,9 @@ export async function saveQuote(prevState: any, formData: FormData) {
             status: 'Nuevo',
             created_at: cdmxDate,
             notas: rawData.isOutOfZone ? '⚠️ ZONA FORÁNEA: El cliente cotizó fuera de Mérida. Revisar costos de logística.' : '',
-            is_out_of_zone: rawData.isOutOfZone
+            is_out_of_zone: rawData.isOutOfZone,
+            created_by: createdBy,
+            postal_code: rawData.postalCode || ''
         });
 
         if (insertError) {

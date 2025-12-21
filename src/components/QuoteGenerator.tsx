@@ -14,9 +14,10 @@ interface QuoteGeneratorProps {
     city?: string;
     stateName?: string;
     mapsLink?: string;
+    postalCode?: string;
 }
 
-export default function QuoteGenerator({ initialArea, address, city, stateName, mapsLink }: QuoteGeneratorProps) {
+export default function QuoteGenerator({ initialArea, address, city, stateName, mapsLink, postalCode }: QuoteGeneratorProps) {
     const [currentStep, setCurrentStep] = useState<'selection' | 'contact' | 'result'>('selection');
     const [roofType, setRoofType] = useState<'concrete' | 'sheet' | null>(null);
     const [selectedSolutionId, setSelectedSolutionId] = useState<string | null>(null);
@@ -84,6 +85,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
         formData.append('city', city || '');
         formData.append('state', stateName || '');
         formData.append('maps_link', mapsLink || '');
+        formData.append('postalCode', postalCode || '');
 
         const finalSolutionId = (paymentOption === 'Upgrade' && upsellQuote) ? upsellQuote.internal_id : selectedSolutionId;
         formData.append('solutionId', finalSolutionId || '');
@@ -386,9 +388,25 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                         />
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Correo Electrónico (Opcional)</label>
-                                    <input type="email" name="email" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-secondary focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="ejemplo@correo.com" />
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Correo Electrónico (Opcional)</label>
+                                        <input type="email" name="email" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-secondary focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="ejemplo@correo.com" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Código Postal</label>
+                                        <input
+                                            type="text"
+                                            name="postalCode"
+                                            defaultValue={postalCode}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-secondary focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-bold"
+                                            placeholder="CP"
+                                            maxLength={5}
+                                            onChange={(e) => {
+                                                e.target.value = e.target.value.replace(/\D/g, '').slice(0, 5);
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                                 <button type="submit" className="w-full bg-primary hover:bg-orange-600 text-white font-black py-4 rounded-xl shadow-xl shadow-primary/20 transition-all text-lg flex items-center justify-center gap-2 mt-4 uppercase tracking-wider group">
                                     Ver Mi Cotización Ahora <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -516,8 +534,9 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                             <button onClick={() => setCurrentStep('selection')} className="group flex items-center gap-2 text-secondary font-bold hover:text-primary transition-colors py-2 px-4 rounded-full hover:bg-slate-50"><RotateCcw className="w-4 h-4" /> Volver a los Sistemas</button>
                         </div>
                     </motion.div>
-                )}
-            </AnimatePresence>
+                )
+                }
+            </AnimatePresence >
 
             {showSuccessModal && (
                 <div className="fixed inset-0 bg-secondary/90 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
@@ -530,6 +549,6 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                     </motion.div>
                 </div>
             )}
-        </div>
+        </div >
     );
 }

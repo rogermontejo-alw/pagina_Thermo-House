@@ -9,9 +9,9 @@ import { getLocations } from '@/app/actions/admin-locations';
 
 interface MapCalculatorProps {
     onAreaCalculated: (area: number) => void;
-    onLocationUpdated?: (details: { address: string; city: string; state: string; maps_link: string }) => void;
-    onAddressFound?: (details: { address: string; city: string; state: string; maps_link: string }) => void;
-    onCityDetected?: (details: { address: string; city: string; state: string; maps_link: string }) => void;
+    onLocationUpdated?: (details: { address: string; city: string; state: string; maps_link: string; postal_code: string }) => void;
+    onAddressFound?: (details: { address: string; city: string; state: string; maps_link: string; postal_code: string }) => void;
+    onCityDetected?: (details: { address: string; city: string; state: string; maps_link: string; postal_code: string }) => void;
 }
 
 // Fallback in case DB fetch fails or is empty
@@ -61,7 +61,7 @@ const isGoogleMapsLoaded = () => typeof window !== 'undefined' && !!window.googl
 
 export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onAddressFound, onCityDetected }: MapCalculatorProps) {
     // Utility to trigger all location callbacks
-    const notifyLocation = useCallback((loc: { address: string; city: string; state: string; maps_link: string }) => {
+    const notifyLocation = useCallback((loc: { address: string; city: string; state: string; maps_link: string; postal_code: string }) => {
         if (onLocationUpdated) onLocationUpdated(loc);
         if (onAddressFound) onAddressFound(loc);
         if (onCityDetected) onCityDetected(loc);
@@ -87,10 +87,11 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
     // Manual Location State
     const [manualLocation, setManualLocation] = useState({
         address: '',
-        city: '',
-        state: '',
+        city: 'Mérida',
+        state: 'Yucatán',
         customCity: '',
-        customState: ''
+        customState: '',
+        postal_code: ''
     });
     const [dynamicRegions, setDynamicRegions] = useState<Record<string, string[]>>({});
 
@@ -110,7 +111,21 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
         });
     }, []);
 
-    const activeRegions = Object.keys(dynamicRegions).length > 0 ? dynamicRegions : FALLBACK_REGIONS;
+    const activeRegions = (() => {
+        const merged: Record<string, string[]> = { ...FALLBACK_REGIONS };
+        if (Object.keys(dynamicRegions).length > 0) {
+            Object.keys(dynamicRegions).forEach(state => {
+                if (!merged[state]) {
+                    merged[state] = dynamicRegions[state];
+                } else {
+                    // Combine and remove duplicates
+                    const combined = [...new Set([...merged[state], ...dynamicRegions[state]])];
+                    merged[state] = combined;
+                }
+            });
+        }
+        return merged;
+    })();
 
     const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || dbMapsKey || '';
 
@@ -199,12 +214,23 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                         const state = place.address_components?.find(c =>
                             c.types.includes('administrative_area_level_1')
                         )?.long_name || '';
+                        const postal_code = place.address_components?.find(c =>
+                            c.types.includes('postal_code')
+                        )?.long_name || '';
 
                         const lat = place.geometry.location.lat();
                         const lng = place.geometry.location.lng();
                         const maps_link = `https://www.google.com/maps?q=${lat},${lng}`;
 
-                        notifyLocation({ address, city, state, maps_link });
+                        setManualLocation(prev => ({
+                            ...prev,
+                            address,
+                            city,
+                            state,
+                            postal_code
+                        }));
+
+                        notifyLocation({ address, city, state, maps_link, postal_code });
 
                         if (place.geometry.viewport) {
                             bounds.union(place.geometry.viewport);
@@ -268,10 +294,11 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                             address: res.formatted_address,
                             city: res.address_components?.find(c => c.types.includes('locality'))?.long_name || '',
                             state: res.address_components?.find(c => c.types.includes('administrative_area_level_1'))?.long_name || '',
+                            postal_code: res.address_components?.find(c => c.types.includes('postal_code'))?.long_name || '',
                             maps_link: `https://www.google.com/maps?q=${center.lat()},${center.lng()}`
                         };
                         notifyLocation(loc);
-                        setManualLocation({ address: loc.address, city: loc.city, state: loc.state, customCity: '', customState: '' });
+                        setManualLocation({ address: loc.address, city: loc.city, state: loc.state, customCity: '', customState: '', postal_code: loc.postal_code });
                     }
                 });
             }
@@ -432,10 +459,28 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                             onChange={(e) => {
                                 const newLoc = { ...manualLocation, address: e.target.value };
                                 setManualLocation(newLoc);
-                                notifyLocation({ ...newLoc, maps_link: '' });
+                                notifyLocation({ ...newLoc, maps_link: '', city: newLoc.city === 'Otro' ? newLoc.customCity : newLoc.city, state: newLoc.state === 'Otro' ? newLoc.customState : newLoc.state });
                             }}
                             className={`w-full bg-white border ${!manualLocation.address && area > 0 ? 'border-red-300 bg-red-50/30' : 'border-slate-200'} text-sm font-medium text-secondary rounded-xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all`}
                             placeholder="Calle, Número, Colonia..."
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 flex items-center gap-1">
+                            Código Postal <span className="text-primary">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            value={manualLocation.postal_code}
+                            onChange={(e) => {
+                                const newLoc = { ...manualLocation, postal_code: e.target.value.replace(/\D/g, '').slice(0, 5) };
+                                setManualLocation(newLoc);
+                                notifyLocation({ ...newLoc, maps_link: '', city: newLoc.city === 'Otro' ? newLoc.customCity : newLoc.city, state: newLoc.state === 'Otro' ? newLoc.customState : newLoc.state });
+                            }}
+                            className="w-full bg-white border border-slate-200 text-sm font-bold text-secondary rounded-xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                            placeholder="CP (5 dígitos)"
+                            maxLength={5}
                         />
                     </div>
 

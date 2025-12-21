@@ -16,11 +16,12 @@ export default function Home() {
     address: '',
     city: '',
     state: '',
-    maps_link: ''
+    maps_link: '',
+    postal_code: ''
   });
 
   const handleArea = (area: number) => setMeasurement(prev => ({ ...prev, area }));
-  const handleLocation = (details: { address: string; city: string; state: string; maps_link: string }) => {
+  const handleLocation = (details: { address: string; city: string; state: string; maps_link: string; postal_code: string }) => {
     setMeasurement(prev => ({ ...prev, ...details }));
   };
 
@@ -105,6 +106,7 @@ export default function Home() {
               city={measurement.city}
               stateName={measurement.state}
               mapsLink={measurement.maps_link}
+              postalCode={measurement.postal_code}
             />
           </div>
         </motion.section>

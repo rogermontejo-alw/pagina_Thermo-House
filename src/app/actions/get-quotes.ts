@@ -1,6 +1,7 @@
 'use server';
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getAdminSession } from './admin-auth';
 
 export async function getQuotes(cityFilter?: string) {
     try {
@@ -11,6 +12,12 @@ export async function getQuotes(cityFilter?: string) {
                 soluciones_precios (
                     title,
                     internal_id
+                ),
+                admin_users!created_by (
+                    name,
+                    apellido,
+                    telefono,
+                    contacto_email
                 )
             `);
 
@@ -34,6 +41,28 @@ export async function getQuotes(cityFilter?: string) {
 
 export async function updateQuote(id: string, updates: any) {
     try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, message: 'Sesión no válida.' };
+
+        // If editor, check if quote is still in 'Nuevo' status to allow initial edits
+        if (session.role === 'editor') {
+            const { data: currentQuote, error: fetchError } = await supabaseAdmin
+                .from('cotizaciones')
+                .select('status')
+                .eq('id', id)
+                .single();
+
+            if (fetchError || !currentQuote) {
+                return { success: false, message: 'No se pudo verificar el estado de la cotización.' };
+            }
+
+            if (currentQuote.status !== 'Nuevo') {
+                return { success: false, message: 'Esta cotización ya fue procesada y no puede ser modificada por un asesor. Contacte a administración.' };
+            }
+        } else if (session.role !== 'admin') {
+            return { success: false, message: 'No tienes permisos para realizar esta acción.' };
+        }
+
         const { error } = await supabaseAdmin
             .from('cotizaciones')
             .update(updates)
