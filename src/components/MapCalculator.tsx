@@ -24,6 +24,8 @@ const MEXICO_REGIONS: Record<string, string[]> = {
     'Nuevo León': ['Monterrey', 'San Pedro Garza García', 'Guadalupe'],
     'Puebla': ['Puebla', 'Cholula'],
     'Veracruz': ['Veracruz', 'Boca del Río', 'Xalapa'],
+    'Morelos': ['Cuernavaca', 'Jiutepec', 'Cuautla', 'Temixco'],
+    'Chihuahua': ['Chihuahua', 'Ciudad Juárez', 'Delicias', 'Cuauhtémoc'],
     'Otro': ['Otro']
 };
 
