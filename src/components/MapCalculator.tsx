@@ -14,19 +14,9 @@ interface MapCalculatorProps {
 }
 
 const MEXICO_REGIONS: Record<string, string[]> = {
-    'Yucatán': ['Mérida', 'Progreso', 'Umán', 'Kanasín', 'Valladolid', 'Tizimín', 'Motul', 'Hunucmá'],
-    'Quintana Roo': ['Cancún', 'Playa del Carmen', 'Cozumel', 'Tulum', 'Chetumal', 'Isla Mujeres'],
-    'Campeche': ['Campeche', 'Ciudad del Carmen', 'Champotón'],
-    'Tabasco': ['Villahermosa', 'Cárdenas', 'Comalcalco'],
-    'Ciudad de México': ['CDMX'],
-    'Estado de México': ['Toluca', 'Naucalpan', 'Tlalnepantla'],
-    'Jalisco': ['Guadalajara', 'Zapopan', 'Puerto Vallarta'],
-    'Nuevo León': ['Monterrey', 'San Pedro Garza García', 'Guadalupe'],
-    'Puebla': ['Puebla', 'Cholula'],
-    'Veracruz': ['Veracruz', 'Boca del Río', 'Xalapa'],
-    'Morelos': ['Cuernavaca', 'Jiutepec', 'Cuautla', 'Temixco'],
+    'Yucatán': ['Mérida', 'Progreso', 'Umán', 'Kanasín'],
     'Chihuahua': ['Chihuahua', 'Ciudad Juárez', 'Delicias', 'Cuauhtémoc'],
-    'Otro': ['Otro']
+    'Morelos': ['Cuernavaca', 'Jiutepec', 'Cuautla', 'Temixco']
 };
 
 declare global {

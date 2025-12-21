@@ -48,16 +48,33 @@ export async function saveQuote(prevState: any, formData: FormData) {
             return { success: false, errors, message: 'Por favor corrige los errores.' };
         }
 
-        // Resolve Solution ID first
-        const { data: solution, error: solError } = await supabaseAdmin
+        // Resolve Solution ID first, prioritizing the selected city
+        const lookupCity = rawData.city || 'Mérida';
+        let { data: solution, error: solError } = await supabaseAdmin
             .from('soluciones_precios')
             .select('id, internal_id')
             .eq('internal_id', rawData.solutionId)
+            .eq('ciudad', lookupCity)
             .single();
+
+        // Fallback to Merida if not found for specific city
+        if ((solError || !solution) && lookupCity !== 'Mérida') {
+            const fallback = await supabaseAdmin
+                .from('soluciones_precios')
+                .select('id, internal_id')
+                .eq('internal_id', rawData.solutionId)
+                .eq('ciudad', 'Mérida')
+                .single();
+
+            if (fallback.data) {
+                solution = fallback.data;
+                solError = null;
+            }
+        }
 
         if (solError || !solution) {
             console.error('CRITICAL: Solution ID resolution failed for:', rawData.solutionId, solError);
-            return { success: false, message: `Error: No se encontró el sistema ${rawData.solutionId} en la base de datos.` };
+            return { success: false, message: `Error: No se encontró el sistema ${rawData.solutionId} para la ciudad ${lookupCity} en la base de datos.` };
         }
 
         // Final safety check for prices (Minimum 5900 MXN)

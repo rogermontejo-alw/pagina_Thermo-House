@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition, useActionState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Shield, Zap, Droplets, Loader2, Phone, ArrowRight, RotateCcw, Sparkles, Package } from 'lucide-react';
+import { Check, Shield, Zap, Droplets, Loader2, Phone, ArrowRight, RotateCcw, Sparkles, Package, MapPin } from 'lucide-react';
 import { calculateQuote } from '@/app/actions/calculate-quote';
 import { saveQuote } from '@/app/actions/save-quote';
 import { getAllSolutions } from '@/app/actions/get-solutions';
@@ -227,7 +227,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                 try {
                     // Task 1: Calculate Selected Quote
                     let finalQuote = null;
-                    const result = await calculateQuote(initialArea, selectedSolutionId);
+                    const result = await calculateQuote(initialArea, selectedSolutionId, city);
                     const MIN_PRICE = 5900;
 
                     if (result.success && result.data) {
@@ -256,7 +256,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
 
                     if (superiorSolution) {
                         let finalUpsell = null;
-                        const superiorResult = await calculateQuote(initialArea, superiorSolution.internal_id);
+                        const superiorResult = await calculateQuote(initialArea, superiorSolution.internal_id, city);
 
                         if (superiorResult.success && superiorResult.data) {
                             finalUpsell = {
@@ -519,7 +519,15 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                 <Check className="w-3.5 h-3.5" /> Cotización Generada
                             </div>
                             <h3 className="text-2xl md:text-5xl font-black text-secondary tracking-tighter">¡Todo Listo, {leadName.split(' ')[0] || 'Cliente'}!</h3>
-                            <p className="text-slate-500 mt-2 md:mt-4 text-xs md:text-xl">Tu proyecto de <strong>{initialArea}m²</strong> en <strong>{city || address || 'tu ubicación'}</strong></p>
+                            <div className="flex flex-col items-center gap-1 mt-2 md:mt-4">
+                                <p className="text-slate-500 text-xs md:text-xl">Tu proyecto de <strong>{initialArea}m²</strong> en <strong>{city || address || 'tu ubicación'}</strong></p>
+                                <div className="mt-2 inline-flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
+                                    <MapPin className="w-4 h-4 text-primary" />
+                                    <span className="text-[10px] md:text-xs font-black text-secondary uppercase tracking-tight">
+                                        Precio considerado en: {city?.includes('Chihuahua') ? 'Chihuahua, Chihuahua y áreas cercanas' : city?.includes('Cuernavaca') ? 'Cuernavaca y áreas cercanas' : 'Mérida y áreas cercanas'}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="grid md:grid-cols-3 gap-4 items-stretch">

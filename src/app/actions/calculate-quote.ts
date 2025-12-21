@@ -2,8 +2,9 @@
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-export async function calculateQuote(area: number, solutionId: string) {
+export async function calculateQuote(area: number, solutionId: string, city?: string) {
     try {
+        const lookupCity = city || 'Mérida';
         if (!area || area <= 0) {
             throw new Error('Invalid area');
         }
@@ -18,14 +19,29 @@ export async function calculateQuote(area: number, solutionId: string) {
         // Mixing types in .or() can be tricky in Supabase unless we use filter logic carefully.
         // For safety, let's assume solutionId is the internal_id string for now as per `solutions.ts`.
 
-        const { data: solution, error } = await supabaseAdmin
+        let { data: solution, error } = await supabaseAdmin
             .from('soluciones_precios')
-            .select('precio_contado_m2, precio_msi_m2')
+            .select('precio_contado_m2, precio_msi_m2, ciudad')
             .eq('internal_id', solutionId)
+            .eq('ciudad', lookupCity)
             .single();
 
-        if (error || !solution) {
-            console.error('Error fetching solution:', error);
+        // Fallback to Merida if specific city price not found
+        if ((error || !solution) && lookupCity !== 'Mérida') {
+            const fallback = await supabaseAdmin
+                .from('soluciones_precios')
+                .select('precio_contado_m2, precio_msi_m2, ciudad')
+                .eq('internal_id', solutionId)
+                .eq('ciudad', 'Mérida')
+                .single();
+
+            if (fallback.data) {
+                solution = fallback.data;
+            }
+        }
+
+        if (!solution) {
+            console.error('Error fetching solution or fallback:', error);
             throw new Error('Solution not found or pricing unavailable');
         }
 
