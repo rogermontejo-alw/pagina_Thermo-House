@@ -3,13 +3,24 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { Solution } from '@/types';
 
+// Utility to normalize city names (remove accents and lower case)
+function normalizeCity(city: string) {
+    return city.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+}
+
 export async function calculateQuote(area: number, solutionId: string, city?: string) {
     try {
-        const lookupCity = city || 'Mérida';
+        const targetCity = city || 'Mérida';
+        const normTargetCity = normalizeCity(targetCity);
+        const normMerida = normalizeCity('Mérida');
+
         if (!area || area <= 0) throw new Error('Invalid area');
         if (!solutionId) throw new Error('Invalid solution ID');
 
-        // 1. Fetch EVERYTHING from solutions_precios to build a robust catalog
+        // 1. Fetch entire catalog
         const { data: allSolsRaw, error } = await supabaseAdmin
             .from('soluciones_precios')
             .select('*')
@@ -19,47 +30,52 @@ export async function calculateQuote(area: number, solutionId: string, city?: st
             throw new Error('Database pricing catalog empty');
         }
 
-        // 2. Filter for the target city + Get Mérida as fallback items
-        const citySols = allSolsRaw.filter(s => s.ciudad === lookupCity);
-        const meridaSols = allSolsRaw.filter(s => s.ciudad === 'Mérida');
+        // 2. Build Unified Catalog with accent-insensitive city matching
+        const catalogMap = new Map<string, any>();
 
-        // 3. Create a unified catalog: prefer city price, else Mérida price
-        // This ensures that even if a city is missing a system, we can still "see" it from the catalog
-        const unifiedCatalog: any[] = [];
-        const uniqueIds = Array.from(new Set(allSolsRaw.map(s => s.internal_id)));
-
-        uniqueIds.forEach(id => {
-            const cityPrice = citySols.find(s => s.internal_id === id);
-            const meridaPrice = meridaSols.find(s => s.internal_id === id);
-
-            if (cityPrice) {
-                unifiedCatalog.push(cityPrice);
-            } else if (meridaPrice) {
-                // If missing in city, we use Mérida price but mark it
-                unifiedCatalog.push(meridaPrice);
+        // Pass 1: Load Mérida or generic items (without ciudad)
+        allSolsRaw.forEach(s => {
+            const solCity = s.ciudad ? normalizeCity(s.ciudad) : null;
+            if (!solCity || solCity === normMerida) {
+                catalogMap.set(s.internal_id.toLowerCase(), s);
             }
         });
 
-        // Re-sort unified catalog by orden
-        unifiedCatalog.sort((a, b) => (a.orden || 0) - (b.orden || 0));
+        // Pass 2: Overwrite with target city if different from Mérida
+        if (normTargetCity !== normMerida) {
+            allSolsRaw.forEach(s => {
+                if (s.ciudad && normalizeCity(s.ciudad) === normTargetCity) {
+                    catalogMap.set(s.internal_id.toLowerCase(), s);
+                }
+            });
+        }
 
-        // 4. Find current solution 
-        const currentSol = unifiedCatalog.find(s => s.internal_id.toLowerCase() === solutionId.toLowerCase());
-        if (!currentSol) throw new Error(`Solution ${solutionId} not found`);
+        const unifiedCatalog = Array.from(catalogMap.values())
+            .sort((a, b) => (a.orden || 0) - (b.orden || 0));
+
+        // 3. Find current solution
+        const searchId = solutionId.toLowerCase();
+        const currentSol = unifiedCatalog.find(s => s.internal_id.toLowerCase() === searchId);
+
+        if (!currentSol) {
+            console.error('[CALC] Current sol NOT found in catalog:', searchId);
+            throw new Error('Sistema no encontrado');
+        }
 
         const MIN_PRICE = 5900;
         const totalCash = Math.max(Math.round(area * Number(currentSol.precio_contado_m2)), MIN_PRICE);
         const totalMsi = Math.max(Math.round(area * Number(currentSol.precio_msi_m2)), MIN_PRICE);
 
-        // 5. Intelligent Upsell Search in the Unified Catalog
+        // 4. Find Upsell Logic
         const currentCategory = (currentSol.category || 'concrete').toLowerCase();
-        const currentIndex = unifiedCatalog.findIndex(s => s.internal_id === currentSol.internal_id);
+        const currentIndex = unifiedCatalog.findIndex(s => s.internal_id.toLowerCase() === searchId);
 
+        // Search next levels
         const upsellSol = unifiedCatalog.slice(currentIndex + 1).find(s => {
             const sCat = (s.category || 'concrete').toLowerCase();
-            if (currentCategory === 'concrete') return sCat === 'concrete' || sCat === 'both';
-            if (currentCategory === 'sheet') return sCat === 'sheet' || sCat === 'both';
-            return true;
+            return currentCategory === 'concrete' ? (sCat === 'concrete' || sCat === 'both') :
+                currentCategory === 'sheet' ? (sCat === 'sheet' || sCat === 'both') :
+                    true;
         });
 
         let upsellData = null;
@@ -78,7 +94,7 @@ export async function calculateQuote(area: number, solutionId: string, city?: st
             upsell: upsellData
         };
     } catch (error) {
-        console.error('Calculation error:', error);
-        return { success: false, error: 'Error al calcular' };
+        console.error('[CALC] Critical error:', error);
+        return { success: false, error: 'Error al calcular el presupuesto' };
     }
 }

@@ -9,6 +9,7 @@ export interface Solution {
   beneficio_principal?: string;
   detalle_costo_beneficio?: string;
   orden?: number;
+  ciudad?: string;
 }
 
 export interface Lead {

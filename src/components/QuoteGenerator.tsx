@@ -124,9 +124,14 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
     const currentSolutions = (() => {
         // Build a unified list for selection: Prefer specific city, else Mérida/Fallback
         const uniqueInternalIds = Array.from(new Set(allPotentialSols.map(s => s.internal_id)));
+        const normalize = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        const targetCityNorm = normalize(city || 'Mérida');
 
         return uniqueInternalIds.map(id => {
-            const citySol = allPotentialSols.find(s => s.internal_id === id && (s as any).ciudad === (city || 'Mérida'));
+            const citySol = allPotentialSols.find(s =>
+                s.internal_id === id &&
+                s.ciudad && normalize(s.ciudad) === targetCityNorm
+            );
             const fallbackSol = allPotentialSols.find(s => s.internal_id === id); // Takes the first one found
             return citySol || fallbackSol;
         })
