@@ -9,7 +9,7 @@ export default function Hero() {
     };
 
     return (
-        <div className="dark-section relative pt-24 pb-10 md:pt-32 md:pb-24 overflow-hidden border-b border-white/5">
+        <div className="dark-section relative min-h-screen flex flex-col justify-center overflow-hidden border-b border-white/5">
             <div className="absolute inset-0 z-0">
                 {/* Gradiente sutil Dark Navy consistente con Branding */}
                 <div className="absolute inset-0 bg-gradient-to-b from-secondary via-[#1e293b] to-[#0f172a]" />

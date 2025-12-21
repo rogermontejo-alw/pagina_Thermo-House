@@ -2,12 +2,12 @@ import { ShieldCheck, Droplets, Sun, ChevronDown } from 'lucide-react';
 
 export default function WarrantySection() {
     return (
-        <section id="garantia" className="py-10 md:py-16 bg-white">
+        <section id="garantia" className="py-4 md:py-6 bg-white">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
-                {/* Header Section (Image 1 Top) */}
-                <div className="flex flex-col lg:flex-row items-center gap-10 md:gap-12 mb-12 md:mb-20">
-                    <div className="flex-1 space-y-4 md:space-y-6 text-center lg:text-left">
+                {/* Header Section */}
+                <div className="flex flex-col lg:flex-row items-center gap-8 mb-6">
+                    <div className="flex-1 space-y-4 text-center lg:text-left">
                         <h2 className="text-3xl md:text-4xl font-extrabold text-secondary leading-tight">
                             Garantía de Por Vida: <br />
                             Protección Total Para Su Hogar
@@ -34,7 +34,7 @@ export default function WarrantySection() {
                     <h3 className="text-xl md:text-2xl font-bold text-secondary">Qué Cubre Nuestra Garantía</h3>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-6 md:gap-8 mb-12 md:mb-20">
+                <div className="grid md:grid-cols-3 gap-6 mb-6">
                     {[
                         { icon: Droplets, title: "Protección Contra Goteras", desc: "Cobertura completa contra cualquier filtración de agua causada por fallas en la aplicación." },
                         { icon: ShieldCheck, title: "Defectos de Materiales", desc: "Garantizamos la calidad e integridad de todos los materiales utilizados en nuestros servicios." },
@@ -49,7 +49,7 @@ export default function WarrantySection() {
                 </div>
 
                 {/* Maintenance Section (Active Warranty) */}
-                <div className="bg-white rounded-2xl p-6 md:p-12 shadow-sm border border-border flex flex-col lg:flex-row items-center gap-8 md:gap-12 mb-12 md:mb-20">
+                <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-border flex flex-col lg:flex-row items-center gap-8 mb-6">
                     <div className="flex-1 space-y-4 md:space-y-6">
                         <h3 className="text-xl md:text-2xl font-bold text-secondary">Manteniendo Su Garantía Activa</h3>
                         <p className="text-sm md:text-base text-muted-foreground">

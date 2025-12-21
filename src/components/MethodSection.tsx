@@ -23,18 +23,18 @@ export default function MethodSection() {
     ];
 
     return (
-        <section className="py-10 md:py-16 bg-white">
+        <section className="py-4 md:py-6 bg-white">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center max-w-3xl mx-auto mb-12 md:mb-20">
-                    <h2 className="text-2xl sm:text-4xl font-bold text-secondary mb-4">
-                        El Método Thermo House: Una Mirada Profunda
+                <div className="text-center max-w-3xl mx-auto mb-6">
+                    <h2 className="text-2xl sm:text-4xl font-bold text-secondary mb-2">
+                        El Método Thermo House
                     </h2>
                     <p className="text-base md:text-lg text-muted-foreground">
                         Explore nuestro proceso probado para una impermeabilización y aislamiento térmico superiores, garantizando calidad y durabilidad en cada paso del camino.
                     </p>
                 </div>
 
-                <div className="space-y-16 md:space-y-24">
+                <div className="space-y-6 md:space-y-8">
                     {steps.map((step, index) => (
                         <div key={step.id} className={`flex flex-col lg:flex-row items-center gap-8 md:gap-12 ${index % 2 !== 0 ? 'lg:flex-row-reverse' : ''}`}>
                             {/* Image Placeholder Area */}
@@ -65,7 +65,7 @@ export default function MethodSection() {
                     ))}
                 </div>
 
-                <div className="mt-16 md:mt-20 text-center">
+                <div className="mt-12 md:mt-16 text-center">
                     <p className="text-muted-foreground mb-6 md:mb-8 max-w-2xl mx-auto text-sm md:text-base">
                         Nuestro compromiso con materiales de calidad y una aplicación experta garantiza una solución duradera y efectiva para su propiedad.
                     </p>

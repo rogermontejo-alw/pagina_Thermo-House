@@ -333,9 +333,9 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                         key="result"
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="space-y-12 py-10 md:py-20"
+                        className="space-y-8 py-8 md:py-12"
                     >
-                        <div className="bg-white rounded-3xl p-6 md:p-12 border border-slate-100 shadow-xl relative overflow-hidden text-center">
+                        <div className="bg-white rounded-3xl p-6 md:p-10 border border-slate-100 shadow-xl relative overflow-hidden text-center">
                             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-orange-400 to-amber-300" />
                             <div className="inline-flex items-center gap-2 bg-green-50 text-green-600 px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold mb-3 md:mb-4 border border-green-100 uppercase tracking-widest">
                                 <Check className="w-3.5 h-3.5" /> Cotización Generada
@@ -345,8 +345,8 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                         </div>
 
                         <div className="grid md:grid-cols-3 gap-6 items-stretch">
-                            <div className="bg-white rounded-3xl shadow-2xl flex flex-col transition-all border border-slate-100 overflow-hidden min-h-[480px]">
-                                <div className="p-4 md:p-6 pb-0">
+                            <div className="bg-white rounded-3xl shadow-2xl flex flex-col transition-all border border-slate-100 overflow-hidden min-h-[440px]">
+                                <div className="p-4 md:p-5 pb-0">
                                     <div className="text-primary font-bold text-[9px] uppercase tracking-widest mb-1 flex items-center gap-1"><Check className="w-3 h-3" /> Pago Contado</div>
                                     <h4 className="text-lg md:text-xl lg:text-2xl font-black text-secondary">{selectedSolution?.title}</h4>
                                 </div>
@@ -366,13 +366,13 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                         <span className="text-[10px] font-bold text-green-600 bg-green-50 px-3 py-1 rounded-md mt-2 inline-block">Ahorro del 14% aplicado</span>
                                     </div>
                                 </div>
-                                <button disabled={isPendingSave} onClick={() => handleSaveAndAction('Contado')} className="mt-auto w-full bg-slate-100 hover:bg-slate-200 text-secondary font-black py-4 md:py-6 rounded-b-3xl transition-all flex items-center justify-center gap-2 text-xs md:text-sm uppercase tracking-wider">
+                                <button disabled={isPendingSave} onClick={() => handleSaveAndAction('Contado')} className="mt-auto w-full bg-slate-100 hover:bg-slate-200 text-secondary font-black py-4 rounded-b-3xl transition-all flex items-center justify-center gap-2 text-xs md:text-sm uppercase tracking-wider">
                                     {isPendingSave ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Phone className="w-4 h-4" /> ELEGIR CONTADO</>}
                                 </button>
                             </div>
 
-                            <div className="bg-white rounded-3xl shadow-2xl border-2 border-primary/20 flex flex-col relative overflow-hidden min-h-[480px]">
-                                <div className="p-4 md:p-6 pb-0">
+                            <div className="bg-white rounded-3xl shadow-2xl border-2 border-primary/20 flex flex-col relative overflow-hidden min-h-[440px]">
+                                <div className="p-4 md:p-5 pb-0">
                                     <div className="text-primary font-bold text-[9px] uppercase tracking-widest mb-1 flex items-center gap-1"><Zap className="w-3 h-3 fill-primary" /> Pago a 12 MSI</div>
                                     <h4 className="text-lg md:text-xl lg:text-2xl font-black text-secondary">{selectedSolution?.title}</h4>
                                 </div>
@@ -396,16 +396,16 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                             </div>
 
                             {upsellQuote ? (
-                                <div className="bg-secondary rounded-3xl shadow-2xl relative flex flex-col overflow-hidden min-h-[480px]">
-                                    <div className="p-4 md:p-6 pb-0">
+                                <div className="bg-secondary rounded-3xl shadow-2xl relative flex flex-col overflow-hidden min-h-[440px]">
+                                    <div className="p-4 pb-0">
                                         <div className="text-primary font-bold text-[9px] uppercase tracking-widest mb-1 flex items-center gap-1"><Shield className="w-3 h-3" /> Nivel Superior</div>
-                                        <h4 className="text-lg md:text-xl lg:text-2xl font-black text-white">{upsellQuote.title}</h4>
+                                        <h4 className="text-lg md:text-xl font-black text-white">{upsellQuote.title}</h4>
                                     </div>
-                                    <div className="space-y-3 p-4 md:p-6 flex flex-col flex-grow">
-                                        <div className="bg-white/5 rounded-xl p-3 border border-white/5 text-[10px] md:text-xs lg:text-sm text-slate-200 italic leading-relaxed font-medium flex-grow">
+                                    <div className="space-y-3 p-4 flex flex-col flex-grow">
+                                        <div className="bg-white/5 rounded-xl p-3 border border-white/5 text-[10px] md:text-xs text-slate-200 italic leading-relaxed font-medium flex-grow">
                                             "Si ya vas a impermeabilizar, este nivel garantiza <span className="text-primary font-black">doble aislamiento térmico</span> por solo un pequeño ajuste mensual."
                                         </div>
-                                        <div className="text-center mt-auto pt-6 px-4 pb-4">
+                                        <div className="text-center mt-auto pt-4 px-4 pb-4">
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block text-white/60">12 Pagos Fijos de:</span>
                                             <div className="text-3xl md:text-4xl font-black text-white tracking-tight">${Math.round((upsellQuote?.totalMsi || 0) / 12).toLocaleString()}</div>
                                             <div className="text-[10px] text-slate-300 mt-3 font-black uppercase tracking-widest opacity-90 leading-none">
@@ -413,7 +413,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                             </div>
                                         </div>
                                     </div>
-                                    <button disabled={isPendingSave} onClick={() => handleSaveAndAction('Upgrade')} className="mt-auto w-full bg-white text-secondary hover:bg-slate-100 font-black py-4 md:py-6 rounded-b-3xl transition-all flex items-center justify-center gap-2 text-xs md:text-sm uppercase tracking-wider shadow-2xl">
+                                    <button disabled={isPendingSave} onClick={() => handleSaveAndAction('Upgrade')} className="mt-auto w-full bg-white text-secondary hover:bg-slate-100 font-black py-4 rounded-b-3xl transition-all flex items-center justify-center gap-2 text-xs md:text-sm uppercase tracking-wider shadow-2xl">
                                         {isPendingSave ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Zap className="w-4 h-4 fill-primary text-primary" /> QUIERO EL UPGRADE</>}
                                     </button>
                                 </div>

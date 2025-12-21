@@ -105,19 +105,19 @@ export default function SystemsSection() {
     );
 
     return (
-        <section id="sistemas" className="py-10 md:py-16 bg-muted/40">
+        <section id="sistemas" className="py-4 md:py-6 bg-muted/20">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
-                <div className="text-center max-w-3xl mx-auto mb-8">
-                    <h2 className="text-2xl sm:text-4xl font-bold text-secondary mb-4 md:mb-6 uppercase tracking-tight">
-                        Nuestros Sistemas de Aislamiento
+                <div className="text-center max-w-3xl mx-auto mb-4">
+                    <h2 className="text-2xl sm:text-4xl font-black text-secondary tracking-tight uppercase">
+                        SISTEMAS ELITE THERMO HOUSE
                     </h2>
-                    <p className="text-base md:text-lg text-muted-foreground mb-8">
-                        Soluciones especializadas diseñadas para proteger tu hogar según tu tipo de techumbre.
+                    <p className="text-sm md:text-base text-muted-foreground">
+                        Protección avanzada para cada tipo de estructura.
                     </p>
 
                     {/* Selector de Tipo de Techo */}
-                    <div className="flex justify-center mb-16">
+                    <div className="flex justify-center mb-6">
                         <div className="inline-flex p-1.5 bg-slate-100 rounded-[2rem] shadow-inner border border-slate-200">
                             <button
                                 onClick={() => setRoofType('concrete')}
@@ -136,14 +136,14 @@ export default function SystemsSection() {
                 </div>
 
                 {/* Systems Cards Grid */}
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
                     {filteredSolutions.map((sys) => {
                         const Icon = getIcon(sys.internal_id);
                         const isPremium = sys.internal_id === 'th-forte' || sys.internal_id === 'th-ingles';
                         const isBestSeller = sys.internal_id === 'th-light';
 
                         return (
-                            <div key={sys.id} className={`group bg-white rounded-[2.5rem] p-10 border-2 transition-all duration-500 relative overflow-hidden flex flex-col ${isPremium ? 'border-primary/20 shadow-xl' : 'border-slate-100 hover:border-slate-200 shadow-sm hover:shadow-2xl'}`}>
+                            <div key={sys.id} className={`group bg-white rounded-[2.5rem] p-8 border-2 transition-all duration-500 relative overflow-hidden flex flex-col ${isPremium ? 'border-primary/20 shadow-xl' : 'border-slate-100 hover:border-slate-200 shadow-sm hover:shadow-2xl'}`}>
                                 {isBestSeller && (
                                     <div className="absolute top-0 right-0 bg-primary text-white text-[10px] font-black px-6 py-2 rounded-bl-3xl shadow-lg uppercase tracking-widest z-10">Más Vendido</div>
                                 )}
