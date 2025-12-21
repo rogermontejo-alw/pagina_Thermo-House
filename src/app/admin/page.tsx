@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { getQuotes, updateQuoteStatus } from '@/app/actions/get-quotes';
+import { logoutAdmin } from '@/app/actions/admin-auth';
+import { useRouter } from 'next/navigation';
 import {
     Users,
     TrendingUp,
@@ -15,7 +17,8 @@ import {
     CheckCircle2,
     Clock,
     AlertCircle,
-    ChevronRight
+    ChevronRight,
+    LogOut
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -23,14 +26,11 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [password, setPassword] = useState('');
+    const router = useRouter();
 
     useEffect(() => {
-        if (isAuthenticated) {
-            fetchData();
-        }
-    }, [isAuthenticated]);
+        fetchData();
+    }, []);
 
     const fetchData = async () => {
         setLoading(true);
@@ -48,14 +48,10 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleLogin = (e: React.FormEvent) => {
-        e.preventDefault();
-        // Simple protection as requested, can be enhanced later
-        if (password === 'adminTH2025') {
-            setIsAuthenticated(true);
-        } else {
-            alert('Contraseña incorrecta');
-        }
+    const handleLogout = async () => {
+        await logoutAdmin();
+        router.push('/');
+        router.refresh();
     };
 
     const filteredQuotes = quotes.filter(q => {
@@ -71,33 +67,6 @@ export default function AdminDashboard() {
     const totalArea = quotes.reduce((acc, q) => acc + (q.area || 0), 0);
     const avgTicket = quotes.length ? totalRevenue / quotes.length : 0;
 
-    if (!isAuthenticated) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-                <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 w-full max-w-md">
-                    <div className="text-center mb-8">
-                        <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <Clock className="w-8 h-8 text-primary" />
-                        </div>
-                        <h1 className="text-2xl font-black text-secondary uppercase tracking-tight">Acceso Admin</h1>
-                        <p className="text-muted-foreground text-sm">Panel de Control Thermo House</p>
-                    </div>
-                    <form onSubmit={handleLogin} className="space-y-4">
-                        <input
-                            type="password"
-                            placeholder="Introduce la contraseña"
-                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                        <button className="w-full bg-secondary text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition-all">
-                            Entrar al Dashboard
-                        </button>
-                    </form>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-slate-50/50 p-4 md:p-8 font-sans">
@@ -108,13 +77,22 @@ export default function AdminDashboard() {
                         <h1 className="text-3xl font-black text-secondary uppercase tracking-tight">Dashboard de Ventas</h1>
                         <p className="text-muted-foreground">Gestión de cotizaciones y leads en tiempo real</p>
                     </div>
-                    <button
-                        onClick={fetchData}
-                        className="bg-white px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2"
-                    >
-                        <TrendingUp className="w-4 h-4 text-primary" />
-                        Actualizar Datos
-                    </button>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={fetchData}
+                            className="bg-white px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2"
+                        >
+                            <TrendingUp className="w-4 h-4 text-primary" />
+                            Actualizar
+                        </button>
+                        <button
+                            onClick={handleLogout}
+                            className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-bold border border-red-100 shadow-sm hover:bg-red-100 transition-all flex items-center gap-2"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Salir
+                        </button>
+                    </div>
                 </div>
 
                 {/* Stats Grid */}
@@ -238,9 +216,9 @@ export default function AdminDashboard() {
                                                     value={quote.status}
                                                     onChange={(e) => handleUpdateStatus(quote.id, e.target.value)}
                                                     className={`text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg border outline-none transition-all cursor-pointer ${quote.status === 'Nuevo' ? 'bg-orange-50 text-orange-600 border-orange-100' :
-                                                            quote.status === 'Contactado' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                                                quote.status === 'Visita Técnica' ? 'bg-purple-50 text-purple-600 border-purple-100' :
-                                                                    'bg-green-50 text-green-600 border-green-100'
+                                                        quote.status === 'Contactado' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                            quote.status === 'Visita Técnica' ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                                                'bg-green-50 text-green-600 border-green-100'
                                                         }`}
                                                 >
                                                     <option value="Nuevo">Nuevo</option>
