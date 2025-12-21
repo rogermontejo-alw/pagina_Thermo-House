@@ -1,20 +1,25 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
-export async function loginAdmin(password: string) {
-    const adminPasswordEnv = process.env.ADMIN_PASSWORD;
+export async function loginAdmin(email: string, password: string) {
+    try {
+        const { data: user, error } = await supabaseAdmin
+            .from('admin_users')
+            .select('*')
+            .eq('email', email)
+            .eq('password', password) // En producción usar hashing
+            .single();
 
-    if (!adminPasswordEnv) {
-        console.error('ADMIN_PASSWORD no está configurada en las variables de entorno.');
-        return { success: false, message: 'Error de configuración del servidor.' };
-    }
+        if (error || !user) {
+            return { success: false, message: 'Credenciales inválidas.' };
+        }
 
-    if (password === adminPasswordEnv) {
         const cookieStore = await cookies();
 
-        // Establecer una cookie segura que expire en 24 horas
-        cookieStore.set('admin_session', adminPasswordEnv, {
+        // El token ahora es el email para identificar al usuario
+        cookieStore.set('admin_session', user.email, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
@@ -23,9 +28,9 @@ export async function loginAdmin(password: string) {
         });
 
         return { success: true };
+    } catch (err) {
+        return { success: false, message: 'Error de servidor.' };
     }
-
-    return { success: false, message: 'Contraseña incorrecta.' };
 }
 
 export async function logoutAdmin() {

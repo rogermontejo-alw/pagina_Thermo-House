@@ -6,6 +6,7 @@ import { loginAdmin } from '@/app/actions/admin-auth';
 import { Clock, ShieldCheck, Lock } from 'lucide-react';
 
 export default function AdminLoginPage() {
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -16,7 +17,7 @@ export default function AdminLoginPage() {
         setLoading(true);
         setError('');
 
-        const res = await loginAdmin(password);
+        const res = await loginAdmin(email, password);
 
         if (res.success) {
             router.push('/admin');
@@ -43,7 +44,19 @@ export default function AdminLoginPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-6 relative">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contraseña de Administrador</label>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Correo Electrónico</label>
+                        <input
+                            type="email"
+                            placeholder="admin@thermohouse.mx"
+                            className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm font-bold"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contraseña</label>
                         <input
                             type="password"
                             placeholder="••••••••••••"
