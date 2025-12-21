@@ -5,10 +5,9 @@ export function middleware(request: NextRequest) {
     // Solo proteger la ruta /admin (pero permitir /admin/login)
     if (request.nextUrl.pathname === '/admin') {
         const sessionToken = request.cookies.get('admin_session')?.value;
-        const adminPasswordEnv = process.env.ADMIN_PASSWORD;
 
-        // Si no hay token de sesión, redirigir al login
-        if (!sessionToken || sessionToken !== adminPasswordEnv) {
+        // Si no hay token de sesión (el email del admin), redirigir al login
+        if (!sessionToken) {
             return NextResponse.redirect(new URL('/admin/login', request.url));
         }
     }
