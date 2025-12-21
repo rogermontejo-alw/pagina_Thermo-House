@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getQuotes, updateQuoteStatus } from '@/app/actions/get-quotes';
+import { getQuotes, updateQuote } from '@/app/actions/get-quotes';
 import { logoutAdmin, getAdminSession } from '@/app/actions/admin-auth';
 import { getAdminUsers, createAdminUser, deleteAdminUser, resetAdminPassword } from '@/app/actions/admin-users';
 import { getProducts, updateProduct, cloneProductToCity, deleteProduct } from '@/app/actions/admin-products';
@@ -10,7 +10,7 @@ import {
     Users, TrendingUp, Calendar, MapPin, Phone, ExternalLink, Search, Filter,
     CheckCircle2, Clock, AlertCircle, ChevronRight, LogOut, UserPlus, Trash2,
     Shield, Mail, UserCircle, Package, Edit3, Plus, Globe, Save, X, Key, Building2,
-    Download, CheckSquare, Square
+    Download, CheckSquare, Square, FileText, Cake, Receipt, FileSignature
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -35,6 +35,10 @@ export default function AdminDashboard() {
     // Product Editing State
     const [editingProduct, setEditingProduct] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<any>(null);
+
+    // Client Detail Modal
+    const [selectedLeadForDetail, setSelectedLeadForDetail] = useState<any>(null);
+    const [isSavingDetail, setIsSavingDetail] = useState(false);
 
     const router = useRouter();
 
@@ -73,9 +77,32 @@ export default function AdminDashboard() {
         setLoading(false);
     };
 
-    const handleUpdateQuote = async (id: string, status: string) => {
-        const res = await updateQuoteStatus(id, status);
+    const handleUpdateQuoteStatus = async (id: string, status: string) => {
+        const res = await updateQuote(id, { status });
         if (res.success) setQuotes(prev => prev.map(q => q.id === id ? { ...q, status } : q));
+    };
+
+    const handleSaveLeadDetail = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedLeadForDetail) return;
+        setIsSavingDetail(true);
+
+        const updates = {
+            status: selectedLeadForDetail.status,
+            solution_id: selectedLeadForDetail.solution_id,
+            fecha_nacimiento: selectedLeadForDetail.fecha_nacimiento || null,
+            factura: selectedLeadForDetail.factura || false,
+            notas: selectedLeadForDetail.notas || ''
+        };
+
+        const res = await updateQuote(selectedLeadForDetail.id, updates);
+        if (res.success) {
+            await fetchData(session);
+            setSelectedLeadForDetail(null);
+        } else {
+            alert('Error: ' + res.message);
+        }
+        setIsSavingDetail(false);
     };
 
     const handleCreateUser = async (e: React.FormEvent) => {
@@ -162,7 +189,7 @@ export default function AdminDashboard() {
             return;
         }
 
-        const headers = ['Fecha', 'Cliente', 'WhatsApp', 'Email', 'Ciudad', 'Area (m2)', 'Sistema', 'Precio Contado', 'Estado'];
+        const headers = ['Fecha', 'Cliente', 'WhatsApp', 'Email', 'Ciudad', 'Area (m2)', 'Sistema', 'Precio Contado', 'Estado', 'Cumpleaños', 'Factura', 'Notas'];
         const rows = leadsToExport.map(q => [
             new Date(q.created_at).toLocaleDateString(),
             q.contact_info.name,
@@ -172,7 +199,10 @@ export default function AdminDashboard() {
             q.area,
             q.soluciones_precios?.title || 'Personalizado',
             Math.round(q.precio_total_contado),
-            q.status
+            q.status,
+            q.fecha_nacimiento || 'N/A',
+            q.factura ? 'SÍ' : 'NO',
+            (q.notas || '').replace(/\n/g, ' ')
         ]);
 
         const csvContent = [
@@ -342,12 +372,19 @@ export default function AdminDashboard() {
                                                     <div className="text-[10px] text-primary font-black uppercase tracking-tighter mt-1">{q.soluciones_precios?.title || 'Personalizado'}</div>
                                                 </td>
                                                 <td className="px-8 py-5">
-                                                    <select value={q.status} onChange={e => handleUpdateQuote(q.id, e.target.value)} className="text-[10px] font-black uppercase tracking-wider px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 outline-none hover:border-primary transition-all cursor-pointer">
+                                                    <select value={q.status} onChange={e => handleUpdateQuoteStatus(q.id, e.target.value)} className="text-[10px] font-black uppercase tracking-wider px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 outline-none hover:border-primary transition-all cursor-pointer">
                                                         {['Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado'].map(s => <option key={s} value={s}>{s}</option>)}
                                                     </select>
                                                 </td>
                                                 <td className="px-8 py-5 text-right">
                                                     <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={() => setSelectedLeadForDetail(q)}
+                                                            className="p-2 bg-secondary text-white rounded-xl hover:bg-slate-800 transition-all shadow-sm"
+                                                            title="Ver Ficha del Cliente"
+                                                        >
+                                                            <FileText className="w-4 h-4" />
+                                                        </button>
                                                         {q.google_maps_link && (
                                                             <a href={q.google_maps_link} target="_blank" className="p-2 bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"><ExternalLink className="w-4 h-4" /></a>
                                                         )}
@@ -523,6 +560,115 @@ export default function AdminDashboard() {
                     </div>
                 )}
             </div>
+
+            {/* Client Detail Modal (Ficha) */}
+            {selectedLeadForDetail && (
+                <div className="fixed inset-0 bg-secondary/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="bg-slate-50 p-8 border-b border-slate-100 flex justify-between items-center">
+                            <div>
+                                <h3 className="text-2xl font-black text-secondary uppercase tracking-tight flex items-center gap-3">
+                                    <UserCircle className="w-7 h-7 text-primary" />
+                                    Ficha del Cliente
+                                </h3>
+                                <p className="text-slate-400 text-sm font-medium">Folio: #{selectedLeadForDetail.id.slice(0, 8).toUpperCase()}</p>
+                            </div>
+                            <button onClick={() => setSelectedLeadForDetail(null)} className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all text-slate-400">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveLeadDetail} className="p-8 space-y-8 overflow-y-auto max-h-[70vh]">
+                            {/* Contact Info Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre</label>
+                                    <div className="px-4 py-3 bg-slate-50 rounded-xl font-bold text-secondary border border-transparent">{selectedLeadForDetail.contact_info.name}</div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Teléfono</label>
+                                    <div className="px-4 py-3 bg-slate-50 rounded-xl font-bold text-secondary border border-transparent">{selectedLeadForDetail.contact_info.phone}</div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Fecha de Nacimiento</label>
+                                    <input
+                                        type="date"
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10"
+                                        value={selectedLeadForDetail.fecha_nacimiento || ''}
+                                        onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, fecha_nacimiento: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1 flex flex-col justify-end pb-1 ml-1">
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className={`w-12 h-6 rounded-full transition-all relative ${selectedLeadForDetail.factura ? 'bg-primary' : 'bg-slate-200'}`}>
+                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${selectedLeadForDetail.factura ? 'left-7' : 'left-1'}`} />
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            className="hidden"
+                                            checked={selectedLeadForDetail.factura || false}
+                                            onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, factura: e.target.checked })}
+                                        />
+                                        <span className="text-sm font-black text-secondary uppercase tracking-tight group-hover:text-primary transition-colors">¿Requiere Factura?</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Project Section */}
+                            <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-6">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Package className="w-5 h-5 text-primary" />
+                                    <h4 className="font-black text-secondary uppercase text-sm">Detalles del Cierre</h4>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Estatus</label>
+                                        <select
+                                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none"
+                                            value={selectedLeadForDetail.status}
+                                            onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, status: e.target.value })}
+                                        >
+                                            {['Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado'].map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">SISTEMA FINAL COMPRADO</label>
+                                        <select
+                                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-primary outline-none"
+                                            value={selectedLeadForDetail.solution_id}
+                                            onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, solution_id: e.target.value })}
+                                        >
+                                            {products.filter(p => p.ciudad === selectedLeadForDetail.ciudad || p.ciudad === 'Mérida').map(p => (
+                                                <option key={p.id} value={p.id}>{p.title} ({p.ciudad})</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Notes */}
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Notas y Comentarios Internos</label>
+                                <textarea
+                                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium min-h-[100px] outline-none focus:ring-4 focus:ring-primary/10"
+                                    placeholder="Escribe notas sobre el cliente o el proceso de venta..."
+                                    value={selectedLeadForDetail.notas || ''}
+                                    onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, notas: e.target.value })}
+                                />
+                            </div>
+
+                            <button
+                                disabled={isSavingDetail}
+                                className="w-full bg-secondary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-secondary/20 flex items-center justify-center gap-3 active:scale-[0.98]"
+                            >
+                                {isSavingDetail ? <Clock className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                Actualizar Ficha de Cliente
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

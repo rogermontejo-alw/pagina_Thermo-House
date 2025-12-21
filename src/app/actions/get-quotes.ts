@@ -32,16 +32,17 @@ export async function getQuotes(cityFilter?: string) {
     }
 }
 
-export async function updateQuoteStatus(id: string, newStatus: string) {
+export async function updateQuote(id: string, updates: any) {
     try {
         const { error } = await supabaseAdmin
             .from('cotizaciones')
-            .update({ status: newStatus })
+            .update(updates)
             .eq('id', id);
 
         if (error) throw error;
         return { success: true };
     } catch (err) {
-        return { success: false, message: 'Error al actualizar estado.' };
+        console.error('Error updating quote:', err);
+        return { success: false, message: 'Error al actualizar el registro.' };
     }
 }
