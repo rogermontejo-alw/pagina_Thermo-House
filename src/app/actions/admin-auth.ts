@@ -5,20 +5,30 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function loginAdmin(email: string, password: string) {
     try {
+        console.log('Intento de login para:', email);
+
+        if (!supabaseAdmin) {
+            return { success: false, message: 'Supabase no inicializado.' };
+        }
+
         const { data: user, error } = await supabaseAdmin
             .from('admin_users')
             .select('*')
-            .eq('email', email)
-            .eq('password', password) // En producción usar hashing
+            .eq('email', email.trim())
             .single();
 
-        if (error || !user) {
-            return { success: false, message: 'Credenciales inválidas.' };
+        if (error) {
+            console.error('Error de consulta Supabase:', error);
+            if (error.code === 'PGRST116') return { success: false, message: 'Usuario no encontrado.' };
+            return { success: false, message: `Error DB: ${error.message}` };
+        }
+
+        if (!user || user.password !== password) {
+            return { success: false, message: 'Contraseña incorrecta.' };
         }
 
         const cookieStore = await cookies();
 
-        // El token ahora es el email para identificar al usuario
         cookieStore.set('admin_session', user.email, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -27,9 +37,11 @@ export async function loginAdmin(email: string, password: string) {
             path: '/',
         });
 
+        console.log('Login exitoso para:', email);
         return { success: true };
-    } catch (err) {
-        return { success: false, message: 'Error de servidor.' };
+    } catch (err: any) {
+        console.error('Error crítico en loginAdmin:', err);
+        return { success: false, message: `Error crítico: ${err.message || 'Desconocido'}` };
     }
 }
 

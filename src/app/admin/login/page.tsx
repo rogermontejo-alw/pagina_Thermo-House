@@ -17,13 +17,18 @@ export default function AdminLoginPage() {
         setLoading(true);
         setError('');
 
-        const res = await loginAdmin(email, password);
+        try {
+            const res = await loginAdmin(email, password);
 
-        if (res.success) {
-            router.push('/admin');
-            router.refresh();
-        } else {
-            setError(res.message || 'Error al iniciar sesión');
+            if (res.success) {
+                router.push('/admin');
+                router.refresh();
+            } else {
+                setError(res.message || 'Error al iniciar sesión');
+                setLoading(false);
+            }
+        } catch (err: any) {
+            setError('Error de conexión con el servidor.');
             setLoading(false);
         }
     };
