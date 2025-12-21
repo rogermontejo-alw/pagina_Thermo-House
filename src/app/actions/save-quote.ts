@@ -16,6 +16,7 @@ export async function saveQuote(prevState: any, formData: FormData) {
             solutionId: formData.get('solutionId') as string,
             totalCash: Number(formData.get('totalCash')),
             totalMsi: Number(formData.get('totalMsi')),
+            isOutOfZone: formData.get('isOutOfZone') === 'true',
         };
 
         // Basic Validation
@@ -45,37 +46,37 @@ export async function saveQuote(prevState: any, formData: FormData) {
         }
 
         if (Object.keys(errors).length > 0) {
+            console.warn('[SAVE] Validation failed:', errors);
             return { success: false, errors, message: 'Por favor corrige los errores.' };
         }
 
-        // Resolve Solution ID first, prioritizing the selected city
-        const lookupCity = rawData.city || 'Mérida';
-        let { data: solution, error: solError } = await supabaseAdmin
+        // Normalize helper
+        const norm = (c: string) => c.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const targetCityNorm = norm(rawData.city || 'Mérida');
+        const meridaNorm = norm('Mérida');
+
+        // Fetch all possible variations for this internal_id
+        const { data: allSols, error: solError } = await supabaseAdmin
             .from('soluciones_precios')
-            .select('id, internal_id')
-            .eq('internal_id', rawData.solutionId)
-            .eq('ciudad', lookupCity)
-            .single();
+            .select('id, internal_id, ciudad')
+            .eq('internal_id', rawData.solutionId);
 
-        // Fallback to Merida if not found for specific city
-        if ((solError || !solution) && lookupCity !== 'Mérida') {
-            const fallback = await supabaseAdmin
-                .from('soluciones_precios')
-                .select('id, internal_id')
-                .eq('internal_id', rawData.solutionId)
-                .eq('ciudad', 'Mérida')
-                .single();
-
-            if (fallback.data) {
-                solution = fallback.data;
-                solError = null;
-            }
+        if (solError || !allSols || allSols.length === 0) {
+            console.error('CRITICAL: No solutions found for:', rawData.solutionId);
+            return { success: false, message: `Error: No se encontró el sistema ${rawData.solutionId} en el catálogo base.` };
         }
 
-        if (solError || !solution) {
-            console.error('CRITICAL: Solution ID resolution failed for:', rawData.solutionId, solError);
-            return { success: false, message: `Error: No se encontró el sistema ${rawData.solutionId} para la ciudad ${lookupCity} en la base de datos.` };
+        // 1. Try to find the specific city match
+        let solution = allSols.find(s => s.ciudad && norm(s.ciudad) === targetCityNorm);
+
+        // 2. If not found and not already Mérida, try to find Mérida fallback
+        if (!solution && targetCityNorm !== meridaNorm) {
+            solution = allSols.find(s => s.ciudad && norm(s.ciudad) === meridaNorm);
         }
+
+        // 3. Last resort: just take any if still missing (shouldn't happen with Mérida default)
+        if (!solution) solution = allSols[0];
+
 
         // Final safety check for prices (Minimum 5900 MXN)
         const MIN_PRICE = 5900;
@@ -117,7 +118,9 @@ export async function saveQuote(prevState: any, formData: FormData) {
                 email: rawData.email
             },
             status: 'Nuevo',
-            created_at: cdmxDate
+            created_at: cdmxDate,
+            notas: rawData.isOutOfZone ? '⚠️ ZONA FORÁNEA: El cliente cotizó fuera de Mérida. Revisar costos de logística.' : '',
+            is_out_of_zone: rawData.isOutOfZone
         });
 
         if (insertError) {

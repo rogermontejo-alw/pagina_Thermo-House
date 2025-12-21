@@ -10,15 +10,18 @@ import {
     Users, TrendingUp, Calendar, MapPin, Phone, ExternalLink, Search, Filter,
     CheckCircle2, Clock, AlertCircle, ChevronRight, LogOut, UserPlus, Trash2,
     Shield, Mail, UserCircle, Package, Edit3, Plus, Globe, Save, X, Key, Building2,
-    Download, CheckSquare, Square, FileText, Cake, Receipt, FileSignature
+    Download, CheckSquare, Square, FileText, Cake, Receipt, FileSignature,
+    LayoutGrid, ListOrdered, Navigation, Map, AlertTriangle
 } from 'lucide-react';
+import { getLocations, createLocation, deleteLocation } from '@/app/actions/admin-locations';
 
 export default function AdminDashboard() {
     const [session, setSession] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'quotes' | 'users' | 'prices'>('quotes');
+    const [activeTab, setActiveTab] = useState<'quotes' | 'users' | 'prices' | 'locations'>('quotes');
     const [quotes, setQuotes] = useState<any[]>([]);
     const [users, setUsers] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
+    const [locations, setLocations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
@@ -29,7 +32,7 @@ export default function AdminDashboard() {
     const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
 
     // User Creation State
-    const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'editor' as 'admin' | 'editor', ciudad: 'Mérida' });
+    const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'editor' as 'admin' | 'editor', ciudad: '' });
     const [isCreatingUser, setIsCreatingUser] = useState(false);
 
     // Product Editing State
@@ -50,9 +53,12 @@ export default function AdminDashboard() {
 
     const router = useRouter();
 
-    const CIUDADES_OPERACION = [
-        'Mérida', 'Cancún', 'Playa del Carmen', 'Campeche', 'Villahermosa',
-        'Veracruz', 'Cuernavaca', 'Chihuahua', 'Ciudad Juárez', 'Puebla', 'Monterrey'
+    // Location Management State
+    const [isSavingLocation, setIsSavingLocation] = useState(false);
+    const [newLocation, setNewLocation] = useState({ ciudad: '', estado: '' });
+
+    const MEXICAN_STATES = [
+        'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche', 'Chiapas', 'Chihuahua', 'Coahuila', 'Colima', 'Ciudad de México', 'Durango', 'Guanajuato', 'Guerrero', 'Hidalgo', 'Jalisco', 'México', 'Michoacán', 'Morelos', 'Nayarit', 'Nuevo León', 'Oaxaca', 'Puebla', 'Querétaro', 'Quintana Roo', 'San Luis Potosí', 'Sinaloa', 'Sonora', 'Tabasco', 'Tamaulipas', 'Tlaxcala', 'Veracruz', 'Yucatán', 'Zacatecas'
     ];
 
     useEffect(() => {
@@ -73,15 +79,22 @@ export default function AdminDashboard() {
         setLoading(true);
         const cityFilter = currSession.role === 'admin' ? 'Todas' : currSession.ciudad;
 
-        const [qRes, uRes, pRes] = await Promise.all([
+        const [qRes, uRes, pRes, lRes] = await Promise.all([
             getQuotes(cityFilter),
             currSession.role === 'admin' ? getAdminUsers() : Promise.resolve({ success: true, data: [] }),
-            getProducts(cityFilter)
+            getProducts(cityFilter),
+            getLocations()
         ]);
 
         if (qRes.success) setQuotes(qRes.data || []);
         if (uRes.success) setUsers(uRes.data || []);
         if (pRes.success) setProducts(pRes.data || []);
+        if (lRes.success) {
+            setLocations(lRes.data || []);
+            if (lRes.data && lRes.data.length > 0 && !newUser.ciudad) {
+                setNewUser(prev => ({ ...prev, ciudad: lRes.data[0].ciudad }));
+            }
+        }
         setLoading(false);
     };
 
@@ -120,7 +133,7 @@ export default function AdminDashboard() {
         const res = await createAdminUser(newUser);
         if (res.success) {
             await fetchData(session);
-            setNewUser({ name: '', email: '', password: '', role: 'editor', ciudad: 'Mérida' });
+            setNewUser({ name: '', email: '', password: '', role: 'editor', ciudad: locations[0]?.ciudad || 'Mérida' });
             alert('Usuario creado exitosamente');
         } else alert('Error: ' + res.message);
         setIsCreatingUser(false);
@@ -135,7 +148,7 @@ export default function AdminDashboard() {
         }
     };
 
-    const handeDeleteUser = async (id: string) => {
+    const handleDeleteUser = async (id: string) => {
         if (confirm('¿Eliminar usuario definitivamente?')) {
             const res = await deleteAdminUser(id);
             if (res.success) fetchData(session);
@@ -187,6 +200,27 @@ export default function AdminDashboard() {
     const handleDeleteProduct = async (id: string) => {
         if (confirm('¿Eliminar esta tarifa regional?')) {
             const res = await deleteProduct(id);
+            if (res.success) fetchData(session);
+        }
+    };
+
+    const handleCreateLocation = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newLocation.ciudad || !newLocation.estado) return;
+        setIsSavingLocation(true);
+        const res = await createLocation(newLocation);
+        if (res.success) {
+            await fetchData(session);
+            const cityCreated = newLocation.ciudad;
+            setNewLocation({ ciudad: '', estado: '' });
+            alert(`¡Ciudad Habilitada! 📍\n\nRecuerda que para que los clientes en ${cityCreated} puedan cotizar localmente (sin advertencia de zona foránea), debes agregar al menos un precio específico para esta ciudad en la pestaña de 'Tarifas'.`);
+        } else alert(res.message);
+        setIsSavingLocation(false);
+    };
+
+    const handleDeleteLocation = async (id: string) => {
+        if (confirm('¿Eliminar esta ubicación? Esto no borrará los precios ya creados, pero la ciudad ya no aparecerá en los menús.')) {
+            const res = await deleteLocation(id);
             if (res.success) fetchData(session);
         }
     };
@@ -281,8 +315,9 @@ export default function AdminDashboard() {
                         <div className="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-1">
                             <button onClick={() => setActiveTab('quotes')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'quotes' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`}>Leads</button>
                             <button onClick={() => setActiveTab('prices')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'prices' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`}>Precios</button>
+                            <button onClick={() => setActiveTab('locations')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'locations' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`}>Ubicaciones</button>
                             {session.role === 'admin' && (
-                                <button onClick={() => setActiveTab('users')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`}>Mi Equipo</button>
+                                <button onClick={() => setActiveTab('users')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`}>Equipo</button>
                             )}
                         </div>
                         <button onClick={handleLogout} className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-bold border border-red-100 hover:bg-red-100 transition-all"><LogOut className="w-4 h-4" /></button>
@@ -510,15 +545,13 @@ export default function AdminDashboard() {
                                                                     >
                                                                         <Plus className="w-4 h-4" />
                                                                     </button>
-                                                                    {p.ciudad !== 'General' && (
-                                                                        <button
-                                                                            onClick={() => handleDeleteProduct(p.id)}
-                                                                            className="p-2 bg-red-50 text-red-300 hover:text-red-500 hover:bg-red-100 rounded-xl transition-all"
-                                                                            title="Eliminar"
-                                                                        >
-                                                                            <Trash2 className="w-4 h-4" />
-                                                                        </button>
-                                                                    )}
+                                                                    <button
+                                                                        onClick={() => handleDeleteProduct(p.id)}
+                                                                        className="p-2 bg-red-50 text-red-300 hover:text-red-500 hover:bg-red-100 rounded-xl transition-all"
+                                                                        title="Eliminar"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </button>
                                                                 </>
                                                             )}
                                                         </div>
@@ -570,7 +603,7 @@ export default function AdminDashboard() {
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ciudad</label>
                                             <select className="w-full px-2 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={newUser.ciudad} onChange={e => setNewUser({ ...newUser, ciudad: e.target.value })} disabled={newUser.role === 'admin'}>
-                                                {CIUDADES_OPERACION.map(c => <option key={c} value={c}>{c}</option>)}
+                                                {locations.map(l => <option key={l.id} value={l.ciudad}>{l.ciudad} ({l.estado})</option>)}
                                                 {newUser.role === 'admin' && <option value="Todas">Todas</option>}
                                             </select>
                                         </div>
@@ -607,10 +640,93 @@ export default function AdminDashboard() {
                                         </div>
                                         <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all">
                                             <button onClick={() => handleResetPassword(u.id)} className="p-2.5 bg-slate-50 text-slate-400 hover:text-secondary rounded-xl" title="Resetear Contraseña"><Key className="w-4 h-4" /></button>
-                                            <button onClick={() => handeDeleteUser(u.id)} className="p-2.5 bg-red-50 text-red-300 hover:text-red-600 rounded-xl" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
+                                            <button onClick={() => handleDeleteUser(u.id)} className="p-2.5 bg-red-50 text-red-300 hover:text-red-600 rounded-xl" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'locations' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-2">
+                        {/* Location Form */}
+                        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm h-fit space-y-8">
+                            <div>
+                                <h2 className="text-2xl font-black text-secondary uppercase tracking-tight flex items-center gap-3">
+                                    <Map className="w-6 h-6 text-primary" />
+                                    Abrir Zona
+                                </h2>
+                                <p className="text-slate-400 text-xs mt-1">Registra nuevos centros de operación</p>
+                            </div>
+
+                            <form onSubmit={handleCreateLocation} className="space-y-4">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Estado</label>
+                                    <select
+                                        required
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10"
+                                        value={newLocation.estado}
+                                        onChange={e => setNewLocation({ ...newLocation, estado: e.target.value })}
+                                    >
+                                        <option value="">Selecciona Estado</option>
+                                        {MEXICAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ciudad</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="Nombre de la ciudad"
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10"
+                                        value={newLocation.ciudad}
+                                        onChange={e => setNewLocation({ ...newLocation, ciudad: e.target.value })}
+                                    />
+                                </div>
+                                <button disabled={isSavingLocation} className="w-full bg-secondary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-secondary/20 flex items-center justify-center gap-2">
+                                    {isSavingLocation ? 'Guardando...' : 'Habilitar Ciudad'}
+                                </button>
+                            </form>
+                        </div>
+
+                        {/* Location List */}
+                        <div className="lg:col-span-2 space-y-6">
+                            <h2 className="text-2xl font-black text-secondary uppercase tracking-tight flex items-center gap-3 mb-6">
+                                <Navigation className="w-6 h-6 text-primary" />
+                                Zonas de Operación Activas
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {locations.map(l => (
+                                    <div key={l.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between group hover:border-primary/20 transition-all">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-primary border border-slate-100">
+                                                <MapPin className="w-6 h-6" />
+                                            </div>
+                                            <div>
+                                                <div className="font-black text-secondary uppercase tracking-tight">{l.ciudad}</div>
+                                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{l.estado}</div>
+                                                {!products.some(p => p.ciudad === l.ciudad) && (
+                                                    <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-600 border border-amber-100 rounded text-[8px] font-black uppercase tracking-widest animate-pulse">
+                                                        <AlertCircle className="w-2.5 h-2.5" /> Sin Tarifas Regionales
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {session.role === 'admin' && (
+                                            <button
+                                                onClick={() => handleDeleteLocation(l.id)}
+                                                className="p-3 bg-red-50 text-red-300 hover:text-red-600 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                                {locations.length === 0 && (
+                                    <div className="col-span-full py-20 text-center text-slate-300 font-bold italic">No hay ciudades configuradas.</div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -635,6 +751,13 @@ export default function AdminDashboard() {
                         </div>
 
                         <form onSubmit={handleSaveLeadDetail} className="p-8 space-y-8 overflow-y-auto max-h-[70vh]">
+                            {selectedLeadForDetail.is_out_of_zone && (
+                                <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-center gap-3 text-orange-800 animate-pulse">
+                                    <AlertTriangle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                                    <p className="text-[11px] font-black uppercase tracking-tight">Zona Foránea: Requiere validación de costos logísticos</p>
+                                </div>
+                            )}
+
                             {/* Contact Info Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-1">
@@ -767,8 +890,7 @@ export default function AdminDashboard() {
                                         required
                                     >
                                         <option value="" disabled>Selecciona una ciudad</option>
-                                        {CIUDADES_OPERACION.map(c => <option key={c} value={c}>{c}</option>)}
-                                        <option value="General">General (Global)</option>
+                                        {locations.map(l => <option key={l.id} value={l.ciudad}>{l.ciudad} ({l.estado})</option>)}
                                     </select>
                                 </div>
 

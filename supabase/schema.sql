@@ -7,7 +7,31 @@ create extension if not exists "uuid-ossp";
 -- 2. Limpieza (Cuidado: Borra datos existentes)
 drop table if exists public.cotizaciones cascade;
 drop table if exists public.soluciones_precios cascade;
+drop table if exists public.ubicaciones cascade;
 drop table if exists public.app_config cascade;
+
+-- 2.5 Tabla de Ubicaciones (Ciudades y Estados)
+create table public.ubicaciones (
+  id uuid default uuid_generate_v4() primary key,
+  ciudad text not null,
+  estado text not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(ciudad, estado)
+);
+
+-- Insertar ubicaciones iniciales
+insert into public.ubicaciones (ciudad, estado) values
+('Mérida', 'Yucatán'),
+('Cancún', 'Quintana Roo'),
+('Playa del Carmen', 'Quintana Roo'),
+('Campeche', 'Campeche'),
+('Villahermosa', 'Tabasco'),
+('Veracruz', 'Veracruz'),
+('Cuernavaca', 'Morelos'),
+('Chihuahua', 'Chihuahua'),
+('Ciudad Juárez', 'Chihuahua'),
+('Puebla', 'Puebla'),
+('Monterrey', 'Nuevo León');
 
 -- 3. Tabla de Productos (soluciones_precios)
 create table public.soluciones_precios (
@@ -37,7 +61,11 @@ create table public.cotizaciones (
   precio_total_contado numeric,
   precio_total_msi numeric,
   status text check (status in ('Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado')) default 'Nuevo',
-  contact_info jsonb not null -- { name, phone, email }
+  contact_info jsonb not null, -- { name, phone, email }
+  notas text,
+  factura boolean default false,
+  fecha_nacimiento date,
+  is_out_of_zone boolean default false
 );
 
 -- 5. Tabla de Configuración (Para APIs y llaves - SEGURIDAD)

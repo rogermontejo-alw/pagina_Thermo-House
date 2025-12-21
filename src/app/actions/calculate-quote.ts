@@ -30,21 +30,29 @@ export async function calculateQuote(area: number, solutionId: string, city?: st
             throw new Error('Database pricing catalog empty');
         }
 
-        // 2. Build Unified Catalog with accent-insensitive city matching
+        // 2. Build Hybrid Catalog (Mérida Base + City Overrides)
+        const meridaSols = allSolsRaw.filter(s => s.ciudad && normalizeCity(s.ciudad) === normMerida);
+        const citySols = (normTargetCity !== normMerida)
+            ? allSolsRaw.filter(s => s.ciudad && normalizeCity(s.ciudad) === normTargetCity)
+            : [];
+
         const catalogMap = new Map<string, any>();
 
-        // Pass 1: Load Mérida or generic items (without ciudad)
-        allSolsRaw.forEach(s => {
-            const solCity = s.ciudad ? normalizeCity(s.ciudad) : null;
-            if (!solCity || solCity === normMerida) {
-                catalogMap.set(s.internal_id.toLowerCase(), s);
-            }
+        // Step A: Load all Mérida baseline products
+        meridaSols.forEach(s => {
+            catalogMap.set(s.internal_id.toLowerCase(), s);
         });
 
-        // Pass 2: Overwrite with target city if different from Mérida
-        if (normTargetCity !== normMerida) {
+        // Step B: Overlay with specific city prices (overwrites Mérida if same internal_id)
+        citySols.forEach(s => {
+            catalogMap.set(s.internal_id.toLowerCase(), s);
+        });
+
+        // Step C: Fallback check - if Catalog is STILL empty (e.g. no Mérida prices either??)
+        // just use the raw list to avoid a crash, but this shouldn't happen.
+        if (catalogMap.size === 0) {
             allSolsRaw.forEach(s => {
-                if (s.ciudad && normalizeCity(s.ciudad) === normTargetCity) {
+                if (!catalogMap.has(s.internal_id.toLowerCase())) {
                     catalogMap.set(s.internal_id.toLowerCase(), s);
                 }
             });
@@ -52,6 +60,9 @@ export async function calculateQuote(area: number, solutionId: string, city?: st
 
         const unifiedCatalog = Array.from(catalogMap.values())
             .sort((a, b) => (a.orden || 0) - (b.orden || 0));
+
+        // Note: isOutOfZone = true if we didn't find specific prices for THIS city for THIS specific solution ID
+        // (will be checked below)
 
         // 3. Find current solution
         const searchId = solutionId.toLowerCase();
@@ -70,7 +81,6 @@ export async function calculateQuote(area: number, solutionId: string, city?: st
         const currentCategory = (currentSol.category || 'concrete').toLowerCase();
         const currentIndex = unifiedCatalog.findIndex(s => s.internal_id.toLowerCase() === searchId);
 
-        // Search next levels
         const upsellSol = unifiedCatalog.slice(currentIndex + 1).find(s => {
             const sCat = (s.category || 'concrete').toLowerCase();
             return currentCategory === 'concrete' ? (sCat === 'concrete' || sCat === 'both') :
@@ -91,7 +101,9 @@ export async function calculateQuote(area: number, solutionId: string, city?: st
         return {
             success: true,
             data: { totalCash, totalMsi },
-            upsell: upsellData
+            upsell: upsellData,
+            // isOutOfZone is true if the price we used doesn't match the target city
+            isOutOfZone: currentSol.ciudad ? normalizeCity(currentSol.ciudad) !== normTargetCity : true
         };
     } catch (error) {
         console.error('[CALC] Critical error:', error);

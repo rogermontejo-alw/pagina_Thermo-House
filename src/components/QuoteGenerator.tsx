@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Shield, Zap, Droplets, Loader2, Phone, ArrowRight, RotateCcw, Sparkles, Package, MapPin, CheckCircle2, Building2, Factory } from 'lucide-react';
+import { Check, Shield, Zap, Droplets, Loader2, Phone, ArrowRight, RotateCcw, Sparkles, Package, MapPin, CheckCircle2, Building2, Factory, AlertTriangle, AlertCircle } from 'lucide-react';
 import { calculateQuote } from '@/app/actions/calculate-quote';
 import { saveQuote } from '@/app/actions/save-quote';
 import { getAllSolutions } from '@/app/actions/get-solutions';
@@ -69,6 +69,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
     const [quote, setQuote] = useState<{ totalCash: number; totalMsi: number } | null>(null);
     const [upsellQuote, setUpsellQuote] = useState<{ totalCash: number; totalMsi: number; title: string; internal_id: string } | null>(null);
     const [calcError, setCalcError] = useState<string | null>(null);
+    const [isOutOfZone, setIsOutOfZone] = useState(false);
 
     const [isPendingSave, startSaveTransition] = useTransition();
     const [saveState, setSaveState] = useState<{ success: boolean; errors?: Record<string, string>; message?: string } | null>(null);
@@ -97,6 +98,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
 
         formData.append('totalCash', cash.toString());
         formData.append('totalMsi', msi.toString());
+        formData.append('isOutOfZone', isOutOfZone ? 'true' : 'false');
 
         startSaveTransition(async () => {
             const result = await saveQuote(null, formData);
@@ -120,23 +122,42 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
     };
 
     const allPotentialSols = allDbSolutions.length > 0 ? allDbSolutions : fallbackSolutions;
-
     const currentSolutions = (() => {
-        // Build a unified list for selection: Prefer specific city, else Mérida/Fallback
-        const uniqueInternalIds = Array.from(new Set(allPotentialSols.map(s => s.internal_id)));
         const normalize = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
         const targetCityNorm = normalize(city || 'Mérida');
+        const meridaNorm = normalize('Mérida');
 
-        return uniqueInternalIds.map(id => {
-            const citySol = allPotentialSols.find(s =>
-                s.internal_id === id &&
-                s.ciudad && normalize(s.ciudad) === targetCityNorm
-            );
-            const fallbackSol = allPotentialSols.find(s => s.internal_id === id); // Takes the first one found
-            return citySol || fallbackSol;
-        })
+        // Master List (Mérida)
+        const meridaPool = allPotentialSols.filter(s => s.ciudad && normalize(s.ciudad) === meridaNorm);
+
+        // City Overrides
+        const cityPool = (targetCityNorm !== meridaNorm)
+            ? allPotentialSols.filter(s => s.ciudad && normalize(s.ciudad) === targetCityNorm)
+            : [];
+
+        // Build Map (InternalID -> Solution)
+        const finalMap = new Map<string, Solution>();
+
+        // Load Mérida base
+        meridaPool.forEach(s => {
+            finalMap.set(s.internal_id.toLowerCase(), s);
+        });
+
+        // Overlay with city overrides (keeps all products, just changes pricing/data if available)
+        cityPool.forEach(s => {
+            finalMap.set(s.internal_id.toLowerCase(), s);
+        });
+
+        // If for some reason Mérida has nothing (new DB), load whatever is available
+        if (finalMap.size === 0) {
+            allPotentialSols.forEach(s => {
+                const id = s.internal_id.toLowerCase();
+                if (!finalMap.has(id)) finalMap.set(id, s);
+            });
+        }
+
+        return Array.from(finalMap.values())
             .filter((s): s is Solution => {
-                if (!s) return false;
                 if (roofType === 'concrete') return s.category === 'concrete' || s.category === 'both';
                 if (roofType === 'sheet') return s.category === 'sheet' || s.category === 'both';
                 return false;
@@ -144,7 +165,8 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
             .sort((a, b) => (a.orden || 0) - (b.orden || 0));
     })();
 
-    const selectedSolution = activeSolutions.find(s => s.internal_id === selectedSolutionId);
+
+    const selectedSolution = currentSolutions.find(s => s.internal_id === selectedSolutionId);
 
     const handleSolutionSelect = (id: string) => {
         setSelectedSolutionId(id);
@@ -153,6 +175,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                 if (res.success && res.data) {
                     setQuote(res.data);
                     setUpsellQuote(res.upsell || null);
+                    setIsOutOfZone(!!res.isOutOfZone);
                     setCalcError(null);
                 } else {
                     setCalcError(res.error || 'Error al calcular');
@@ -278,11 +301,33 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                     })}
                                 </div>
 
+                                {calcError && (
+                                    <div className="flex justify-center pt-4">
+                                        <div className="px-6 py-3 bg-red-50 text-red-600 rounded-2xl text-xs font-bold border border-red-100 flex items-center gap-2">
+                                            <AlertCircle className="w-4 h-4" /> {calcError}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {selectedSolutionId && (
-                                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center pt-8">
-                                        <button onClick={() => setCurrentStep('contact')} className="bg-primary hover:bg-orange-600 text-white font-black px-12 py-5 rounded-2xl shadow-xl shadow-primary/20 transition-all flex items-center gap-3 text-lg uppercase tracking-wider group active:scale-95">
-                                            Continuar a Precios <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center pt-8 gap-4">
+                                        <button
+                                            disabled={isPendingCalc || !!calcError}
+                                            onClick={() => setCurrentStep('contact')}
+                                            className={`bg-primary hover:bg-orange-600 text-white font-black px-12 py-5 rounded-2xl shadow-xl shadow-primary/20 transition-all flex items-center gap-3 text-lg uppercase tracking-wider group active:scale-95 ${(isPendingCalc || !!calcError) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        >
+                                            {isPendingCalc ? (
+                                                <><Loader2 className="w-5 h-5 animate-spin" /> Calculando...</>
+                                            ) : (
+                                                <>{calcError ? 'Reintenta Seleccionar' : 'Continuar a Precios'} <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>
+                                            )}
                                         </button>
+
+                                        {isOutOfZone && !isPendingCalc && !calcError && (
+                                            <p className="text-[10px] md:text-xs text-orange-600 font-bold uppercase tracking-widest flex items-center gap-2 animate-pulse">
+                                                <AlertTriangle className="w-4 h-4" /> Zona con cargo logístico adicional
+                                            </p>
+                                        )}
                                     </motion.div>
                                 )}
                             </motion.div>
@@ -301,27 +346,52 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                             <form className="space-y-6" onSubmit={(e) => {
                                 e.preventDefault();
                                 const formData = new FormData(e.currentTarget);
-                                setLeadName(formData.get('name') as string);
-                                setContactData({ phone: formData.get('phone') as string, email: formData.get('email') as string });
+                                const name = formData.get('name') as string;
+                                const phone = formData.get('phone') as string;
+                                const email = formData.get('email') as string;
+
+                                if (name.trim().length < 3) {
+                                    alert('Por favor, ingresa tu nombre completo (mínimo 3 letras).');
+                                    return;
+                                }
+                                const cleanPhone = phone.replace(/\D/g, '');
+                                if (cleanPhone.length !== 10) {
+                                    alert('El WhatsApp debe ser de 10 dígitos exactamente.');
+                                    return;
+                                }
+
+                                setLeadName(name);
+                                setContactData({ phone: cleanPhone, email });
                                 setSaveState(null);
                                 setCurrentStep('result');
                             }}>
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Nombre Completo</label>
-                                        <input type="text" name="name" required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-secondary focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="Tu nombre..." />
+                                        <input type="text" name="name" required minLength={3} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-secondary focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="Tu nombre..." />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">WhatsApp</label>
-                                        <input type="tel" name="phone" required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-secondary focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="10 dígitos" />
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">WhatsApp (10 dígitos)</label>
+                                        <input
+                                            type="tel"
+                                            name="phone"
+                                            required
+                                            pattern="[0-9]{10}"
+                                            maxLength={10}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-secondary focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+                                            placeholder="Ej: 9991234567"
+                                            onChange={(e) => {
+                                                e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                            }}
+                                        />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Correo Electrónico (Opcional)</label>
                                     <input type="email" name="email" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-secondary focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="ejemplo@correo.com" />
                                 </div>
-                                <button type="submit" className="w-full bg-primary hover:bg-orange-600 text-white font-black py-4 rounded-xl shadow-xl shadow-primary/20 transition-all text-lg flex items-center justify-center gap-2 mt-4 uppercase tracking-wider">
-                                    Ver Mi Cotización Ahora <ArrowRight className="w-5 h-5" />
+                                <button type="submit" className="w-full bg-primary hover:bg-orange-600 text-white font-black py-4 rounded-xl shadow-xl shadow-primary/20 transition-all text-lg flex items-center justify-center gap-2 mt-4 uppercase tracking-wider group">
+                                    Ver Mi Cotización Ahora <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </button>
                             </form>
                         </div>
@@ -342,6 +412,23 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                             </div>
                             <h3 className="text-2xl md:text-5xl font-black text-secondary tracking-tighter">¡Todo Listo, {leadName.split(' ')[0] || 'Cliente'}!</h3>
                             <p className="text-slate-500 text-xs md:text-xl mt-2">Tu proyecto de <strong>{initialArea}m²</strong> en <strong>{city || address || 'tu ubicación'}</strong></p>
+
+                            {isOutOfZone && (
+                                <div className="mt-8 p-4 md:p-6 bg-orange-50 border border-orange-100 rounded-2xl md:rounded-[2rem] text-orange-800 text-xs md:text-base font-bold flex items-center justify-center gap-4 animate-in fade-in zoom-in duration-500">
+                                    <AlertTriangle className="w-6 h-6 md:w-8 md:h-8 text-orange-500 flex-shrink-0" />
+                                    <div className="text-left">
+                                        <p className="text-orange-950">Nota de Ubicación Especial</p>
+                                        <p className="text-[10px] md:text-sm font-medium opacity-80">Esta es una cotización basada en precios de Mérida. Debido a la distancia, podrían incurrir costos extras de logística y viáticos tras la visita técnica.</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {saveState && !saveState.success && (
+                                <div className="mt-6 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-700 text-xs font-bold flex items-center gap-3 animate-bounce">
+                                    <AlertCircle className="w-5 h-5" />
+                                    <p>Error al registrar cotización: {saveState.message || 'Intenta de nuevo.'}</p>
+                                </div>
+                            )}
                         </div>
 
                         <div className="grid md:grid-cols-3 gap-6 items-stretch">

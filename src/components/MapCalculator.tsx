@@ -5,6 +5,7 @@ import Script from 'next/script';
 import { Search, Map as MapIcon, RotateCcw, Crosshair, PencilRuler, Keyboard } from 'lucide-react';
 
 import { getAppConfig } from '@/app/actions/get-config';
+import { getLocations } from '@/app/actions/admin-locations';
 
 interface MapCalculatorProps {
     onAreaCalculated: (area: number) => void;
@@ -13,10 +14,40 @@ interface MapCalculatorProps {
     onCityDetected?: (details: { address: string; city: string; state: string; maps_link: string }) => void;
 }
 
-const MEXICO_REGIONS: Record<string, string[]> = {
-    'Yucatán': ['Mérida', 'Progreso', 'Umán', 'Kanasín'],
-    'Chihuahua': ['Chihuahua', 'Ciudad Juárez', 'Delicias', 'Cuauhtémoc'],
-    'Morelos': ['Cuernavaca', 'Jiutepec', 'Cuautla', 'Temixco']
+// Fallback in case DB fetch fails or is empty
+const FALLBACK_REGIONS: Record<string, string[]> = {
+    'Aguascalientes': ['Aguascalientes'],
+    'Baja California': ['Tijuana', 'Mexicali', 'Ensenada', 'Rosarito'],
+    'Baja California Sur': ['La Paz', 'Los Cabos', 'San José del Cabo'],
+    'Campeche': ['Campeche', 'Ciudad del Carmen'],
+    'Chiapas': ['Tuxtla Gutiérrez', 'San Cristóbal de las Casas', 'Tapachula'],
+    'Chihuahua': ['Chihuahua', 'Ciudad Juárez', 'Delicias', 'Cuauhtémoc', 'Parral'],
+    'Ciudad de México': ['CDMX'],
+    'Coahuila': ['Saltillo', 'Torreón', 'Monclova', 'Piedras Negras'],
+    'Colima': ['Colima', 'Manzanillo'],
+    'Durango': ['Durango', 'Gómez Palacio'],
+    'Estado de México': ['Toluca', 'Naucalpan', 'Tlalnepantla', 'Huixquilucan', 'Metepec'],
+    'Guanajuato': ['León', 'Irapuato', 'Celaya', 'Guanajuato', 'San Miguel de Allende'],
+    'Guerrero': ['Acapulco', 'Chilpancingo', 'Zihuatanejo', 'Iguala'],
+    'Hidalgo': ['Pachuca', 'Tula', 'Tulancingo'],
+    'Jalisco': ['Guadalajara', 'Zapopan', 'Puerto Vallarta', 'Tlaquepaque', 'Tonalá'],
+    'Michoacán': ['Morelia', 'Uruapan', 'Lázaro Cárdenas'],
+    'Morelos': ['Cuernavaca', 'Jiutepec', 'Cuautla', 'Temixco'],
+    'Nayarit': ['Tepic', 'Bahía de Banderas'],
+    'Nuevo León': ['Monterrey', 'San Pedro Garza García', 'Santa Catarina', 'Guadalupe'],
+    'Oaxaca': ['Oaxaca de Juárez', 'Salina Cruz', 'Huatulco'],
+    'Puebla': ['Puebla', 'Tehuacán', 'San Andrés Cholula', 'Atlixco'],
+    'Querétaro': ['Querétaro', 'San Juan del Río', 'Corregidora'],
+    'Quintana Roo': ['Cancún', 'Playa del Carmen', 'Tulum', 'Cozumel', 'Chetumal'],
+    'San Luis Potosí': ['San Luis Potosí', 'Ciudad Valles', 'Matehuala'],
+    'Sinaloa': ['Culiacán', 'Mazatlán', 'Los Mochis'],
+    'Sonora': ['Hermosillo', 'Ciudad Obregón', 'Nogales', 'Puerto Peñasco'],
+    'Tabasco': ['Villahermosa', 'Cárdenas'],
+    'Tamaulipas': ['Reynosa', 'Matamoros', 'Nuevo Laredo', 'Tampico', 'Ciudad Victoria'],
+    'Tlaxcala': ['Tlaxcala', 'Apizaco'],
+    'Veracruz': ['Veracruz', 'Xalapa', 'Boca del Río', 'Coatzacoalcos'],
+    'Yucatán': ['Mérida', 'Progreso', 'Umán', 'Kanasín', 'Valladolid', 'Tizimín'],
+    'Zacatecas': ['Zacatecas', 'Fresnillo', 'Guadalupe']
 };
 
 declare global {
@@ -57,8 +88,29 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
     const [manualLocation, setManualLocation] = useState({
         address: '',
         city: '',
-        state: ''
+        state: '',
+        customCity: '',
+        customState: ''
     });
+    const [dynamicRegions, setDynamicRegions] = useState<Record<string, string[]>>({});
+
+    // Load dynamic locations for manual input
+    useEffect(() => {
+        getLocations().then(res => {
+            if (res.success && res.data && res.data.length > 0) {
+                const grouped: Record<string, string[]> = {};
+                res.data.forEach((loc: any) => {
+                    if (!grouped[loc.estado]) grouped[loc.estado] = [];
+                    if (!grouped[loc.estado].includes(loc.ciudad)) {
+                        grouped[loc.estado].push(loc.ciudad);
+                    }
+                });
+                setDynamicRegions(grouped);
+            }
+        });
+    }, []);
+
+    const activeRegions = Object.keys(dynamicRegions).length > 0 ? dynamicRegions : FALLBACK_REGIONS;
 
     const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || dbMapsKey || '';
 
@@ -219,7 +271,7 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                             maps_link: `https://www.google.com/maps?q=${center.lat()},${center.lng()}`
                         };
                         notifyLocation(loc);
-                        setManualLocation({ address: loc.address, city: loc.city, state: loc.state });
+                        setManualLocation({ address: loc.address, city: loc.city, state: loc.state, customCity: '', customState: '' });
                     }
                 });
             }
@@ -395,18 +447,38 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                             value={manualLocation.state}
                             onChange={(e) => {
                                 const state = e.target.value;
-                                const firstCity = MEXICO_REGIONS[state]?.[0] || '';
-                                const newLoc = { ...manualLocation, state, city: firstCity };
+                                const firstCity = activeRegions[state]?.[0] || '';
+                                const newLoc = { ...manualLocation, state, city: (state === 'Otro' ? 'Otro' : firstCity), customState: '', customCity: '' };
                                 setManualLocation(newLoc);
-                                notifyLocation({ ...newLoc, maps_link: '' });
+                                notifyLocation({
+                                    ...newLoc,
+                                    state: state === 'Otro' ? '' : state,
+                                    city: state === 'Otro' ? '' : newLoc.city,
+                                    maps_link: ''
+                                });
                             }}
                             className={`w-full bg-white border ${!manualLocation.state && area > 0 ? 'border-red-300 bg-red-50/30' : 'border-slate-200'} text-sm font-medium text-secondary rounded-xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none cursor-pointer`}
                         >
                             <option value="">Seleccione Estado</option>
-                            {Object.keys(MEXICO_REGIONS).map(state => (
+                            {Object.keys(activeRegions).sort().map(state => (
                                 <option key={state} value={state}>{state}</option>
                             ))}
+                            <option value="Otro">Otro (Especificar)</option>
                         </select>
+                        {manualLocation.state === 'Otro' && (
+                            <input
+                                type="text"
+                                placeholder="Nombre del Estado..."
+                                value={manualLocation.customState}
+                                onChange={(e) => {
+                                    const customState = e.target.value;
+                                    const newLoc = { ...manualLocation, customState };
+                                    setManualLocation(newLoc);
+                                    notifyLocation({ ...newLoc, state: customState, city: manualLocation.customCity || manualLocation.city, maps_link: '' });
+                                }}
+                                className="mt-2 w-full bg-white border border-primary/30 text-sm font-bold text-primary rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none animate-in fade-in slide-in-from-top-1"
+                            />
+                        )}
                     </div>
 
                     <div>
@@ -416,18 +488,38 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                         <select
                             value={manualLocation.city}
                             onChange={(e) => {
-                                const newLoc = { ...manualLocation, city: e.target.value };
+                                const cityVal = e.target.value;
+                                const newLoc = { ...manualLocation, city: cityVal, customCity: '' };
                                 setManualLocation(newLoc);
-                                notifyLocation({ ...newLoc, maps_link: '' });
+                                notifyLocation({
+                                    ...newLoc,
+                                    city: cityVal === 'Otro' ? '' : cityVal,
+                                    state: manualLocation.state === 'Otro' ? manualLocation.customState : manualLocation.state,
+                                    maps_link: ''
+                                });
                             }}
                             className={`w-full bg-white border ${!manualLocation.city && area > 0 ? 'border-red-300 bg-red-50/30' : 'border-slate-200'} text-sm font-medium text-secondary rounded-xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none cursor-pointer`}
                         >
                             <option value="">Seleccione Ciudad</option>
-                            {(MEXICO_REGIONS[manualLocation.state] || []).map(city => (
+                            {(activeRegions[manualLocation.state] || []).map(city => (
                                 <option key={city} value={city}>{city}</option>
                             ))}
-                            <option value="Otro">Otro</option>
+                            <option value="Otro">Otro (Especificar)</option>
                         </select>
+                        {manualLocation.city === 'Otro' && (
+                            <input
+                                type="text"
+                                placeholder="Nombre de la Ciudad..."
+                                value={manualLocation.customCity}
+                                onChange={(e) => {
+                                    const customCity = e.target.value;
+                                    const newLoc = { ...manualLocation, customCity };
+                                    setManualLocation(newLoc);
+                                    notifyLocation({ ...newLoc, city: customCity, state: manualLocation.state === 'Otro' ? manualLocation.customState : manualLocation.state, maps_link: '' });
+                                }}
+                                className="mt-2 w-full bg-white border border-primary/30 text-sm font-bold text-primary rounded-xl p-3 focus:ring-2 focus:ring-primary/20 outline-none animate-in fade-in slide-in-from-top-1"
+                            />
+                        )}
                     </div>
                 </div>
             </div>
