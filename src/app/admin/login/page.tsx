@@ -47,7 +47,7 @@ export default function AdminLoginPage() {
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Correo Electrónico</label>
                         <input
                             type="email"
-                            placeholder="admin@thermohouse.mx"
+                            placeholder="nombre@ejemplo.com"
                             className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm font-bold"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contraseña</label>
                         <input
                             type="password"
-                            placeholder="••••••••••••"
+                            placeholder="Ingresa tu contraseña"
                             className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-lg font-bold tracking-widest placeholder:text-slate-200"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}

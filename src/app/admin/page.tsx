@@ -4,33 +4,19 @@ import { useState, useEffect } from 'react';
 import { getQuotes, updateQuoteStatus } from '@/app/actions/get-quotes';
 import { logoutAdmin } from '@/app/actions/admin-auth';
 import { getAdminUsers, createAdminUser, deleteAdminUser } from '@/app/actions/admin-users';
+import { getProducts, updateProduct, cloneProductToCity, deleteProduct } from '@/app/actions/admin-products';
 import { useRouter } from 'next/navigation';
 import {
-    Users,
-    TrendingUp,
-    Calendar,
-    MapPin,
-    Phone,
-    ExternalLink,
-    Search,
-    Filter,
-    ArrowUpDown,
-    CheckCircle2,
-    Clock,
-    AlertCircle,
-    ChevronRight,
-    LogOut,
-    UserPlus,
-    Trash2,
-    Shield,
-    Mail,
-    UserCircle
+    Users, TrendingUp, Calendar, MapPin, Phone, ExternalLink, Search, Filter,
+    CheckCircle2, Clock, AlertCircle, ChevronRight, LogOut, UserPlus, Trash2,
+    Shield, Mail, UserCircle, Package, Edit3, Plus, Globe, Save, X
 } from 'lucide-react';
 
 export default function AdminDashboard() {
-    const [activeTab, setActiveTab] = useState<'quotes' | 'users'>('quotes');
+    const [activeTab, setActiveTab] = useState<'quotes' | 'users' | 'prices'>('quotes');
     const [quotes, setQuotes] = useState<any[]>([]);
     const [users, setUsers] = useState<any[]>([]);
+    const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
@@ -39,30 +25,29 @@ export default function AdminDashboard() {
     const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'editor' as 'admin' | 'editor' });
     const [isCreatingUser, setIsCreatingUser] = useState(false);
 
+    // Product Editing State
+    const [editingProduct, setEditingProduct] = useState<string | null>(null);
+    const [editForm, setEditForm] = useState<any>(null);
+    const [newCityName, setNewCityName] = useState('');
+
     const router = useRouter();
 
     useEffect(() => {
-        fetchData();
-        fetchUsers();
+        fetchAllData();
     }, []);
 
-    const fetchData = async () => {
+    const fetchAllData = async () => {
         setLoading(true);
-        const res = await getQuotes();
-        if (res.success) setQuotes(res.data || []);
+        const [qRes, uRes, pRes] = await Promise.all([getQuotes(), getAdminUsers(), getProducts()]);
+        if (qRes.success) setQuotes(qRes.data || []);
+        if (uRes.success) setUsers(uRes.data || []);
+        if (pRes.success) setProducts(pRes.data || []);
         setLoading(false);
     };
 
-    const fetchUsers = async () => {
-        const res = await getAdminUsers();
-        if (res.success) setUsers(res.data || []);
-    };
-
-    const handleUpdateStatus = async (id: string, status: string) => {
+    const handleUpdateQuote = async (id: string, status: string) => {
         const res = await updateQuoteStatus(id, status);
-        if (res.success) {
-            setQuotes(prev => prev.map(q => q.id === id ? { ...q, status } : q));
-        }
+        if (res.success) setQuotes(prev => prev.map(q => q.id === id ? { ...q, status } : q));
     };
 
     const handleCreateUser = async (e: React.FormEvent) => {
@@ -70,19 +55,46 @@ export default function AdminDashboard() {
         setIsCreatingUser(true);
         const res = await createAdminUser(newUser);
         if (res.success) {
-            await fetchUsers();
+            await fetchAllData();
             setNewUser({ name: '', email: '', password: '', role: 'editor' });
-            alert('Usuario creado exitosamente');
-        } else {
-            alert('Error: ' + res.message);
-        }
+            alert('Usuario creado');
+        } else alert('Error: ' + res.message);
         setIsCreatingUser(false);
     };
 
-    const handleDeleteUser = async (id: string) => {
-        if (confirm('¿Estás seguro de eliminar a este usuario?')) {
+    const handeDeleteUser = async (id: string) => {
+        if (confirm('¿Eliminar usuario?')) {
             const res = await deleteAdminUser(id);
-            if (res.success) await fetchUsers();
+            if (res.success) fetchAllData();
+        }
+    };
+
+    const handleSaveProduct = async () => {
+        if (!editForm) return;
+        const res = await updateProduct(editForm.id, {
+            precio_contado_m2: Number(editForm.precio_contado_m2),
+            precio_msi_m2: Number(editForm.precio_msi_m2),
+            title: editForm.title
+        });
+        if (res.success) {
+            setEditingProduct(null);
+            fetchAllData();
+        } else alert(res.message);
+    };
+
+    const handleClone = async (prod: any) => {
+        const city = prompt('¿Para qué ciudad quieres crear este precio especial? (Ej: Chihuahua)');
+        if (city) {
+            const res = await cloneProductToCity(prod, city);
+            if (res.success) fetchAllData();
+            else alert(res.message);
+        }
+    };
+
+    const handleDeleteProduct = async (id: string) => {
+        if (confirm('¿Eliminar esta variante de precio?')) {
+            const res = await deleteProduct(id);
+            if (res.success) fetchAllData();
         }
     };
 
@@ -93,17 +105,10 @@ export default function AdminDashboard() {
     };
 
     const filteredQuotes = quotes.filter(q => {
-        const matchesSearch =
-            q.contact_info.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            q.ciudad.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = q.contact_info.name.toLowerCase().includes(searchTerm.toLowerCase()) || q.ciudad.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'All' || q.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
-
-    // Stats
-    const totalRevenue = quotes.reduce((acc, q) => acc + (q.precio_total_contado || 0), 0);
-    const totalArea = quotes.reduce((acc, q) => acc + (q.area || 0), 0);
-    const avgTicket = quotes.length ? totalRevenue / quotes.length : 0;
 
     return (
         <div className="min-h-screen bg-slate-50/50 p-4 md:p-8 font-sans">
@@ -112,256 +117,124 @@ export default function AdminDashboard() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-black text-secondary uppercase tracking-tight">Management Suite</h1>
-                        <p className="text-muted-foreground">Sistema de Control Thermo House</p>
+                        <p className="text-muted-foreground">Control de Ventas y Precios</p>
                     </div>
                     <div className="flex gap-3">
-                        <div className="bg-white p-1 rounded-2xl border border-slate-200 shadow-sm flex">
-                            <button
-                                onClick={() => setActiveTab('quotes')}
-                                className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'quotes' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`}
-                            >
-                                Cotizaciones
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('users')}
-                                className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`}
-                            >
-                                Mi Equipo
-                            </button>
+                        <div className="bg-white p-1 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap">
+                            <button onClick={() => setActiveTab('quotes')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'quotes' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400'}`}>Leads</button>
+                            <button onClick={() => setActiveTab('prices')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'prices' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400'}`}>Precios</button>
+                            <button onClick={() => setActiveTab('users')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400'}`}>Equipo</button>
                         </div>
-                        <button
-                            onClick={handleLogout}
-                            className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-bold border border-red-100 shadow-sm hover:bg-red-100 transition-all flex items-center gap-2"
-                        >
-                            <LogOut className="w-4 h-4" />
-                            Salir
-                        </button>
+                        <button onClick={handleLogout} className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-bold border border-red-100"><LogOut className="w-4 h-4" /></button>
                     </div>
                 </div>
 
-                {activeTab === 'quotes' ? (
-                    <>
-                        {/* Stats Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                                <div className="flex items-center gap-4 mb-2">
-                                    <div className="p-2 bg-blue-50 rounded-xl"><Users className="w-6 h-6 text-blue-500" /></div>
-                                    <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Leads</span>
-                                </div>
-                                <div className="text-3xl font-black text-secondary">{quotes.length}</div>
-                            </div>
-                            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                                <div className="flex items-center gap-4 mb-2">
-                                    <div className="p-2 bg-primary/10 rounded-xl"><TrendingUp className="w-6 h-6 text-primary" /></div>
-                                    <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Cartera</span>
-                                </div>
-                                <div className="text-3xl font-black text-secondary">${(totalRevenue / 1000).toFixed(1)}k</div>
-                            </div>
-                            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                                <div className="flex items-center gap-4 mb-2">
-                                    <div className="p-2 bg-accent/10 rounded-xl"><MapPin className="w-6 h-6 text-accent" /></div>
-                                    <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Metraje</span>
-                                </div>
-                                <div className="text-3xl font-black text-secondary">{Math.round(totalArea)}m²</div>
-                            </div>
-                            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                                <div className="flex items-center gap-4 mb-2">
-                                    <div className="p-2 bg-purple-50 rounded-xl"><Calendar className="w-6 h-6 text-purple-500" /></div>
-                                    <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Promedio</span>
-                                </div>
-                                <div className="text-3xl font-black text-secondary">${Math.round(avgTicket).toLocaleString()}</div>
+                {activeTab === 'quotes' && (
+                    <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                        <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                            <div className="relative w-96">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <input type="text" placeholder="Buscar..." className="w-full pl-12 pr-4 py-2 rounded-xl border border-slate-200 outline-none" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                             </div>
                         </div>
-
-                        {/* Quotes Table */}
-                        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                            <div className="p-4 md:p-6 border-b border-slate-50 flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-50/50">
-                                <div className="relative w-full md:w-96">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                    <input
-                                        type="text"
-                                        placeholder="Buscar por nombre o ciudad..."
-                                        className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-primary/10 transition-all text-sm"
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
-                                </div>
-                                <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-                                    {['All', 'Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado'].map(status => (
-                                        <button
-                                            key={status}
-                                            onClick={() => setStatusFilter(status)}
-                                            className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${statusFilter === status ? 'bg-secondary text-white shadow-md' : 'bg-white text-slate-400 border border-slate-100 hover:bg-slate-50'}`}
-                                        >
-                                            {status}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="bg-slate-50/50 text-[10px] uppercase tracking-widest font-black text-slate-400">
-                                            <th className="px-6 py-4">Fecha</th>
-                                            <th className="px-6 py-4">Cliente</th>
-                                            <th className="px-6 py-4">Proyecto</th>
-                                            <th className="px-6 py-4">Propuesta</th>
-                                            <th className="px-6 py-4">Estado</th>
-                                            <th className="px-6 py-4 text-right">Acción</th>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-50 text-[10px] uppercase font-black text-slate-400 tracking-widest">
+                                    <tr><th className="px-6 py-4">Fecha</th><th className="px-6 py-4">Cliente</th><th className="px-6 py-4">Proyecto</th><th className="px-6 py-4">Estado</th></tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {filteredQuotes.map(q => (
+                                        <tr key={q.id} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-4 text-xs font-bold text-slate-500">{new Date(q.created_at).toLocaleDateString()}</td>
+                                            <td className="px-6 py-4 font-bold text-secondary text-sm">{q.contact_info.name} <div className="text-[10px] text-primary">{q.contact_info.phone}</div></td>
+                                            <td className="px-6 py-4 text-sm">{q.area}m² - {q.ciudad}</td>
+                                            <td className="px-6 py-4">
+                                                <select value={q.status} onChange={e => handleUpdateQuote(q.id, e.target.value)} className="text-[10px] font-black uppercase tracking-wider p-2 rounded-lg bg-white border border-slate-200">
+                                                    {['Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado'].map(s => <option key={s} value={s}>{s}</option>)}
+                                                </select>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-50">
-                                        {loading ? (
-                                            <tr>
-                                                <td colSpan={6} className="px-6 py-12 text-center text-slate-400">Cargando datos...</td>
-                                            </tr>
-                                        ) : filteredQuotes.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={6} className="px-6 py-12 text-center text-slate-400">No hay cotizaciones.</td>
-                                            </tr>
-                                        ) : (
-                                            filteredQuotes.map((quote) => (
-                                                <tr key={quote.id} className="hover:bg-slate-50/50 transition-colors group">
-                                                    <td className="px-6 py-4">
-                                                        <div className="text-xs font-bold text-slate-600">
-                                                            {new Date(quote.created_at).toLocaleDateString()}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="font-bold text-secondary text-sm">{quote.contact_info.name}</div>
-                                                        <div className="text-xs text-primary font-medium">{quote.contact_info.phone}</div>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-sm font-medium">
-                                                        {quote.area} m² - {quote.ciudad}
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="text-sm font-black text-secondary">${Math.round(quote.precio_total_contado).toLocaleString()}</div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <select
-                                                            value={quote.status}
-                                                            onChange={(e) => handleUpdateStatus(quote.id, e.target.value)}
-                                                            className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg border outline-none bg-slate-50 border-slate-100"
-                                                        >
-                                                            <option value="Nuevo">Nuevo</option>
-                                                            <option value="Contactado">Contactado</option>
-                                                            <option value="Visita Técnica">Visita</option>
-                                                            <option value="Cerrado">Cerrado</option>
-                                                        </select>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        {quote.google_maps_link && (
-                                                            <a href={quote.google_maps_link} target="_blank" className="p-2 hover:bg-slate-100 rounded-lg inline-block transition-all">
-                                                                <ExternalLink className="w-4 h-4 text-primary" />
-                                                            </a>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
-                    </>
-                ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* New User Form */}
-                        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm h-fit">
-                            <div className="mb-6">
-                                <h2 className="text-xl font-black text-secondary uppercase tracking-tight flex items-center gap-2">
-                                    <UserPlus className="w-5 h-5 text-primary" />
-                                    Nuevo Integrante
-                                </h2>
-                                <p className="text-slate-400 text-xs mt-1">Otorga acceso al panel administrativo</p>
-                            </div>
-                            <form onSubmit={handleCreateUser} className="space-y-4">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre Completo</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm"
-                                        placeholder="Ej. Juan Pérez"
-                                        value={newUser.name}
-                                        onChange={e => setNewUser({ ...newUser, name: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Correo</label>
-                                    <input
-                                        type="email"
-                                        required
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm"
-                                        placeholder="correo@thermohouse.mx"
-                                        value={newUser.email}
-                                        onChange={e => setNewUser({ ...newUser, email: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contraseña Temporal</label>
-                                    <input
-                                        type="password"
-                                        required
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm"
-                                        placeholder="••••••••"
-                                        value={newUser.password}
-                                        onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nivel de Acceso</label>
-                                    <select
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm"
-                                        value={newUser.role}
-                                        onChange={e => setNewUser({ ...newUser, role: e.target.value as any })}
-                                    >
-                                        <option value="editor">Vendedor (Editor)</option>
-                                        <option value="admin">Administrador (Total)</option>
-                                    </select>
-                                </div>
-                                <button
-                                    disabled={isCreatingUser}
-                                    className="w-full bg-secondary text-white py-4 rounded-xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-secondary/10 mt-2 flex items-center justify-center gap-2"
-                                >
-                                    {isCreatingUser ? 'Guardando...' : 'Dar de Alta'}
-                                </button>
-                            </form>
-                        </div>
+                    </div>
+                )}
 
-                        {/* Users List */}
-                        <div className="lg:col-span-2 space-y-4">
-                            <h2 className="text-xl font-black text-secondary uppercase tracking-tight flex items-center gap-2 mb-6">
-                                <Users className="w-5 h-5 text-primary" />
-                                Integrantes Activos
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {users.map(user => (
-                                    <div key={user.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-start justify-between group">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100">
-                                                <UserCircle className="w-6 h-6 text-slate-400" />
+                {activeTab === 'prices' && (
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {products.map(p => (
+                                <div key={p.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div>
+                                            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${p.ciudad === 'General' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
+                                                {p.ciudad}
+                                            </span>
+                                            <h3 className="text-lg font-black text-secondary mt-2">{p.title}</h3>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <button onClick={() => handleClone(p)} className="p-2 bg-slate-50 text-slate-400 hover:text-primary rounded-xl transition-all" title="Clonar para ciudad"><Plus className="w-4 h-4" /></button>
+                                            {p.ciudad !== 'General' && <button onClick={() => handleDeleteProduct(p.id)} className="p-2 bg-red-50 text-red-400 hover:text-red-600 rounded-xl transition-all"><Trash2 className="w-4 h-4" /></button>}
+                                        </div>
+                                    </div>
+
+                                    {editingProduct === p.id ? (
+                                        <div className="space-y-4 pt-2">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Contado $/m²</label>
+                                                    <input type="number" className="w-full p-2 bg-slate-50 border rounded-lg text-sm font-bold" value={editForm.precio_contado_m2} onChange={e => setEditForm({ ...editForm, precio_contado_m2: e.target.value })} />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">MSI $/m²</label>
+                                                    <input type="number" className="w-full p-2 bg-slate-50 border rounded-lg text-sm font-bold" value={editForm.precio_msi_m2} onChange={e => setEditForm({ ...editForm, precio_msi_m2: e.target.value })} />
+                                                </div>
                                             </div>
-                                            <div>
-                                                <div className="font-bold text-secondary">{user.name}</div>
-                                                <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                                                    <Mail className="w-3 h-3 text-primary" /> {user.email}
-                                                </div>
-                                                <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-slate-50 border border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                                    <Shield className="w-2.5 h-2.5 mr-1.5 text-primary" /> {user.role}
-                                                </div>
+                                            <div className="flex gap-2">
+                                                <button onClick={handleSaveProduct} className="flex-1 bg-primary text-white py-2 rounded-xl text-xs font-black uppercase tracking-widest">Guardar</button>
+                                                <button onClick={() => setEditingProduct(null)} className="p-2 bg-slate-100 rounded-xl"><X className="w-4 h-4" /></button>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => handleDeleteUser(user.id)}
-                                            className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                                                <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Precio Contado</span>
+                                                <span className="text-lg font-black text-secondary">${p.precio_contado_m2}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center py-2">
+                                                <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Precio MSI</span>
+                                                <span className="text-lg font-black text-primary">${p.precio_msi_m2}</span>
+                                            </div>
+                                            <button onClick={() => { setEditingProduct(p.id); setEditForm(p); }} className="w-full mt-4 py-3 border border-slate-100 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 hover:text-secondary transition-all flex items-center justify-center gap-2">
+                                                <Edit3 className="w-3 h-3" /> Editar Tarifas
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'users' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm h-fit">
+                            <h2 className="text-xl font-black text-secondary uppercase tracking-tight mb-6">Nuevo Usuario</h2>
+                            <form onSubmit={handleCreateUser} className="space-y-4">
+                                <input placeholder="Nombre" className="w-full p-3 bg-slate-50 border rounded-xl" value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })} />
+                                <input placeholder="Email" className="w-full p-3 bg-slate-50 border rounded-xl" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} />
+                                <input type="password" placeholder="Password" className="w-full p-3 bg-slate-50 border rounded-xl" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
+                                <button className="w-full bg-secondary text-white py-4 rounded-xl font-black uppercase tracking-widest">Crear Acceso</button>
+                            </form>
+                        </div>
+                        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {users.map(u => (
+                                <div key={u.id} className="bg-white p-6 rounded-3xl border border-slate-100 flex justify-between items-center">
+                                    <div><div className="font-bold">{u.name}</div><div className="text-xs text-slate-400">{u.email}</div></div>
+                                    <button onClick={() => handeDeleteUser(u.id)} className="p-2 text-red-300 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}
