@@ -119,13 +119,25 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
         ];
     };
 
-    const currentSolutions = activeSolutions
-        .filter((s: Solution) => {
-            if (roofType === 'concrete') return s.category === 'concrete' || s.category === 'both';
-            if (roofType === 'sheet') return s.category === 'sheet' || s.category === 'both';
-            return false;
+    const allPotentialSols = allDbSolutions.length > 0 ? allDbSolutions : fallbackSolutions;
+
+    const currentSolutions = (() => {
+        // Build a unified list for selection: Prefer specific city, else Mérida/Fallback
+        const uniqueInternalIds = Array.from(new Set(allPotentialSols.map(s => s.internal_id)));
+
+        return uniqueInternalIds.map(id => {
+            const citySol = allPotentialSols.find(s => s.internal_id === id && (s as any).ciudad === (city || 'Mérida'));
+            const fallbackSol = allPotentialSols.find(s => s.internal_id === id); // Takes the first one found
+            return citySol || fallbackSol;
         })
-        .sort((a, b) => (a.orden || 0) - (b.orden || 0));
+            .filter((s): s is Solution => {
+                if (!s) return false;
+                if (roofType === 'concrete') return s.category === 'concrete' || s.category === 'both';
+                if (roofType === 'sheet') return s.category === 'sheet' || s.category === 'both';
+                return false;
+            })
+            .sort((a, b) => (a.orden || 0) - (b.orden || 0));
+    })();
 
     const selectedSolution = activeSolutions.find(s => s.internal_id === selectedSolutionId);
 
