@@ -1,70 +1,72 @@
 'use server';
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { Solution } from '@/types';
 
 export async function calculateQuote(area: number, solutionId: string, city?: string) {
     try {
         const lookupCity = city || 'Mérida';
-        if (!area || area <= 0) {
-            throw new Error('Invalid area');
-        }
-        if (!solutionId) {
-            throw new Error('Invalid solution ID');
-        }
+        if (!area || area <= 0) throw new Error('Invalid area');
+        if (!solutionId) throw new Error('Invalid solution ID');
 
-        // Fetch solution price details from DB
-        // We try to match by internal_id (e.g., 'conc-1') first, as that's what the frontend likely uses currently.
-        // If solutionId is a UUID, it might also work if we adjusted the query, but 'conc-1' is text.
-        // The query `.or` handles both if we cast properly, but `internal_id` is text. `id` is uuid.
-        // Mixing types in .or() can be tricky in Supabase unless we use filter logic carefully.
-        // For safety, let's assume solutionId is the internal_id string for now as per `solutions.ts`.
-
-        let { data: solution, error } = await supabaseAdmin
+        // Fetch all solution prices for the city (or fallback) to find current and upsell
+        let { data: allSolutions, error } = await supabaseAdmin
             .from('soluciones_precios')
-            .select('precio_contado_m2, precio_msi_m2, ciudad')
-            .eq('internal_id', solutionId)
+            .select('*')
             .eq('ciudad', lookupCity)
-            .single();
+            .order('orden', { ascending: true });
 
         // Fallback to Merida if specific city price not found
-        if ((error || !solution) && lookupCity !== 'Mérida') {
+        if ((error || !allSolutions || allSolutions.length === 0) && lookupCity !== 'Mérida') {
             const fallback = await supabaseAdmin
                 .from('soluciones_precios')
-                .select('precio_contado_m2, precio_msi_m2, ciudad')
-                .eq('internal_id', solutionId)
+                .select('*')
                 .eq('ciudad', 'Mérida')
-                .single();
+                .order('orden', { ascending: true });
 
             if (fallback.data) {
-                solution = fallback.data;
+                allSolutions = fallback.data;
             }
         }
 
-        if (!solution) {
-            console.error('Error fetching solution or fallback:', error);
-            throw new Error('Solution not found or pricing unavailable');
+        if (!allSolutions || allSolutions.length === 0) {
+            throw new Error('Pricing unavailable');
         }
 
-        // Server-side calculation with 5900 MXN Minimum
-        const rawCash = Math.round(area * Number(solution.precio_contado_m2));
-        const rawMsi = Math.round(area * Number(solution.precio_msi_m2));
+        const currentSol = allSolutions.find(s => s.internal_id === solutionId);
+        if (!currentSol) throw new Error('Solution not found');
 
+        // Calculate current price
         const MIN_PRICE = 5900;
-        const totalCash = Math.max(rawCash, MIN_PRICE);
-        const totalMsi = Math.max(rawMsi, MIN_PRICE);
+        const totalCash = Math.max(Math.round(area * Number(currentSol.precio_contado_m2)), MIN_PRICE);
+        const totalMsi = Math.max(Math.round(area * Number(currentSol.precio_msi_m2)), MIN_PRICE);
+
+        // Find Upsell: Next solution in same category (or 'both') with higher order
+        const currentCategory = currentSol.category;
+        const upsellSol = allSolutions.find(s =>
+            s.orden > currentSol.orden &&
+            (s.category === currentCategory || s.category === 'both')
+        );
+
+        let upsellData = null;
+        if (upsellSol) {
+            const upCash = Math.max(Math.round(area * Number(upsellSol.precio_contado_m2)), MIN_PRICE);
+            const upMsi = Math.max(Math.round(area * Number(upsellSol.precio_msi_m2)), MIN_PRICE);
+            upsellData = {
+                totalCash: upCash,
+                totalMsi: upMsi,
+                title: upsellSol.title,
+                internal_id: upsellSol.internal_id
+            };
+        }
 
         return {
             success: true,
-            data: {
-                totalCash,
-                totalMsi
-            }
+            data: { totalCash, totalMsi },
+            upsell: upsellData
         };
     } catch (error) {
         console.error('Calculation error:', error);
-        return {
-            success: false,
-            error: 'Failed to calculate price'
-        };
+        return { success: false, error: 'Failed to calculate price' };
     }
 }
