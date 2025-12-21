@@ -31,7 +31,7 @@ export default function Navbar() {
             timeoutRef.current = setTimeout(() => {
                 // Check if mouse is NOT at the top before hiding
                 setIsVisible(false);
-            }, 2500);
+            }, 1200);
         };
 
         const handleMouseMove = (e: MouseEvent) => {
@@ -64,7 +64,7 @@ export default function Navbar() {
             // Keep visible while scrolling to target
             setIsVisible(true);
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
-            timeoutRef.current = setTimeout(() => setIsVisible(false), 2500);
+            timeoutRef.current = setTimeout(() => setIsVisible(false), 1200);
         }
     };
 
@@ -79,11 +79,11 @@ export default function Navbar() {
             <motion.nav
                 initial={{ y: 0 }}
                 animate={{ y: isVisible || isOpen ? 0 : -100 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 40 }}
                 className="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md border-b border-border shadow-sm"
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16 md:h-20">
+                    <div className="flex items-center justify-between h-14 md:h-16">
                         <div className="flex-shrink-0 flex items-center gap-2">
                             <Link href="/" className="text-xl md:text-2xl font-bold text-secondary tracking-tight">
                                 Thermo<span className="font-light">House</span>
