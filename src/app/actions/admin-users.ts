@@ -17,11 +17,14 @@ export async function getAdminUsers() {
     }
 }
 
-export async function createAdminUser(payload: { email: string; password: string; name: string; role: 'admin' | 'editor' }) {
+export async function createAdminUser(payload: { email: string; password: string; name: string; role: 'admin' | 'editor', ciudad?: string }) {
     try {
         const { error } = await supabaseAdmin
             .from('admin_users')
-            .insert(payload);
+            .insert({
+                ...payload,
+                ciudad: payload.ciudad || (payload.role === 'admin' ? 'Todas' : 'General')
+            });
 
         if (error) throw error;
         return { success: true };
@@ -30,9 +33,22 @@ export async function createAdminUser(payload: { email: string; password: string
     }
 }
 
+export async function resetAdminPassword(id: string, newPassword: string) {
+    try {
+        const { error } = await supabaseAdmin
+            .from('admin_users')
+            .update({ password: newPassword })
+            .eq('id', id);
+
+        if (error) throw error;
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, message: 'Error al resetear contraseña.' };
+    }
+}
+
 export async function deleteAdminUser(id: string) {
     try {
-        // Prevent deleting the last admin if we wanted to (omitted for simplicity now)
         const { error } = await supabaseAdmin
             .from('admin_users')
             .delete()

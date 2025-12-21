@@ -2,11 +2,17 @@
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-export async function getProducts() {
+export async function getProducts(cityFilter?: string) {
     try {
-        const { data, error } = await supabaseAdmin
+        let query = supabaseAdmin
             .from('soluciones_precios')
-            .select('*')
+            .select('*');
+
+        if (cityFilter && cityFilter !== 'Todas') {
+            query = query.eq('ciudad', cityFilter);
+        }
+
+        const { data, error } = await query
             .order('ciudad', { ascending: true })
             .order('orden', { ascending: true });
 

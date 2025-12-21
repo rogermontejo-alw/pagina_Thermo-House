@@ -50,3 +50,23 @@ export async function logoutAdmin() {
     cookieStore.delete('admin_session');
     return { success: true };
 }
+
+export async function getAdminSession() {
+    try {
+        const cookieStore = await cookies();
+        const email = cookieStore.get('admin_session')?.value;
+
+        if (!email) return null;
+
+        const { data: user, error } = await supabaseAdmin
+            .from('admin_users')
+            .select('*')
+            .eq('email', email)
+            .single();
+
+        if (error || !user) return null;
+        return user;
+    } catch (err) {
+        return null;
+    }
+}

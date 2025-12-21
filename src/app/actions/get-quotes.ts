@@ -2,9 +2,9 @@
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-export async function getQuotes() {
+export async function getQuotes(cityFilter?: string) {
     try {
-        const { data, error } = await supabaseAdmin
+        let query = supabaseAdmin
             .from('cotizaciones')
             .select(`
                 *,
@@ -12,8 +12,13 @@ export async function getQuotes() {
                     title,
                     internal_id
                 )
-            `)
-            .order('created_at', { ascending: false });
+            `);
+
+        if (cityFilter && cityFilter !== 'Todas') {
+            query = query.eq('ciudad', cityFilter);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) {
             console.error('Error fetching quotes:', error);
