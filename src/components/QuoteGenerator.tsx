@@ -433,10 +433,10 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                             ))}
                                         </ul>
                                     </div>
-                                    <div className="text-center mt-auto pt-6">
-                                        <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block uppercase">Inversión Final:</span>
-                                        <div className="text-5xl md:text-5xl lg:text-5xl font-black text-secondary tracking-tighter">${quote?.totalCash.toLocaleString()}</div>
-                                        <span className="text-[10px] md:text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-md mt-2 inline-block">Ahorro del 14% aplicado</span>
+                                    <div className="text-center mt-auto pt-6 px-4 pb-4">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Inversión Final:</span>
+                                        <div className="text-3xl md:text-4xl lg:text-4xl font-black text-secondary tracking-tight">${quote?.totalCash.toLocaleString()}</div>
+                                        <span className="text-[10px] font-bold text-green-600 bg-green-50 px-3 py-1 rounded-md mt-2 inline-block">Ahorro del 14% aplicado</span>
                                     </div>
                                 </div>
 
@@ -465,10 +465,10 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                             <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-500" /> Saldo diferido</li>
                                         </ul>
                                     </div>
-                                    <div className="text-center mt-auto pt-6">
-                                        <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">12 Pagos Fijos de:</span>
-                                        <div className="text-5xl md:text-5xl lg:text-5xl font-black text-primary tracking-tighter">${Math.round((quote?.totalMsi || 0) / 12).toLocaleString()}</div>
-                                        <div className="text-[9px] md:text-xs text-slate-400 mt-2 uppercase font-black tracking-widest">Inversión anual: ${quote?.totalMsi.toLocaleString()}</div>
+                                    <div className="text-center mt-auto pt-6 px-4 pb-4">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">12 Pagos Fijos de:</span>
+                                        <div className="text-3xl md:text-4xl lg:text-4xl font-black text-primary tracking-tight">${Math.round((quote?.totalMsi || 0) / 12).toLocaleString()}</div>
+                                        <div className="text-[9px] text-slate-400 mt-2 uppercase font-black tracking-widest">Inversión anual: ${quote?.totalMsi.toLocaleString()}</div>
                                     </div>
                                 </div>
 
@@ -494,10 +494,10 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                         <div className="bg-white/5 rounded-xl p-4 md:p-6 border border-white/5 text-xs md:text-sm lg:text-base text-slate-200 italic leading-relaxed font-medium flex-grow">
                                             "Si ya vas a impermeabilizar, este nivel garantiza <span className="text-primary font-black">doble aislamiento térmico</span> por solo un pequeño ajuste mensual."
                                         </div>
-                                        <div className="text-center mt-auto pt-6">
-                                            <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block text-white/60">12 Pagos Fijos de:</span>
-                                            <div className="text-5xl md:text-5xl lg:text-5xl font-black text-white tracking-tighter">${Math.round((upsellQuote?.totalMsi || 0) / 12).toLocaleString()}</div>
-                                            <div className="text-[10px] md:text-xs text-slate-300 mt-3 font-black uppercase tracking-widest opacity-90">
+                                        <div className="text-center mt-auto pt-6 px-4 pb-4">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block text-white/60">12 Pagos Fijos de:</span>
+                                            <div className="text-3xl md:text-4xl lg:text-4xl font-black text-white tracking-tight">${Math.round((upsellQuote?.totalMsi || 0) / 12).toLocaleString()}</div>
+                                            <div className="text-[10px] text-slate-300 mt-3 font-black uppercase tracking-widest opacity-90">
                                                 Solo <span className="text-primary font-black">+${Math.round((upsellQuote.totalMsi - (quote?.totalMsi || 0)) / 12).toLocaleString()}</span> mensuales*
                                             </div>
                                         </div>
