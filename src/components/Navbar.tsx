@@ -66,9 +66,17 @@ export default function Navbar() {
                 </div>
             </div>
 
+            {/* Mobile Menu Backdrop */}
+            {isOpen && (
+                <div
+                    className="fixed inset-0 bg-secondary/40 backdrop-blur-md z-[40] transition-all animate-in fade-in duration-300 md:hidden"
+                    onClick={() => setIsOpen(false)}
+                />
+            )}
+
             {/* Mobile Menu */}
             {isOpen && (
-                <div className="md:hidden bg-background border-b border-border animate-in slide-in-from-top duration-300">
+                <div className="md:hidden bg-background border-b border-border animate-in slide-in-from-top duration-300 relative z-[50]">
                     <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                         {menuItems.map((item) => (
                             <a
