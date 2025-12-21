@@ -30,7 +30,7 @@ export default function TechComparisonSection() {
     ];
 
     return (
-        <section className="py-12 md:py-24 bg-background">
+        <section className="py-10 md:py-16 bg-muted/40">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-3xl mx-auto mb-10 md:mb-16">
                     <h2 className="text-2xl sm:text-4xl font-bold text-secondary mb-4 md:mb-6">
