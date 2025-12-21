@@ -22,6 +22,8 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     // Selection state
     const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
@@ -192,7 +194,12 @@ export default function AdminDashboard() {
     const filteredQuotes = quotes.filter(q => {
         const matchesSearch = q.contact_info.name.toLowerCase().includes(searchTerm.toLowerCase()) || q.ciudad.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'All' || q.status === statusFilter;
-        return matchesSearch && matchesStatus;
+
+        const qDate = new Date(q.created_at);
+        const matchesStartDate = !startDate || qDate >= new Date(startDate);
+        const matchesEndDate = !endDate || qDate <= new Date(endDate + 'T23:59:59');
+
+        return matchesSearch && matchesStatus && matchesStartDate && matchesEndDate;
     });
 
     if (!session) return <div className="h-screen flex items-center justify-center font-black text-slate-200 uppercase tracking-widest animate-pulse">Cargando Sesión...</div>;
@@ -241,10 +248,39 @@ export default function AdminDashboard() {
                                     </button>
                                 )}
                             </div>
-                            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-                                {['All', 'Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado'].map(status => (
-                                    <button key={status} onClick={() => setStatusFilter(status)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${statusFilter === status ? 'bg-secondary text-white shadow-md' : 'bg-white text-slate-400 border border-slate-100 hover:bg-slate-50'}`}>{status}</button>
-                                ))}
+
+                            <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
+                                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200">
+                                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                    <input
+                                        type="date"
+                                        className="text-[10px] font-bold outline-none bg-transparent"
+                                        value={startDate}
+                                        onChange={e => setStartDate(e.target.value)}
+                                        placeholder="Inicio"
+                                    />
+                                    <span className="text-slate-300">|</span>
+                                    <input
+                                        type="date"
+                                        className="text-[10px] font-bold outline-none bg-transparent"
+                                        value={endDate}
+                                        onChange={e => setEndDate(e.target.value)}
+                                        placeholder="Fin"
+                                    />
+                                    {(startDate || endDate) && (
+                                        <button
+                                            onClick={() => { setStartDate(''); setEndDate(''); }}
+                                            className="ml-1 p-1 hover:bg-slate-100 rounded-md text-slate-400"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+                                    {['All', 'Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado'].map(status => (
+                                        <button key={status} onClick={() => setStatusFilter(status)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${statusFilter === status ? 'bg-secondary text-white shadow-md' : 'bg-white text-slate-400 border border-slate-100 hover:bg-slate-50'}`}>{status}</button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
