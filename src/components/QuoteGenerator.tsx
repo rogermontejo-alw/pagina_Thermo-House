@@ -308,17 +308,17 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                         </div>
 
                         <div className="grid md:grid-cols-3 gap-6 items-stretch">
-                            <div className="bg-white rounded-3xl shadow-2xl flex flex-col transition-all border border-slate-100 overflow-hidden min-h-[550px]">
-                                <div className="p-5 md:p-8 pb-0">
+                            <div className="bg-white rounded-3xl shadow-2xl flex flex-col transition-all border border-slate-100 overflow-hidden min-h-[480px]">
+                                <div className="p-4 md:p-6 pb-0">
                                     <div className="text-primary font-bold text-[9px] uppercase tracking-widest mb-1 flex items-center gap-1"><Check className="w-3 h-3" /> Pago Contado</div>
-                                    <h4 className="text-xl md:text-2xl lg:text-3xl font-black text-secondary">{selectedSolution?.title}</h4>
+                                    <h4 className="text-lg md:text-xl lg:text-2xl font-black text-secondary">{selectedSolution?.title}</h4>
                                 </div>
-                                <div className="space-y-4 p-5 md:p-8 flex flex-col flex-grow">
-                                    <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-100 flex-grow">
-                                        <ul className="space-y-2.5">
+                                <div className="space-y-3 p-4 md:p-6 flex flex-col flex-grow">
+                                    <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-100 flex-grow">
+                                        <ul className="space-y-1.5">
                                             {getSolutionFeatures(selectedSolution).map((f, i) => (
-                                                <li key={i} className="flex items-start text-slate-600 text-xs md:text-sm gap-2 font-medium leading-tight">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0 mt-1.5" />{f}
+                                                <li key={i} className="flex items-start text-slate-600 text-[10px] md:text-xs gap-2 font-medium leading-tight">
+                                                    <div className="w-1 rounded-full bg-primary flex-shrink-0 mt-1.5 h-1" />{f}
                                                 </li>
                                             ))}
                                         </ul>
@@ -334,14 +334,14 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                 </button>
                             </div>
 
-                            <div className="bg-white rounded-3xl shadow-2xl border-2 border-primary/20 flex flex-col relative overflow-hidden min-h-[550px]">
-                                <div className="p-5 md:p-8 pb-0">
+                            <div className="bg-white rounded-3xl shadow-2xl border-2 border-primary/20 flex flex-col relative overflow-hidden min-h-[480px]">
+                                <div className="p-4 md:p-6 pb-0">
                                     <div className="text-primary font-bold text-[9px] uppercase tracking-widest mb-1 flex items-center gap-1"><Zap className="w-3 h-3 fill-primary" /> Pago a 12 MSI</div>
-                                    <h4 className="text-xl md:text-2xl lg:text-3xl font-black text-secondary">{selectedSolution?.title}</h4>
+                                    <h4 className="text-lg md:text-xl lg:text-2xl font-black text-secondary">{selectedSolution?.title}</h4>
                                 </div>
-                                <div className="space-y-4 p-5 md:p-8 flex flex-col flex-grow">
-                                    <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-100 flex-grow">
-                                        <ul className="space-y-2 text-slate-600 font-medium">
+                                <div className="space-y-3 p-4 md:p-6 flex flex-col flex-grow">
+                                    <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-100 flex-grow">
+                                        <ul className="space-y-1 text-slate-600 font-medium text-[10px] md:text-xs">
                                             <li className="flex items-center gap-2 font-black text-secondary"><Check className="w-4 h-4 text-green-500" /> Sin Intereses</li>
                                             <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-500" /> Todas las Tarjetas*</li>
                                             <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-500" /> Saldo diferido</li>
@@ -359,13 +359,13 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                             </div>
 
                             {upsellQuote ? (
-                                <div className="bg-secondary rounded-3xl shadow-2xl relative flex flex-col overflow-hidden min-h-[550px]">
-                                    <div className="p-5 md:p-8 pb-0">
+                                <div className="bg-secondary rounded-3xl shadow-2xl relative flex flex-col overflow-hidden min-h-[480px]">
+                                    <div className="p-4 md:p-6 pb-0">
                                         <div className="text-primary font-bold text-[9px] uppercase tracking-widest mb-1 flex items-center gap-1"><Shield className="w-3 h-3" /> Nivel Superior</div>
-                                        <h4 className="text-xl md:text-2xl lg:text-3xl font-black text-white">{upsellQuote.title}</h4>
+                                        <h4 className="text-lg md:text-xl lg:text-2xl font-black text-white">{upsellQuote.title}</h4>
                                     </div>
-                                    <div className="space-y-4 p-5 md:p-8 flex flex-col flex-grow">
-                                        <div className="bg-white/5 rounded-xl p-4 border border-white/5 text-xs md:text-sm lg:text-base text-slate-200 italic leading-relaxed font-medium flex-grow">
+                                    <div className="space-y-3 p-4 md:p-6 flex flex-col flex-grow">
+                                        <div className="bg-white/5 rounded-xl p-3 border border-white/5 text-[10px] md:text-xs lg:text-sm text-slate-200 italic leading-relaxed font-medium flex-grow">
                                             "Si ya vas a impermeabilizar, este nivel garantiza <span className="text-primary font-black">doble aislamiento térmico</span> por solo un pequeño ajuste mensual."
                                         </div>
                                         <div className="text-center mt-auto pt-6 px-4 pb-4">

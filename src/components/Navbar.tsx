@@ -18,27 +18,21 @@ export default function Navbar() {
 
     useEffect(() => {
         const handleScroll = () => {
-            // Only apply hide/show logic on desktop
             if (window.innerWidth < 768) {
                 setIsVisible(true);
                 return;
             }
 
             setIsVisible(true);
-
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
             timeoutRef.current = setTimeout(() => {
-                // Check if mouse is NOT at the top before hiding
                 setIsVisible(false);
             }, 1200);
         };
 
         const handleMouseMove = (e: MouseEvent) => {
             if (window.innerWidth < 768) return;
-
-            // If mouse is near the top (top 80px), show navbar
-            if (e.clientY < 80) {
+            if (e.clientY < 60) {
                 setIsVisible(true);
                 if (timeoutRef.current) clearTimeout(timeoutRef.current);
             }
@@ -61,7 +55,6 @@ export default function Navbar() {
         const elem = document.getElementById(targetId);
         if (elem) {
             elem.scrollIntoView({ behavior: 'smooth' });
-            // Keep visible while scrolling to target
             setIsVisible(true);
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
             timeoutRef.current = setTimeout(() => setIsVisible(false), 1200);
@@ -70,7 +63,6 @@ export default function Navbar() {
 
     return (
         <>
-            {/* Hover Trigger for Desktop - Transparent area at top */}
             <div
                 className="fixed top-0 left-0 w-full h-4 z-[51] hidden md:block"
                 onMouseEnter={() => setIsVisible(true)}
@@ -79,25 +71,25 @@ export default function Navbar() {
             <motion.nav
                 initial={{ y: 0 }}
                 animate={{ y: isVisible || isOpen ? 0 : -100 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 40 }}
-                className="fixed top-0 w-full z-50 bg-background/90 backdrop-blur-md border-b border-border shadow-sm"
+                transition={{ type: 'spring', stiffness: 450, damping: 45 }}
+                className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl z-50 bg-background/90 backdrop-blur-md border-b border-border shadow-lg rounded-b-2xl md:mt-0"
             >
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-14 md:h-16">
+                <div className="mx-auto px-4 sm:px-6">
+                    <div className="flex items-center justify-between h-14 md:h-14">
                         <div className="flex-shrink-0 flex items-center gap-2">
-                            <Link href="/" className="text-xl md:text-2xl font-bold text-secondary tracking-tight">
-                                Thermo<span className="font-light">House</span>
+                            <Link href="/" className="text-lg md:text-xl font-bold text-secondary tracking-tighter">
+                                Thermo<span className="font-light text-primary">House</span>
                             </Link>
                         </div>
 
                         <div className="hidden md:block">
-                            <div className="ml-10 flex items-baseline space-x-8">
+                            <div className="flex items-center space-x-2">
                                 {menuItems.map((item) => (
                                     <a
                                         key={item.name}
                                         href={item.href}
                                         onClick={(e) => scrollToSection(e, item.href)}
-                                        className="text-muted-foreground hover:text-primary px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                                        className="text-slate-600 hover:text-white hover:bg-secondary px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300"
                                     >
                                         {item.name}
                                     </a>
@@ -108,9 +100,9 @@ export default function Navbar() {
                         <div className="hidden md:block">
                             <button
                                 onClick={(e) => scrollToSection(e, '#cotizador')}
-                                className="bg-secondary hover:bg-slate-800 text-white px-6 py-2.5 rounded-lg font-semibold transition-all shadow-md active:scale-95 text-sm"
+                                className="bg-primary hover:bg-orange-600 text-white px-5 py-2 rounded-full font-black transition-all shadow-md hover:shadow-primary/20 active:scale-95 text-[10px] uppercase tracking-widest"
                             >
-                                Solicitar Cotización
+                                Cotizar
                             </button>
                         </div>
 
@@ -119,49 +111,47 @@ export default function Navbar() {
                                 onClick={() => setIsOpen(!isOpen)}
                                 className="inline-flex items-center justify-center p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-slate-100 focus:outline-none transition-colors"
                             >
-                                {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                                {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-5 w-5" />}
                             </button>
                         </div>
                     </div>
                 </div>
 
-                {/* Mobile Menu Backdrop */}
                 <AnimatePresence>
                     {isOpen && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-secondary/40 backdrop-blur-md z-[40] md:hidden"
+                            className="fixed inset-0 bg-secondary/60 backdrop-blur-xl z-[40] md:hidden"
                             onClick={() => setIsOpen(false)}
                         />
                     )}
                 </AnimatePresence>
 
-                {/* Mobile Menu */}
                 <AnimatePresence>
                     {isOpen && (
                         <motion.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            className="md:hidden bg-background border-b border-border overflow-hidden relative z-[50]"
+                            className="md:hidden bg-background border-t border-border overflow-hidden relative z-[50]"
                         >
-                            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                            <div className="px-2 pt-2 pb-6 space-y-1 sm:px-3 text-center">
                                 {menuItems.map((item) => (
                                     <a
                                         key={item.name}
                                         href={item.href}
                                         onClick={(e) => scrollToSection(e, item.href)}
-                                        className="text-muted-foreground hover:text-primary hover:bg-slate-50 block px-3 py-4 rounded-md text-base font-medium border-b border-slate-50 last:border-0"
+                                        className="text-secondary hover:text-primary block px-3 py-5 rounded-md text-lg font-black uppercase tracking-tighter"
                                     >
                                         {item.name}
                                     </a>
                                 ))}
-                                <div className="pt-4 pb-2 px-3">
+                                <div className="pt-4 px-3">
                                     <button
                                         onClick={(e) => scrollToSection(e, '#cotizador')}
-                                        className="w-full bg-primary hover:bg-orange-600 text-white px-6 py-4 rounded-lg font-bold transition-all shadow-lg text-center"
+                                        className="w-full bg-primary text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl"
                                     >
                                         Solicitar Cotización
                                     </button>
