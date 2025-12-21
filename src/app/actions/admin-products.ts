@@ -1,6 +1,7 @@
 'use server';
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getAdminSession } from './admin-auth';
 
 export async function getProducts(cityFilter?: string) {
     try {
@@ -25,6 +26,11 @@ export async function getProducts(cityFilter?: string) {
 
 export async function updateProduct(id: string, updates: any) {
     try {
+        const session = await getAdminSession();
+        if (!session || session.role !== 'admin') {
+            return { success: false, message: 'No tienes permisos para cambiar precios.' };
+        }
+
         const { error } = await supabaseAdmin
             .from('soluciones_precios')
             .update(updates)
@@ -39,6 +45,11 @@ export async function updateProduct(id: string, updates: any) {
 
 export async function cloneProductToCity(product: any, newCity: string) {
     try {
+        const session = await getAdminSession();
+        if (!session || session.role !== 'admin') {
+            return { success: false, message: 'No tienes permisos para clonar tarifas.' };
+        }
+
         const { id, created_at, ...rest } = product;
         const { error } = await supabaseAdmin
             .from('soluciones_precios')
@@ -56,6 +67,11 @@ export async function cloneProductToCity(product: any, newCity: string) {
 
 export async function deleteProduct(id: string) {
     try {
+        const session = await getAdminSession();
+        if (!session || session.role !== 'admin') {
+            return { success: false, message: 'No tienes permisos para eliminar tarifas.' };
+        }
+
         const { error } = await supabaseAdmin
             .from('soluciones_precios')
             .delete()

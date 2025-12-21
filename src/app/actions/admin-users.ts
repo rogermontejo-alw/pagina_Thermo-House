@@ -1,10 +1,16 @@
 'use server';
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getAdminSession } from './admin-auth';
 import { cookies } from 'next/headers';
 
 export async function getAdminUsers() {
     try {
+        const session = await getAdminSession();
+        if (!session || session.role !== 'admin') {
+            return { success: false, message: 'No tienes permisos.' };
+        }
+
         const { data, error } = await supabaseAdmin
             .from('admin_users')
             .select('*')
@@ -19,6 +25,11 @@ export async function getAdminUsers() {
 
 export async function createAdminUser(payload: { email: string; password: string; name: string; role: 'admin' | 'editor', ciudad?: string }) {
     try {
+        const session = await getAdminSession();
+        if (!session || session.role !== 'admin') {
+            return { success: false, message: 'No tienes permisos para crear usuarios.' };
+        }
+
         const { error } = await supabaseAdmin
             .from('admin_users')
             .insert({
@@ -35,6 +46,11 @@ export async function createAdminUser(payload: { email: string; password: string
 
 export async function resetAdminPassword(id: string, newPassword: string) {
     try {
+        const session = await getAdminSession();
+        if (!session || session.role !== 'admin') {
+            return { success: false, message: 'No tienes permisos para resetear contraseñas.' };
+        }
+
         const { error } = await supabaseAdmin
             .from('admin_users')
             .update({ password: newPassword })
@@ -49,6 +65,11 @@ export async function resetAdminPassword(id: string, newPassword: string) {
 
 export async function deleteAdminUser(id: string) {
     try {
+        const session = await getAdminSession();
+        if (!session || session.role !== 'admin') {
+            return { success: false, message: 'No tienes permisos para eliminar usuarios.' };
+        }
+
         const { error } = await supabaseAdmin
             .from('admin_users')
             .delete()

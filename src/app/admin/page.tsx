@@ -269,7 +269,7 @@ export default function AdminDashboard() {
                                         )}
                                     </div>
 
-                                    {editingProduct === p.id ? (
+                                    {editingProduct === p.id && session.role === 'admin' ? (
                                         <div className="space-y-4 pt-2">
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="space-y-1">
@@ -298,9 +298,11 @@ export default function AdminDashboard() {
                                                     <span className="text-2xl font-black text-primary">${p.precio_msi_m2}</span>
                                                 </div>
                                             </div>
-                                            <button onClick={() => { setEditingProduct(p.id); setEditForm(p); }} className="w-full py-4 border-2 border-slate-100 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest text-slate-400 hover:border-secondary hover:text-secondary transition-all flex items-center justify-center gap-2">
-                                                <Edit3 className="w-3.5 h-3.5" /> Modificar Tarifas
-                                            </button>
+                                            {session.role === 'admin' && (
+                                                <button onClick={() => { setEditingProduct(p.id); setEditForm(p); }} className="w-full py-4 border-2 border-slate-100 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest text-slate-400 hover:border-secondary hover:text-secondary transition-all flex items-center justify-center gap-2">
+                                                    <Edit3 className="w-3.5 h-3.5" /> Modificar Tarifas
+                                                </button>
+                                            )}
                                         </div>
                                     )}
                                 </div>
