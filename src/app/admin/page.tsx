@@ -403,14 +403,41 @@ export default function AdminDashboard() {
                 });
             } else if (type === 'create' || type === 'clone') {
                 const { id, created_at, ...newData } = data;
-                res = await createProduct({
+
+                // Detailed Validation
+                if (!newData.internal_id) {
+                    alert('Error: Debes seleccionar un producto del catálogo.');
+                    setIsSavingProduct(false);
+                    return;
+                }
+                if (!newData.ciudad) {
+                    alert('Error: Debes seleccionar una ciudad para asignar el precio.');
+                    setIsSavingProduct(false);
+                    return;
+                }
+                if (!newData.precio_contado_m2 || isNaN(Number(newData.precio_contado_m2))) {
+                    alert('Error: El precio de contado debe ser un número válido.');
+                    setIsSavingProduct(false);
+                    return;
+                }
+
+                // Prepare clean object for DB
+                const dbProduct: any = {
+                    title: newData.title,
+                    internal_id: newData.internal_id,
+                    category: newData.category,
                     precio_contado_m2: Number(newData.precio_contado_m2),
-                    precio_msi_m2: Number(newData.precio_msi_m2),
+                    precio_msi_m2: Number(newData.precio_msi_m2 || 0),
                     ciudad: newData.ciudad,
                     orden: Number(newData.orden || 0),
-                    title: newData.title,
-                    category: newData.category
-                });
+                    grosor: newData.grosor,
+                    beneficio_principal: newData.beneficio_principal,
+                    detalle_costo_beneficio: newData.detalle_costo_beneficio,
+                    producto_id: newData.producto_id,
+                    activo: true
+                };
+
+                res = await createProduct(dbProduct);
             }
         }
 
@@ -418,7 +445,8 @@ export default function AdminDashboard() {
             await fetchData(session);
             setProductModal({ ...productModal, open: false });
         } else {
-            alert('Error: ' + res?.message);
+            console.error('Save Product Error:', res);
+            alert('No se pudo guardar: ' + (res?.message || 'Error desconocido del servidor'));
         }
         setIsSavingProduct(false);
     };
@@ -427,7 +455,8 @@ export default function AdminDashboard() {
         setProductModal({
             open: true,
             type: 'clone',
-            data: { ...prod, ciudad: '' } // Clear city for user to input
+            isMaster: false,
+            data: { ...prod, id: undefined, created_at: undefined, ciudad: '' } // Clear city for user to input
         });
     };
 
@@ -1163,12 +1192,13 @@ export default function AdminDashboard() {
                                         onClick={() => setProductModal({
                                             open: true,
                                             type: 'create',
-                                            data: { title: '', ciudad: '', precio_contado_m2: 0, precio_msi_m2: 0, internal_id: 'custom', orden: 0 }
+                                            isMaster: false,
+                                            data: { title: '', ciudad: '', precio_contado_m2: 0, precio_msi_m2: 0, internal_id: '', orden: 0 }
                                         })}
                                         className="bg-primary text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
                                     >
                                         <Plus className="w-3.5 h-3.5" />
-                                        Nuevo
+                                        Nueva Tarifa Regional
                                     </button>
                                 )}
                             </div>
@@ -1258,7 +1288,7 @@ export default function AdminDashboard() {
                                                     </td>
                                                     <td className="px-8 py-5">
                                                         <button
-                                                            onClick={() => toggleProductActive(p.id, p.activo !== false)}
+                                                            onClick={() => toggleProductActive(p.id, !(p.activo !== false))}
                                                             className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${p.activo !== false ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}
                                                         >
                                                             {p.activo !== false ? '● Activo' : '○ Pausado'}
@@ -1696,7 +1726,7 @@ export default function AdminDashboard() {
                                             <div className="flex items-center gap-2">
                                                 <span className="text-[9px] font-black bg-primary text-white px-2 py-0.5 rounded-full uppercase">{p?.category}</span>
                                                 <button
-                                                    onClick={() => toggleMasterProductActive(p.id, p.activo !== false)}
+                                                    onClick={() => toggleMasterProductActive(p.id, !(p.activo !== false))}
                                                     className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase transition-all ${p.activo !== false ? 'bg-green-100 text-green-600' : 'bg-slate-200 text-slate-500'}`}
                                                 >
                                                     {p.activo !== false ? '● Activo' : '○ Pausado'}
@@ -2376,28 +2406,15 @@ export default function AdminDashboard() {
                                     </>
                                 ) : (
                                     <>
-                                        <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 mb-2">
-                                            <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-1">Configuración de Tarifa Regional</p>
-                                            <p className="text-[10px] font-bold text-slate-500 leading-tight">Define los precios específicos para una ciudad. Las características técnicas se heredan del catálogo maestro automáticamente.</p>
+                                        <div className="bg-primary/5 p-5 rounded-2xl border border-primary/10 mb-2">
+                                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">Paso 1: Seleccionar Sistema</p>
+                                            <p className="text-[10px] font-bold text-slate-500 leading-tight">Elige uno de tus 5 productos maestros. Los detalles técnicos (garantía, grosor, etc.) se copiarán automáticamente.</p>
                                         </div>
 
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ciudad o Región</label>
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Producto del Catálogo Maestro</label>
                                             <select
-                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
-                                                value={productModal.data.ciudad}
-                                                onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, ciudad: e.target.value } })}
-                                                required
-                                            >
-                                                <option value="" disabled>Selecciona una ciudad</option>
-                                                {locations.map(l => <option key={l.id} value={l.ciudad}>{l.ciudad} ({l.estado})</option>)}
-                                            </select>
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Producto del Catálogo</label>
-                                            <select
-                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                                className="w-full px-4 py-3 bg-white border-2 border-slate-100 rounded-xl text-sm font-black text-secondary outline-none focus:border-primary transition-all"
                                                 value={productModal.data.internal_id}
                                                 onChange={e => {
                                                     const master = masterProducts.find(m => m.internal_id === e.target.value) ||
@@ -2408,6 +2425,7 @@ export default function AdminDashboard() {
                                                             ...productModal,
                                                             data: {
                                                                 ...productModal.data,
+                                                                producto_id: master.producto_id || master.id, // Try producto_id first if from legacy list
                                                                 internal_id: master.internal_id,
                                                                 title: master.title,
                                                                 category: master.category,
@@ -2421,10 +2439,23 @@ export default function AdminDashboard() {
                                                 }}
                                                 required
                                             >
-                                                <option value="" disabled>Selecciona producto para esta ciudad</option>
+                                                <option value="" disabled>Selecciona el producto...</option>
                                                 {(masterProducts.length > 0 ? masterProducts : Array.from(new Set(products.map(p => p.internal_id))).map(id => products.find(prod => prod.internal_id === id))).map((m: any) => (
                                                     <option key={m.id || m.internal_id} value={m.internal_id}>{m.title}</option>
                                                 ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ciudad Destino</label>
+                                            <select
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                                value={productModal.data.ciudad}
+                                                onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, ciudad: e.target.value } })}
+                                                required
+                                            >
+                                                <option value="" disabled>Selecciona ciudad para el precio</option>
+                                                {locations.map(l => <option key={l.id} value={l.ciudad}>{l.ciudad} ({l.estado})</option>)}
                                             </select>
                                         </div>
 
