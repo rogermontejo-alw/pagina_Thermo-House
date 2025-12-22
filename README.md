@@ -1,55 +1,73 @@
-# Thermo House Platform
+# Thermo House Platform - Manual de Funcionamiento
 
-A hybrid sales platform transforming a rooftop quoter into a professional sales automation tool. Built with Next.js, Supabase, and Google Maps.
+Plataforma híbrida de ventas diseñada para la automatización del proceso de cotización y gestión de leads para Thermo House México. Combina una herramienta de medición satelital con un potente panel administrativo.
 
-## 🚀 Features
+## 🛠 Arquitectura Tecnológica
+- **Core:** Next.js 14+ (App Router)
+- **Base de Datos:** Supabase (PostgreSQL + RLS)
+- **Geolocalización:** Google Maps JavaScript API (Medición Satelital)
+- **UI/UX:** TailwindCSS + Framer Motion para animaciones premium.
 
-- **Satellite Roof Measurement**: Users can measure their roof area directly using Google Maps integration.
-- **Dynamic Quoting Engine**:
-  - Detects roof type (Concrete vs Sheet).
-  - Offers tailored solutions (Standard, Premium, Thermal).
-  - Calculates Cash vs MSI prices automatically.
-- **Sales Automation**:
-  - Admin Dashboard for tracking leads.
-  - "Click-to-Chat" WhatsApp integration for immediate conversion.
-- **Admin Dashboard**:
-  - Kanban-style Funnel view.
-  - Real-time Price Configuration per city.
+---
 
-## 🛠 Tech Stack
+## 📐 1. Flujo del Usuario (Cotizador Público)
 
-- **Framework**: Next.js 14+ (App Router)
-- **Language**: TypeScript
-- **Styling**: TailwindCSS + Framer Motion
-- **Database**: Supabase
-- **Maps**: Google Maps JavaScript API
+El proceso de cotización se divide en tres pasos intuitivos:
 
-## ⚡️ Getting Started
+### Paso 1: Medición Satelital
+- El usuario ingresa su dirección y utiliza el mapa interactivo para delimitar su techo.
+- La herramienta calcula automáticamente el área en m².
+- El sistema detecta si la ubicación del usuario está dentro de las zonas de operación activa o si es una zona foránea (activando alertas de logística).
 
-1. **Install Dependencies**
-   ```bash
-   npm install
-   ```
+### Paso 2: Selección de Sistema
+- El sistema filtra los productos adecuados según el tipo de techo (Concreto, Lámina o Mixto).
+- Se presentan las opciones provenientes del **Catálogo Maestro** con sus beneficios técnicos detallados.
 
-2. **Environment Setup**
-   Create a `.env.local` file with the following:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-   NEXT_PUBLIC_GOOGLE_MAPS_KEY=your_google_maps_key
-   ```
+### Paso 3: Contacto y Reporte
+- El usuario proporciona sus datos de contacto.
+- Se genera una cotización inmediata mostrando el precio de Contado y 12 MSI.
+- Los datos se vinculan automáticamente al Asesor asignado según la región.
 
-3. **Database Setup**
-   Run the SQL found in `supabase/schema.sql` in your Supabase SQL Editor to create the necessary tables and policies.
+---
 
-4. **Run Development Server**
-   ```bash
-   npm run dev
-   ```
+## 💼 2. Panel de Administración (Management Suite)
 
-5. **Access Admin Panel**
-   Navigate to `/admin` to manage quotes and prices.
+Accesible vía `/admin`, centraliza toda la operación comercial.
 
-## 📄 License
-Private (Thermo House)
+### Sección: Leads (Gestión de Prospectos)
+- **Vista Kanban / Listado:** Permite mover leads entre estados (Nuevo, Contactado, Visita Técnica, Cerrado).
+- **Ficha del Cliente:**
+    - Edición de áreas y ajustes técnicos.
+    - Aplicación de **Cargos Logísticos** para zonas foráneas.
+    - Generación de **Cotización PDF** profesional con membrete oficial.
+- **Asignación:** Identifica qué asesor atendió a cada cliente.
+
+### Sección: Productos (Catálogo Maestro)
+- **Fichas Técnicas:** Define el ADN del producto (Nombre, ID interno, Grosor, Beneficio Principal y Orden de visualización).
+- **Consistencia:** Todos los precios regionales se basan en estas fichas para asegurar que el marketing y la información técnica sean uniformes en todo el país.
+
+### Sección: Precios (Tarifado Regional)
+- Permite definir precios específicos de **Contado** y **MSI** por cada ciudad.
+- Soporta el **Modo Legado** para transiciones suaves durante la carga de catálogo.
+
+### Sección: Sedes (Locations)
+- **Mérida (Base Central):** Configurada como la sede principal de operaciones. Es fija y no puede ser removida del sistema.
+- **Zonas Regionales:** Permite abrir nuevas sucursales regionales con sus respectivos estados de cobertura.
+
+### Sección: Configuración (Admin Only)
+- Gestión de llaves de API (Google Maps) directamente desde la interfaz sin tocar el código.
+
+---
+
+## ⚡️ Operaciones Técnicas
+
+### Gestión de Asesores
+Los administradores pueden dar de alta nuevos asesores asignándoles una ciudad base. Esto permite que el sistema asigne leads geográficamente y que las cotizaciones incluyan el teléfono y correo profesional del asesor correcto.
+
+### Sistema de Impresión
+Las cotizaciones están optimizadas para impresión en tamaño **US Letter**. El sistema oculta automáticamente la interfaz del dashboard y aplica estilos limpios de reporte formal al enviar a imprimir (Cmd/Ctrl + P).
+
+---
+
+## 📄 Licencia y Propiedad
+Propiedad privada de **Thermo House México**. Todos los derechos reservados.

@@ -1,27 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getQuotes, updateQuote } from '@/app/actions/get-quotes';
 import { logoutAdmin, getAdminSession } from '@/app/actions/admin-auth';
 import { getAdminUsers, createAdminUser, updateAdminUser, deleteAdminUser, resetAdminPassword } from '@/app/actions/admin-users';
-import { getProducts, updateProduct, cloneProductToCity, deleteProduct, createProduct } from '@/app/actions/admin-products';
+import { getProducts, updateProduct, cloneProductToCity, deleteProduct, createProduct, getMasterProducts, createMasterProduct, updateMasterProduct, deleteMasterProduct } from '@/app/actions/admin-products';
 import { useRouter } from 'next/navigation';
 import {
     Users, TrendingUp, Calendar, MapPin, Phone, ExternalLink, Search, Filter,
     CheckCircle2, Clock, AlertCircle, ChevronRight, LogOut, UserPlus, Trash2,
     Shield, Mail, UserCircle, Package, Edit3, Plus, Globe, Save, X, Key, Building2,
     Download, CheckSquare, Square, FileText, Cake, Receipt, FileSignature,
-    LayoutGrid, ListOrdered, Navigation, Map, AlertTriangle, Printer, FileCheck, PencilRuler
+    LayoutGrid, ListOrdered, Navigation, Map, AlertTriangle, Printer, FileCheck, PencilRuler,
+    PieChart, BarChart3
 } from 'lucide-react';
 import { getLocations, createLocation, deleteLocation } from '@/app/actions/admin-locations';
 import { getAppConfig, updateAppConfig } from '@/app/actions/get-config';
+import { MEXICAN_CITIES_BY_STATE } from '@/lib/mexico-data';
 
 export default function AdminDashboard() {
     const [session, setSession] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'quotes' | 'users' | 'prices' | 'locations'>('quotes');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'quotes' | 'users' | 'prices' | 'locations' | 'products' | 'config'>('dashboard');
     const [quotes, setQuotes] = useState<any[]>([]);
     const [users, setUsers] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
+    const [masterProducts, setMasterProducts] = useState<any[]>([]);
     const [locations, setLocations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [mapsKey, setMapsKey] = useState('');
@@ -32,6 +35,25 @@ export default function AdminDashboard() {
     const [statusFilter, setStatusFilter] = useState('All');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [rangeType, setRangeType] = useState<'all' | 'today' | 'week' | 'month'>('all');
+
+    const dashboardQuotes = useMemo(() => {
+        let filtered = [...quotes];
+        const now = new Date();
+
+        if (rangeType === 'today') {
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+            filtered = filtered.filter(q => new Date(q.created_at).getTime() >= todayStart);
+        } else if (rangeType === 'week') {
+            const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).getTime();
+            filtered = filtered.filter(q => new Date(q.created_at).getTime() >= weekStart);
+        } else if (rangeType === 'month') {
+            const monthStart = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()).getTime();
+            filtered = filtered.filter(q => new Date(q.created_at).getTime() >= monthStart);
+        }
+
+        return filtered;
+    }, [quotes, rangeType]);
 
     // Selection state
     const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
@@ -59,6 +81,27 @@ export default function AdminDashboard() {
     const [editingProduct, setEditingProduct] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<any>(null);
 
+    // Password & Delete Modal States
+    const [passwordModal, setPasswordModal] = useState<{ open: boolean, userId: string | null, userName: string }>({
+        open: false,
+        userId: null,
+        userName: ''
+    });
+    const [newPassword, setNewPassword] = useState('');
+    const [deleteModal, setDeleteModal] = useState<{
+        open: boolean,
+        type: 'user' | 'product' | 'location' | 'master',
+        id: string | null,
+        name: string,
+        details?: string
+    }>({
+        open: false,
+        type: 'user',
+        id: null,
+        name: '',
+        details: ''
+    });
+
     // Client Detail Modal
     const [selectedLeadForDetail, setSelectedLeadForDetail] = useState<any>(null);
     const [isSavingDetail, setIsSavingDetail] = useState(false);
@@ -72,6 +115,7 @@ export default function AdminDashboard() {
         open: boolean;
         type: 'edit' | 'create' | 'clone';
         data: any;
+        isMaster?: boolean;
     }>({ open: false, type: 'edit', data: null });
     const [isSavingProduct, setIsSavingProduct] = useState(false);
 
@@ -93,6 +137,9 @@ export default function AdminDashboard() {
                 return;
             }
             setSession(userSession);
+            if (userSession.role !== 'admin') {
+                setActiveTab('quotes');
+            }
             // After session is set, fetch initial data
             fetchData(userSession);
         };
@@ -103,10 +150,11 @@ export default function AdminDashboard() {
         setLoading(true);
         const cityFilter = currSession.role === 'admin' ? 'Todas' : currSession.ciudad;
 
-        const [qRes, uRes, pRes, lRes, configKey] = await Promise.all([
+        const [qRes, uRes, pRes, mRes, lRes, configKey] = await Promise.all([
             getQuotes(cityFilter),
             currSession.role === 'admin' ? getAdminUsers() : Promise.resolve({ success: true, data: [] }),
             getProducts(cityFilter),
+            getMasterProducts(),
             getLocations(),
             currSession.role === 'admin' ? getAppConfig('GOOGLE_MAPS_KEY') : Promise.resolve(null)
         ]);
@@ -114,6 +162,7 @@ export default function AdminDashboard() {
         if (qRes.success) setQuotes(qRes.data || []);
         if (uRes.success) setUsers(uRes.data || []);
         if (pRes.success) setProducts(pRes.data || []);
+        if (mRes.success) setMasterProducts(mRes.data || []);
         if (lRes.success) {
             setLocations(lRes.data || []);
             if (lRes.data && lRes.data.length > 0 && !newUser.ciudad) {
@@ -216,20 +265,95 @@ export default function AdminDashboard() {
         setIsCreatingUser(false);
     };
 
-    const handleResetPassword = async (id: string) => {
-        const newPass = prompt('Ingresa la nueva contraseña para este usuario');
-        if (newPass) {
-            const res = await resetAdminPassword(id, newPass);
-            if (res.success) alert('Contraseña actualizada');
-            else alert(res.message);
-        }
+    const handleResetPassword = async (id: string, name: string) => {
+        setPasswordModal({ open: true, userId: id, userName: name });
+        setNewPassword('');
     };
 
-    const handleDeleteUser = async (id: string) => {
-        if (confirm('¿Eliminar usuario definitivamente?')) {
-            const res = await deleteAdminUser(id);
-            if (res.success) fetchData(session);
+    const confirmResetPassword = async () => {
+        if (!newPassword) return;
+        setIsCreatingUser(true);
+        const res = await resetAdminPassword(passwordModal.userId!, newPassword);
+        if (res.success) {
+            setPasswordModal({ open: false, userId: null, userName: '' });
+            alert('Contraseña actualizada correctamente para ' + passwordModal.userName);
+        } else {
+            alert(res.message);
         }
+        setIsCreatingUser(false);
+    };
+
+    const handleDeleteUser = (id: string, name: string) => {
+        setDeleteModal({
+            open: true,
+            type: 'user',
+            id: id,
+            name: name,
+            details: 'Esta acción eliminará permanentemente al asesor de la plataforma.'
+        });
+    };
+
+    const handleDeleteProduct = (id: string, name: string) => {
+        setDeleteModal({
+            open: true,
+            type: 'product',
+            id: id,
+            name: name,
+            details: 'Se eliminará esta tarifa regional específica.'
+        });
+    };
+
+    const handleDeleteLocation = (id: string, name: string) => {
+        setDeleteModal({
+            open: true,
+            type: 'location',
+            id: id,
+            name: name,
+            details: 'La ciudad ya no aparecerá en los menús, pero los precios existentes se conservarán.'
+        });
+    };
+
+    const confirmDeleteAction = async () => {
+        setIsCreatingUser(true);
+        let res;
+        if (deleteModal.type === 'user') {
+            res = await deleteAdminUser(deleteModal.id!);
+        } else if (deleteModal.type === 'product') {
+            res = await deleteProduct(deleteModal.id!);
+        } else if (deleteModal.type === 'location') {
+            res = await deleteLocation(deleteModal.id!);
+        }
+
+        if (res?.success) {
+            setDeleteModal({ ...deleteModal, open: false });
+            fetchData(session);
+        } else if (res) {
+            alert(res.message);
+        }
+        setIsCreatingUser(false);
+    };
+
+    const toggleProductActive = async (id: string, current: boolean) => {
+        const res = await updateProduct(id, { activo: !current });
+        if (res.success) fetchData(session);
+    };
+
+    const toggleMasterProductActive = async (id: string, current: boolean) => {
+        const res = await updateMasterProduct(id, { activo: !current });
+        if (res.success) fetchData(session);
+    };
+    const handleCreateLocation = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newLocation.ciudad || !newLocation.estado) return;
+        setIsSavingLocation(true);
+        const res = await createLocation(newLocation);
+        if (res.success) {
+            await fetchData(session);
+            const cityCreated = newLocation.ciudad;
+            setNewLocation({ ciudad: '', estado: '' });
+            alert(`¡Ciudad Habilitada! 📍\n\nRecuerda que para que los clientes en ${cityCreated} puedan cotizar localmente (sin advertencia de zona foránea), debes agregar al menos un precio específico para esta ciudad en la pestaña de 'Tarifas'.`);
+        } else alert(res.message);
+        setIsSavingLocation(false);
     };
 
     const handleSaveProductData = async (e: React.FormEvent) => {
@@ -238,26 +362,52 @@ export default function AdminDashboard() {
         const { data, type } = productModal;
 
         let res;
-        if (type === 'edit') {
-            res = await updateProduct(data.id, {
-                precio_contado_m2: Number(data.precio_contado_m2),
-                precio_msi_m2: Number(data.precio_msi_m2),
-                title: data.title,
-                ciudad: data.ciudad,
-                internal_id: data.internal_id,
-                orden: Number(data.orden),
-                grosor: data.grosor,
-                beneficio_principal: data.beneficio_principal,
-                detalle_costo_beneficio: data.detalle_costo_beneficio
-            });
-        } else if (type === 'create' || type === 'clone') {
-            const { id, created_at, ...newData } = data;
-            res = await createProduct({
-                ...newData,
-                precio_contado_m2: Number(newData.precio_contado_m2),
-                precio_msi_m2: Number(newData.precio_msi_m2),
-                orden: Number(newData.orden || 0)
-            });
+        if (productModal.isMaster) {
+            if (type === 'edit') {
+                res = await updateMasterProduct(data.id, {
+                    title: data.title,
+                    internal_id: data.internal_id,
+                    category: data.category,
+                    grosor: data.grosor,
+                    beneficio_principal: data.beneficio_principal,
+                    detalle_costo_beneficio: data.detalle_costo_beneficio,
+                    orden: Number(data.orden)
+                });
+            } else {
+                res = await createMasterProduct({
+                    title: data.title,
+                    internal_id: data.internal_id,
+                    category: data.category,
+                    grosor: data.grosor,
+                    beneficio_principal: data.beneficio_principal,
+                    detalle_costo_beneficio: data.detalle_costo_beneficio,
+                    orden: Number(data.orden || 0)
+                });
+            }
+        } else {
+            if (type === 'edit') {
+                res = await updateProduct(data.id, {
+                    precio_contado_m2: Number(data.precio_contado_m2),
+                    precio_msi_m2: Number(data.precio_msi_m2),
+                    ciudad: data.ciudad,
+                    internal_id: data.internal_id,
+                    orden: Number(data.orden),
+                    // Strictly pricing and linkage only
+                    title: data.title,
+                    category: data.category
+                });
+            } else if (type === 'create' || type === 'clone') {
+                const { id, created_at, ...newData } = data;
+                res = await createProduct({
+                    precio_contado_m2: Number(newData.precio_contado_m2),
+                    precio_msi_m2: Number(newData.precio_msi_m2),
+                    ciudad: newData.ciudad,
+                    internal_id: newData.internal_id,
+                    orden: Number(newData.orden || 0),
+                    title: newData.title,
+                    category: newData.category
+                });
+            }
         }
 
         if (res?.success) {
@@ -277,33 +427,6 @@ export default function AdminDashboard() {
         });
     };
 
-    const handleDeleteProduct = async (id: string) => {
-        if (confirm('¿Eliminar esta tarifa regional?')) {
-            const res = await deleteProduct(id);
-            if (res.success) fetchData(session);
-        }
-    };
-
-    const handleCreateLocation = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newLocation.ciudad || !newLocation.estado) return;
-        setIsSavingLocation(true);
-        const res = await createLocation(newLocation);
-        if (res.success) {
-            await fetchData(session);
-            const cityCreated = newLocation.ciudad;
-            setNewLocation({ ciudad: '', estado: '' });
-            alert(`¡Ciudad Habilitada! 📍\n\nRecuerda que para que los clientes en ${cityCreated} puedan cotizar localmente (sin advertencia de zona foránea), debes agregar al menos un precio específico para esta ciudad en la pestaña de 'Tarifas'.`);
-        } else alert(res.message);
-        setIsSavingLocation(false);
-    };
-
-    const handleDeleteLocation = async (id: string) => {
-        if (confirm('¿Eliminar esta ubicación? Esto no borrará los precios ya creados, pero la ciudad ya no aparecerá en los menús.')) {
-            const res = await deleteLocation(id);
-            if (res.success) fetchData(session);
-        }
-    };
 
     const handleUpdateMapsKey = async () => {
         setIsSavingKey(true);
@@ -449,17 +572,273 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex gap-3">
                         <div className="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-1">
-                            <button onClick={() => setActiveTab('quotes')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'quotes' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Gestión de prospectos y cotizaciones">Leads</button>
-                            <button onClick={() => setActiveTab('prices')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'prices' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Control de tarifas regionales y productos">Precios</button>
-                            <button onClick={() => setActiveTab('locations')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'locations' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Configuración de ciudades y estados">Ubicaciones</button>
                             {session.role === 'admin' && (
-                                <button onClick={() => setActiveTab('users')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Administración de equipo y permisos">Equipo</button>
+                                <button onClick={() => setActiveTab('dashboard')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Resumen general de métricas">Dashboard</button>
+                            )}
+                            <button onClick={() => setActiveTab('quotes')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'quotes' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Gestión de prospectos y cotizaciones">Leads</button>
+                            {session.role === 'admin' && (
+                                <>
+                                    <button onClick={() => setActiveTab('products')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'products' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Fichas técnicas y productos maestros">Productos</button>
+                                    <button onClick={() => setActiveTab('prices')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'prices' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Control de tarifas regionales">Precios</button>
+                                    <button onClick={() => setActiveTab('locations')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'locations' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Configuración de ciudades">Ubicaciones</button>
+                                    <button onClick={() => setActiveTab('config')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'config' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Ajustes globales del sistema">Configuración</button>
+                                    <button onClick={() => setActiveTab('users')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Administración de equipo">Equipo</button>
+                                </>
                             )}
                         </div>
                         <button onClick={handleLogout} className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-bold border border-red-100 hover:bg-red-100 transition-all"><LogOut className="w-4 h-4" /></button>
                     </div>
                 </div>
 
+
+                {activeTab === 'dashboard' && session.role === 'admin' && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        {/* Dashboard Header with Range Selectors */}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h2 className="text-xl font-black text-secondary uppercase tracking-tight">Rendimiento Operativo</h2>
+                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Métricas en tiempo real basadas en leads cotizados</p>
+                            </div>
+                            <div className="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm self-start md:self-center">
+                                {[
+                                    { id: 'all', label: 'TODO' },
+                                    { id: 'today', label: 'DÍA' },
+                                    { id: 'week', label: 'SEMANA' },
+                                    { id: 'month', label: 'MES' }
+                                ].map((r) => (
+                                    <button
+                                        key={r.id}
+                                        onClick={() => setRangeType(r.id as any)}
+                                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${rangeType === r.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-secondary'}`}
+                                    >
+                                        {r.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* 1. Quick Stats Grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                            {[
+                                { label: 'Total Leads', val: dashboardQuotes.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-50' },
+                                { label: 'Ventas (Cerrado)', val: dashboardQuotes.filter(q => q.status === 'Cerrado').length, icon: TrendingUp, color: 'text-green-500', bg: 'bg-green-50' },
+                                { label: 'Tasa Conv.', val: `${dashboardQuotes.length > 0 ? Math.round((dashboardQuotes.filter(q => q.status === 'Cerrado').length / dashboardQuotes.length) * 100) : 0}%`, icon: BarChart3, color: 'text-purple-500', bg: 'bg-purple-50' },
+                                { label: 'Sin Atender', val: dashboardQuotes.filter(q => q.status === 'Nuevo').length, icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50' }
+                            ].map((stat, i) => (
+                                <div key={i} className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center space-y-2 hover:shadow-xl transition-all duration-300 group">
+                                    <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                                        <stat.icon className="w-6 h-6" />
+                                    </div>
+                                    <div className="text-2xl font-black text-secondary leading-none pt-2">{stat.val}</div>
+                                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            {/* 2. Products Summary */}
+                            <div className="lg:col-span-2 bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-xl font-black text-secondary uppercase tracking-tight flex items-center gap-2">
+                                            <Package className="w-5 h-5 text-primary" />
+                                            Sistemas más Solicitados
+                                        </h3>
+                                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Distribución por volumen de leads</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {Array.from(new Set(dashboardQuotes.map(q => q.soluciones_precios?.title || 'No especificado')))
+                                        .map(title => ({
+                                            title,
+                                            count: dashboardQuotes.filter(q => (q.soluciones_precios?.title || 'No especificado') === title).length
+                                        }))
+                                        .sort((a, b) => b.count - a.count)
+                                        .slice(0, 5)
+                                        .map((prod, i) => (
+                                            <div key={i} className="space-y-2">
+                                                <div className="flex justify-between text-[10px] font-black uppercase tracking-wider">
+                                                    <span className="text-secondary">{prod.title}</span>
+                                                    <span className="text-primary">{prod.count} Leads</span>
+                                                </div>
+                                                <div className="h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5">
+                                                    <div
+                                                        className="h-full bg-primary rounded-full shadow-[0_0_10px_rgba(255,107,38,0.3)] transition-all duration-1000 ease-out"
+                                                        style={{ width: `${(prod.count / (dashboardQuotes.length || 1)) * 100}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                </div>
+                            </div>
+
+                            {/* 3. Payment Preference */}
+                            <div className="bg-secondary p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform duration-700">
+                                    <PieChart className="w-32 h-32 text-white" />
+                                </div>
+                                <div className="relative z-10 space-y-8">
+                                    <div>
+                                        <h3 className="text-xl font-black text-white uppercase tracking-tight">Preferencias</h3>
+                                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Métodos de pago sugeridos</p>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {[
+                                            { label: 'Pago Contado', val: dashboardQuotes.filter(q => q.payment_preference === 'cash').length, color: 'bg-primary' },
+                                            { label: '12 MSI', val: dashboardQuotes.filter(q => q.payment_preference === 'msi').length, color: 'bg-blue-400' }
+                                        ].map((pay, i) => (
+                                            <div key={i} className="bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-sm">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="text-[10px] font-black text-white/50 uppercase tracking-widest">{pay.label}</span>
+                                                    <span className="text-xl font-black text-white">{Math.round((pay.val / (dashboardQuotes.length || 1)) * 100)}%</span>
+                                                </div>
+                                                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full ${pay.color} transition-all duration-1000`}
+                                                        style={{ width: `${(pay.val / (dashboardQuotes.length || 1)) * 100}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* 4. Sales by City */}
+                            <div className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+                                <div>
+                                    <h3 className="text-xl font-black text-secondary uppercase tracking-tight flex items-center gap-2">
+                                        <MapPin className="w-5 h-5 text-primary" />
+                                        Distribución por Ciudad
+                                    </h3>
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Presencia regional activa</p>
+                                </div>
+                                <div className="overflow-hidden rounded-2xl border border-slate-50">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-slate-50 text-[9px] font-black uppercase text-slate-400 tracking-widest">
+                                            <tr>
+                                                <th className="px-6 py-4">Ciudad</th>
+                                                <th className="px-6 py-4">Leads</th>
+                                                <th className="px-6 py-4 text-right">Potencial</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {Array.from(new Set(dashboardQuotes.map(q => q.ciudad)))
+                                                .map(city => ({
+                                                    name: city,
+                                                    count: dashboardQuotes.filter(q => q.ciudad === city).length,
+                                                    total: dashboardQuotes.filter(q => q.ciudad === city).reduce((sum, q) => sum + (q.precio_total_contado || 0), 0)
+                                                }))
+                                                .sort((a, b) => b.count - a.count)
+                                                .slice(0, 5)
+                                                .map((city, i) => (
+                                                    <tr key={i} className="hover:bg-slate-50 transition-all group">
+                                                        <td className="px-6 py-4 font-bold text-secondary text-xs">{city.name}</td>
+                                                        <td className="px-6 py-4 text-xs font-black text-slate-400">{city.count}</td>
+                                                        <td className="px-6 py-4 text-right">
+                                                            <span className="text-[10px] font-black text-primary px-3 py-1 bg-primary/5 rounded-lg group-hover:bg-primary group-hover:text-white transition-all">
+                                                                ${Math.round(city.total / 1000)}k
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* 5. Unattended Clients (Alert List) */}
+                            <div className="bg-orange-50/50 p-10 rounded-[2.5rem] border border-orange-100 space-y-6">
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <h3 className="text-xl font-black text-secondary uppercase tracking-tight flex items-center gap-2">
+                                            <AlertTriangle className="w-5 h-5 text-orange-500" />
+                                            Atención Prioritaria
+                                        </h3>
+                                        <p className="text-orange-900/40 text-[10px] font-bold uppercase tracking-widest mt-1">Nuevos prospectos sin contacto</p>
+                                    </div>
+                                    <button onClick={() => { setActiveTab('quotes'); setStatusFilter('Nuevo'); }} className="text-[9px] font-black py-2 px-4 bg-white border border-orange-100 text-orange-600 rounded-xl hover:bg-orange-600 hover:text-white transition-all uppercase tracking-widest shadow-sm">Ver Todos</button>
+                                </div>
+                                <div className="space-y-3">
+                                    {dashboardQuotes.filter(q => q.status === 'Nuevo').slice(0, 4).map((q, i) => (
+                                        <div key={i} className="bg-white p-4 rounded-2xl border border-orange-100 flex items-center justify-between shadow-sm hover:shadow-md transition-all">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center font-black">{q.contact_info?.name?.[0] || '?'}</div>
+                                                <div>
+                                                    <div className="text-xs font-black text-secondary">{q.contact_info?.name || 'Cliente'}</div>
+                                                    <div className="text-[9px] text-slate-400 font-bold uppercase">{q.ciudad} • {new Date(q.created_at).toLocaleDateString()}</div>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-[9px] font-black text-primary px-2 py-0.5 bg-primary/5 rounded-full uppercase">{q.area}m²</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {dashboardQuotes.filter(q => q.status === 'Nuevo').length === 0 && (
+                                        <div className="p-8 text-center text-slate-400 font-bold italic border-2 border-dashed border-orange-100 rounded-[2rem]">¡Todo al día! Sin pendientes.</div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 6. Advisor Performance */}
+                        <div className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
+                            <div>
+                                <h3 className="text-xl font-black text-secondary uppercase tracking-tight flex items-center gap-2">
+                                    <UserCircle className="w-5 h-5 text-primary" />
+                                    Rendimiento por Asesor
+                                </h3>
+                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Productividad y cierre de ventas</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {Array.from(new Set(dashboardQuotes.filter(q => q.advisor).map(q => q.advisor.name + ' ' + (q.advisor.apellido || ''))))
+                                    .map(advisorName => {
+                                        const advisorQuotes = dashboardQuotes.filter(q => (q.advisor?.name + ' ' + (q.advisor?.apellido || '')) === advisorName);
+                                        const closedSales = advisorQuotes.filter(q => q.status === 'Cerrado').length;
+                                        const convRate = advisorQuotes.length > 0 ? Math.round((closedSales / advisorQuotes.length) * 100) : 0;
+                                        const totalVol = advisorQuotes.reduce((sum, q) => sum + (q.precio_total_contado || 0), 0);
+
+                                        return (
+                                            <div key={advisorName} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 space-y-4 hover:border-primary/20 transition-all group">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-primary border border-slate-100 font-black shadow-sm group-hover:bg-primary group-hover:text-white transition-all">
+                                                        {advisorName[0]}
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-sm font-black text-secondary">{advisorName}</div>
+                                                        <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{advisorQuotes.length} Leads gestionados</div>
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="bg-white p-3 rounded-2xl border border-slate-100">
+                                                        <div className="text-[8px] font-black text-slate-400 uppercase mb-1">Cierres</div>
+                                                        <div className="text-sm font-black text-green-500">{closedSales}</div>
+                                                    </div>
+                                                    <div className="bg-white p-3 rounded-2xl border border-slate-100">
+                                                        <div className="text-[8px] font-black text-slate-400 uppercase mb-1">Conversión</div>
+                                                        <div className="text-sm font-black text-primary">{convRate}%</div>
+                                                    </div>
+                                                </div>
+                                                <div className="pt-2">
+                                                    <div className="text-[8px] font-black text-slate-400 uppercase mb-1">Volumen Total</div>
+                                                    <div className="text-base font-black text-secondary">${Math.round(totalVol / 1000)}k</div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                {quotes.filter(q => q.advisor).length === 0 && (
+                                    <div className="col-span-full p-12 text-center text-slate-300 font-bold italic border-2 border-dashed border-slate-100 rounded-[2rem]">
+                                        Aún no hay asignaciones registradas.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {activeTab === 'quotes' && (
                     <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden min-h-[600px]">
@@ -768,9 +1147,19 @@ export default function AdminDashboard() {
                                                 </div>
                                             </div>
                                             <div className="flex justify-end gap-2">
-                                                <button onClick={() => setProductModal({ open: true, type: 'edit', data: p })} className="p-2 bg-slate-50 text-slate-400 border border-slate-100 rounded-lg"><Edit3 className="w-4 h-4" /></button>
-                                                <button onClick={() => handleClone(p)} className="p-2 bg-blue-50 text-blue-400 border border-blue-100 rounded-lg"><Plus className="w-4 h-4" /></button>
-                                                <button onClick={() => handleDeleteProduct(p.id)} className="p-2 bg-red-50 text-red-300 border border-red-100 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                                                <button
+                                                    onClick={() => toggleProductActive(p.id, p.activo !== false)}
+                                                    className={`p-2 rounded-lg border text-[8px] font-black uppercase tracking-tighter ${p.activo !== false ? 'bg-green-50 text-green-600 border-green-100' : 'bg-slate-50 text-slate-400 border-slate-200'}`}
+                                                >
+                                                    {p.activo !== false ? 'Activo' : 'Pausado'}
+                                                </button>
+                                                {session.role === 'admin' && (
+                                                    <>
+                                                        <button onClick={() => setProductModal({ open: true, type: 'edit', data: p })} className="p-2 bg-slate-50 text-slate-400 border border-slate-100 rounded-lg"><Edit3 className="w-4 h-4" /></button>
+                                                        <button onClick={() => handleClone(p)} className="p-2 bg-blue-50 text-blue-400 border border-blue-100 rounded-lg"><Plus className="w-4 h-4" /></button>
+                                                        <button onClick={() => handleDeleteProduct(p.id, p.title + ' en ' + p.ciudad)} className="p-2 bg-red-50 text-red-300 border border-red-100 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
@@ -783,6 +1172,7 @@ export default function AdminDashboard() {
                                             <th className="px-8 py-5">Sistema</th>
                                             <th className="px-8 py-5">Precio Contado</th>
                                             <th className="px-8 py-5">Precio MSI</th>
+                                            <th className="px-8 py-5">Estado</th>
                                             <th className="px-8 py-5 text-right">Acciones</th>
                                         </tr>
                                     </thead>
@@ -818,6 +1208,14 @@ export default function AdminDashboard() {
                                                         <div className="text-sm font-black text-primary">${p.precio_msi_m2}</div>
                                                         <div className="text-[9px] text-slate-400 font-bold">Por m²</div>
                                                     </td>
+                                                    <td className="px-8 py-5">
+                                                        <button
+                                                            onClick={() => toggleProductActive(p.id, p.activo !== false)}
+                                                            className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${p.activo !== false ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}
+                                                        >
+                                                            {p.activo !== false ? '● Activo' : '○ Pausado'}
+                                                        </button>
+                                                    </td>
                                                     <td className="px-8 py-5 text-right">
                                                         <div className="flex justify-end gap-1.5 p-1 bg-slate-50/50 rounded-xl border border-transparent group-hover:border-slate-100 transition-all">
                                                             {session.role === 'admin' && (
@@ -837,7 +1235,7 @@ export default function AdminDashboard() {
                                                                         <Plus className="w-3.5 h-3.5" />
                                                                     </button>
                                                                     <button
-                                                                        onClick={() => handleDeleteProduct(p.id)}
+                                                                        onClick={() => handleDeleteProduct(p.id, p.title + ' en ' + p.ciudad)}
                                                                         className="p-2 bg-white text-red-300 border border-slate-200 shadow-sm hover:text-red-600 rounded-lg transition-all"
                                                                         title="Eliminar tarifa regional"
                                                                     >
@@ -858,79 +1256,70 @@ export default function AdminDashboard() {
                 )}
 
                 {activeTab === 'users' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="flex flex-col gap-8">
                         {/* Team Form */}
-                        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm h-fit space-y-8">
-                            <div>
-                                <h2 className="text-2xl font-black text-secondary uppercase tracking-tight flex items-center gap-3">
-                                    <UserPlus className="w-6 h-6 text-primary" />
-                                    {session.role === 'admin' ? 'Dar de alta Asesor' : 'Equipo Interno'}
-                                </h2>
-                                <p className="text-slate-400 text-xs mt-1">{session.role === 'admin' ? 'Completa el perfil del nuevo integrante' : 'Lista de personal registrado'}</p>
-                            </div>
+                        {session.role === 'admin' && (
+                            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
+                                <div>
+                                    <h2 className="text-2xl font-black text-secondary uppercase tracking-tight flex items-center gap-3">
+                                        <UserPlus className="w-6 h-6 text-primary" />
+                                        Dar de alta Asesor
+                                    </h2>
+                                    <p className="text-slate-400 text-xs mt-1">Completa el perfil del nuevo integrante</p>
+                                </div>
 
-                            {session.role === 'admin' ? (
-                                <form onSubmit={handleCreateUser} className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre</label>
-                                            <input type="text" required placeholder="Nombre" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })} />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Apellido</label>
-                                            <input type="text" required placeholder="Apellido" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={newUser.apellido} onChange={e => setNewUser({ ...newUser, apellido: e.target.value })} />
-                                        </div>
+                                <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre</label>
+                                        <input type="text" required placeholder="Nombre" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20" value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })} />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email de Acceso</label>
-                                        <input type="email" required placeholder="correo@acceso.com" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} />
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Apellido</label>
+                                        <input type="text" required placeholder="Apellido" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20" value={newUser.apellido} onChange={e => setNewUser({ ...newUser, apellido: e.target.value })} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Acceso</label>
+                                        <input type="email" required placeholder="correo@acceso.com" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} />
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contraseña</label>
-                                        <input type="password" required placeholder="••••••••" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
+                                        <input type="password" required placeholder="••••••••" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Rol</label>
-                                            <select className="w-full px-2 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold" value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value as any })}>
-                                                <option value="editor">Editor</option>
-                                                <option value="admin">Admin</option>
-                                            </select>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sede/Base</label>
-                                            <input type="text" placeholder="Ej: Matriz" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={newUser.base} onChange={e => setNewUser({ ...newUser, base: e.target.value })} />
-                                        </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Rol</label>
+                                        <select className="w-full px-2 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold" value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value as any })}>
+                                            <option value="editor">Editor</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
                                     </div>
-                                    <button disabled={isCreatingUser} className="w-full bg-secondary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-secondary/20 flex items-center justify-center gap-2">
-                                        {isCreatingUser ? 'Guardando...' : 'Registrar Nuevo Perfil'}
-                                    </button>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sede / Base</label>
+                                        <input type="text" placeholder="Ej: Matriz" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={newUser.base} onChange={e => setNewUser({ ...newUser, base: e.target.value })} />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <button disabled={isCreatingUser} className="w-full bg-secondary text-white py-3 rounded-xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-secondary/20 flex items-center justify-center gap-2">
+                                            {isCreatingUser ? 'Guardando...' : 'Registrar Perfil'}
+                                        </button>
+                                    </div>
                                 </form>
-                            ) : (
-                                <div className="p-10 bg-slate-50 border border-slate-100 rounded-[2rem] flex flex-col items-center justify-center text-center space-y-4">
-                                    <Shield className="w-10 h-10 text-slate-300" />
-                                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">
-                                        Solo Administradores pueden gestionar el equipo profesional
-                                    </p>
-                                </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
 
                         {/* Team List */}
-                        <div className="lg:col-span-2 space-y-6">
+                        <div className="space-y-6">
                             <h2 className="text-2xl font-black text-secondary uppercase tracking-tight flex items-center gap-3 mb-6">
                                 <Users className="w-6 h-6 text-primary" />
                                 Equipo Thermo House
                             </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {users.map(u => (
-                                    <div key={u.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-start justify-between group hover:border-primary/20 transition-all">
+                                    <div key={u.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-start justify-between group hover:border-primary/20 transition-all gap-4">
                                         <div className="flex gap-4">
-                                            <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 text-slate-400 group-hover:bg-primary/5 group-hover:text-primary transition-all">
+                                            <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 text-slate-400 group-hover:bg-primary/5 group-hover:text-primary transition-all flex-shrink-0">
                                                 <UserCircle className="w-8 h-8" />
                                             </div>
                                             <div>
-                                                <div className="font-black text-secondary">{u.name} {u.apellido}</div>
+                                                <div className="font-black text-secondary uppercase tracking-tight">{u.name} {u.apellido}</div>
                                                 <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 mt-1"><Building2 className="w-3 h-3" /> {u.base || 'Gral'} • {u.ciudad}</div>
                                                 <div className="mt-3 flex gap-2">
                                                     <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${u.role === 'admin' ? 'bg-purple-50 text-purple-600 border-purple-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
@@ -940,14 +1329,23 @@ export default function AdminDashboard() {
                                             </div>
                                         </div>
                                         {session.role === 'admin' && (
-                                            <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                                <button onClick={() => setUserModal({ open: true, type: 'edit', data: u })} className="p-2.5 bg-slate-50 text-slate-400 border border-slate-200 shadow-sm hover:bg-white hover:text-primary rounded-xl transition-all" title="Editar Perfil y Datos de Contacto Profesional"><Edit3 className="w-4 h-4" /></button>
-                                                <button onClick={() => handleResetPassword(u.id)} className="p-2.5 bg-slate-50 text-slate-400 border border-slate-200 shadow-sm hover:bg-white hover:text-secondary rounded-xl transition-all" title="Restablecer Contraseña de Acceso"><Key className="w-4 h-4" /></button>
-                                                <button onClick={() => handleDeleteUser(u.id)} className="p-2.5 bg-red-50 text-red-300 border border-red-100 shadow-sm hover:bg-white hover:text-red-600 rounded-xl transition-all" title="Eliminar Usuario Definitivamente"><Trash2 className="w-4 h-4" /></button>
+                                            <div className="flex flex-row sm:flex-col gap-2 pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-50 sm:opacity-0 sm:group-hover:opacity-100 transition-all overflow-x-auto">
+                                                <button onClick={() => setUserModal({ open: true, type: 'edit', data: u })} className="flex-1 sm:flex-none p-3 bg-slate-50 text-slate-400 border border-slate-200 shadow-sm hover:bg-white hover:text-primary rounded-xl transition-all flex items-center justify-center gap-2" title="Editar Perfil">
+                                                    <Edit3 className="w-4 h-4" />
+                                                    <span className="text-[8px] font-black uppercase sm:hidden">Editar</span>
+                                                </button>
+                                                <button onClick={() => handleResetPassword(u.id, u.name)} className="flex-1 sm:flex-none p-3 bg-slate-50 text-slate-400 border border-slate-200 shadow-sm hover:bg-white hover:text-secondary rounded-xl transition-all flex items-center justify-center gap-2" title="Clave">
+                                                    <Key className="w-4 h-4" />
+                                                    <span className="text-[8px] font-black uppercase sm:hidden">Clave</span>
+                                                </button>
+                                                <button onClick={() => handleDeleteUser(u.id, u.name)} className="flex-1 sm:flex-none p-3 bg-red-50 text-red-300 border border-red-100 shadow-sm hover:bg-white hover:text-red-600 rounded-xl transition-all flex items-center justify-center gap-2" title="Eliminar">
+                                                    <Trash2 className="w-4 h-4" />
+                                                    <span className="text-[8px] font-black uppercase sm:hidden">Eliminar</span>
+                                                </button>
                                             </div>
                                         )}
                                         {session.role !== 'admin' && (
-                                            <div className="px-3 py-1 bg-slate-50 border border-slate-100 rounded-lg text-[9px] font-black text-slate-300 uppercase italic">Solo Lectura</div>
+                                            <div className="px-3 py-1 bg-slate-50 border border-slate-100 rounded-lg text-[9px] font-black text-slate-300 uppercase italic self-start">Solo Lectura</div>
                                         )}
                                     </div>
                                 ))}
@@ -972,7 +1370,7 @@ export default function AdminDashboard() {
                                     </div>
 
                                     <form onSubmit={handleUpdateUser} className="p-8 space-y-6">
-                                        <div className="grid grid-cols-2 gap-5">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                             <div className="space-y-1">
                                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre</label>
                                                 <input type="text" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold" value={userModal.data.name} onChange={e => setUserModal({ ...userModal, data: { ...userModal.data, name: e.target.value } })} required />
@@ -1045,14 +1443,17 @@ export default function AdminDashboard() {
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ciudad</label>
-                                        <input
-                                            type="text"
+                                        <select
                                             required
-                                            placeholder="Nombre de la ciudad"
                                             className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10"
                                             value={newLocation.ciudad}
                                             onChange={e => setNewLocation({ ...newLocation, ciudad: e.target.value })}
-                                        />
+                                        >
+                                            <option value="">Selecciona Ciudad</option>
+                                            {newLocation.estado && MEXICAN_CITIES_BY_STATE[newLocation.estado]?.map(c => (
+                                                <option key={c} value={c}>{c}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <button disabled={isSavingLocation} className="w-full bg-secondary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-secondary/20 flex items-center justify-center gap-2">
                                         {isSavingLocation ? 'Guardando...' : 'Habilitar Ciudad'}
@@ -1068,80 +1469,193 @@ export default function AdminDashboard() {
                             )}
                         </div>
 
-                        {/* Google Maps Key Configuration (Admin Only) */}
-                        {session.role === 'admin' && (
-                            <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-                                        <Key className="w-5 h-5 text-primary" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-black uppercase tracking-tight text-white">Google Maps API KEY</h3>
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Configuración Crítica</p>
-                                    </div>
-                                </div>
-                                <div className="space-y-3">
-                                    <input
-                                        type="password"
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-mono focus:border-primary outline-none transition-all"
-                                        placeholder="AIzaSy..."
-                                        value={mapsKey}
-                                        onChange={e => setMapsKey(e.target.value)}
-                                    />
-                                    <button
-                                        onClick={handleUpdateMapsKey}
-                                        disabled={isSavingKey}
-                                        className="w-full bg-primary text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all disabled:opacity-50"
-                                    >
-                                        {isSavingKey ? 'Guardando...' : 'Actualizar Key Local'}
-                                    </button>
-                                </div>
-                                <p className="text-[8px] text-slate-500 font-bold leading-relaxed uppercase">
-                                    ⚠️ Esta llave es necesaria para el funcionamiento del mapa satelital. No la comparta.
-                                </p>
-                            </div>
-                        )}
+                        {/* Map Configuration moved to Config tab */}
 
                         {/* Location List */}
                         <div className="lg:col-span-2 space-y-6">
-                            <h2 className="text-2xl font-black text-secondary uppercase tracking-tight flex items-center gap-3 mb-6">
-                                <Navigation className="w-6 h-6 text-primary" />
-                                Zonas de Operación Activas
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {locations.filter(l => {
-                                    const n = l.ciudad.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                                    return n !== 'merida';
-                                }).map(l => (
-                                    <div key={l.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between group hover:border-primary/20 transition-all">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-primary border border-slate-100">
-                                                <MapPin className="w-6 h-6" />
+                            <div className="flex flex-col gap-6">
+                                {/* Base City Highlight */}
+                                {locations.filter(l => l.ciudad.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === 'merida').map(l => (
+                                    <div key="base-merida" className="bg-primary/5 border-2 border-primary/20 p-8 rounded-[2.5rem] flex items-center justify-between shadow-sm">
+                                        <div className="flex items-center gap-5">
+                                            <div className="w-16 h-16 bg-primary text-white rounded-[2rem] flex items-center justify-center shadow-lg shadow-primary/20">
+                                                <Globe className="w-8 h-8" />
                                             </div>
                                             <div>
-                                                <div className="font-black text-secondary uppercase tracking-tight">{l.ciudad}</div>
-                                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{l.estado}</div>
-                                                {!products.some(p => p.ciudad === l.ciudad) && (
-                                                    <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-600 border border-amber-100 rounded text-[8px] font-black uppercase tracking-widest animate-pulse">
-                                                        <AlertCircle className="w-2.5 h-2.5" /> Sin Tarifas Regionales
-                                                    </div>
-                                                )}
+                                                <div className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">Sede Central de Operaciones</div>
+                                                <h3 className="text-3xl font-black text-secondary uppercase tracking-tighter">{l.ciudad}</h3>
+                                                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{l.estado}</p>
                                             </div>
                                         </div>
-                                        {session.role === 'admin' && (
-                                            <button
-                                                onClick={() => handleDeleteLocation(l.id)}
-                                                className="p-3 bg-red-50 text-red-300 hover:text-red-600 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        )}
+                                        <div className="hidden md:block">
+                                            <span className="px-5 py-2 bg-white border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-sm">Configurada como Base</span>
+                                        </div>
                                     </div>
                                 ))}
-                                {locations.length === 0 && (
-                                    <div className="col-span-full py-20 text-center text-slate-300 font-bold italic">No hay ciudades configuradas.</div>
+
+                                <div className="space-y-4">
+                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sucursales y Zonas de Operación Regionales</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {locations.filter(l => l.ciudad.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") !== 'merida').map(l => {
+                                            return (
+                                                <div key={l.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between group hover:border-primary/20 transition-all">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-primary border border-slate-100">
+                                                            <MapPin className="w-6 h-6" />
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="font-black text-secondary uppercase tracking-tight">{l.ciudad}</div>
+                                                            </div>
+                                                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{l.estado}</div>
+                                                            {!products.some(p => p.ciudad === l.id || p.ciudad === l.ciudad) && (
+                                                                <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1.5 bg-amber-50 text-amber-600 border border-amber-100 rounded-lg text-[8px] font-black uppercase tracking-widest animate-pulse">
+                                                                    <AlertCircle className="w-2.5 h-2.5" /> Sin Tarifas Regionales
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    {session.role === 'admin' && (
+                                                        <button
+                                                            onClick={() => handleDeleteLocation(l.id, l.ciudad)}
+                                                            className="p-3 bg-red-50 text-red-300 hover:text-red-600 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                        {locations.length <= 1 && (
+                                            <div className="col-span-full py-20 text-center text-slate-300 font-bold italic border-2 border-dashed border-slate-100 rounded-[2rem]">No hay sucursales regionales configuradas.</div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'config' && session.role === 'admin' && (
+                    <div className="max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-2">
+                        <div className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
+                            <div>
+                                <h2 className="text-2xl font-black text-secondary uppercase tracking-tight flex items-center gap-3">
+                                    <Globe className="w-6 h-6 text-primary" />
+                                    Ajustes Globales del Sistema
+                                </h2>
+                                <p className="text-slate-400 text-sm mt-1">Configuración técnica y llaves de API externas</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="bg-slate-900 p-8 rounded-[2rem] text-white space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                                            <Key className="w-5 h-5 text-primary" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-black uppercase tracking-tight text-white">Google Maps API KEY</h3>
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Mapas Satelitales</p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <input
+                                            type="password"
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-mono focus:border-primary outline-none transition-all"
+                                            placeholder="AIzaSy..."
+                                            value={mapsKey}
+                                            onChange={e => setMapsKey(e.target.value)}
+                                        />
+                                        <button
+                                            onClick={handleUpdateMapsKey}
+                                            disabled={isSavingKey}
+                                            className="w-full bg-primary text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all disabled:opacity-50"
+                                        >
+                                            {isSavingKey ? 'Guardando...' : 'Actualizar Key'}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 flex flex-col items-center justify-center text-center space-y-4">
+                                    <AlertCircle className="w-8 h-8 text-slate-200" />
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+                                        Más configuraciones globales se añadirán próximamente
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'products' && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
+                        <div className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                            <div className="flex items-center justify-between mb-8">
+                                <div>
+                                    <h2 className="text-2xl font-black text-secondary uppercase tracking-tight flex items-center gap-3">
+                                        <Package className="w-6 h-6 text-primary" />
+                                        Catálogo Maestro de Productos
+                                    </h2>
+                                    <p className="text-slate-400 text-sm mt-1">Define las características técnicas de cada sistema termoaislante</p>
+                                </div>
+                                {session.role === 'admin' && (
+                                    <button
+                                        onClick={() => setProductModal({ open: true, type: 'create', data: { title: '', internal_id: '', category: 'concrete' } })}
+                                        className="bg-secondary text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-secondary/20 flex items-center gap-2"
+                                    >
+                                        <Plus className="w-4 h-4" /> Nuevo Producto Master
+                                    </button>
                                 )}
                             </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {(masterProducts.length > 0 ? masterProducts : Array.from(new Set(products.map(p => p.internal_id))).map(id => products.find(prod => prod.internal_id === id))).map((p: any) => (
+                                    <div key={p.id || p.internal_id} className="bg-slate-50 border border-slate-100 rounded-[2rem] p-6 space-y-4 hover:shadow-xl hover:shadow-slate-100/50 transition-all border-b-4 border-b-primary/20">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[9px] font-black bg-primary text-white px-2 py-0.5 rounded-full uppercase">{p?.category}</span>
+                                                <button
+                                                    onClick={() => toggleMasterProductActive(p.id, p.activo !== false)}
+                                                    className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase transition-all ${p.activo !== false ? 'bg-green-100 text-green-600' : 'bg-slate-200 text-slate-500'}`}
+                                                >
+                                                    {p.activo !== false ? '● Activo' : '○ Pausado'}
+                                                </button>
+                                            </div>
+                                            <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">ORDEN #{p?.orden}</span>
+                                        </div>
+                                        <div>
+                                            <h3 className="font-black text-secondary tracking-tight text-lg leading-tight uppercase">{p?.title}</h3>
+                                            <p className="text-[10px] font-mono font-black text-slate-300 uppercase mt-1">{p?.internal_id}</p>
+                                        </div>
+                                        <div className="pt-4 border-t border-slate-200 grid grid-cols-2 gap-4">
+                                            <div>
+                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Espesor</p>
+                                                <p className="text-[11px] font-black text-secondary uppercase">{p?.grosor || '---'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Zonas Activas</p>
+                                                <p className="text-[11px] font-black text-primary uppercase">
+                                                    {products.filter(prod => prod.internal_id === p.internal_id).length} Ciudades
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setProductModal({ open: true, type: 'edit', data: p, isMaster: true })}
+                                                className="flex-1 bg-white border border-slate-200 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all"
+                                            >
+                                                Editar Ficha
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            {masterProducts.length === 0 && products.length > 0 && (
+                                <div className="mt-8 p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-center gap-3 text-blue-800">
+                                    <AlertCircle className="w-5 h-5 text-blue-500" />
+                                    <p className="text-[10px] font-black uppercase tracking-tight">Modo Legado: Los productos se están derivando de los precios regionales. Para habilitar el catálogo maestro, ejecute la migración SQL.</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -1617,25 +2131,34 @@ export default function AdminDashboard() {
                                                 <div className="h-px bg-slate-200 mb-4" />
                                                 <p className="text-[10px] font-black uppercase tracking-widest text-secondary">Thermo House México</p>
                                                 {(() => {
-                                                    // Priority: Quote's recorded advisor > Current session user
                                                     const advisor = selectedLeadForDetail.advisor || session;
                                                     const advisorName = advisor?.name || 'Asesor';
                                                     const advisorLastName = advisor?.apellido || '';
-                                                    const advisorPhone = advisor?.telefono || '';
+                                                    const advisorPhone = advisor?.telefono || '999 448 6445'; // Sede Central Fallback
                                                     const advisorEmail = advisor?.contacto_email || advisor?.email || 'ventas@thermohouse.mx';
 
                                                     return (
-                                                        <div className="mt-2 space-y-0.5">
-                                                            <p className="text-[11px] font-black text-primary uppercase">
-                                                                Atendido por: {advisorName} {advisorLastName}
-                                                            </p>
-                                                            {(advisorPhone || advisorEmail) && (
-                                                                <p className="text-[9px] font-bold text-slate-500">
-                                                                    {advisorPhone && `Tel: ${advisorPhone}`}
-                                                                    {advisorPhone && advisorEmail && ' | '}
-                                                                    {advisorEmail}
+                                                        <div className="mt-2 flex flex-col items-end text-right">
+                                                            <div className="bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 flex flex-col items-end">
+                                                                <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-0.5">Atendido por:</p>
+                                                                <p className="text-sm font-black text-secondary uppercase tracking-tight">
+                                                                    {advisorName} {advisorLastName}
                                                                 </p>
-                                                            )}
+                                                            </div>
+                                                            <div className="mt-2 flex gap-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                                                {advisorPhone && (
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <Phone className="w-3 h-3 text-primary" />
+                                                                        <span>{advisorPhone}</span>
+                                                                    </div>
+                                                                )}
+                                                                {advisorEmail && (
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <Mail className="w-3 h-3 text-primary" />
+                                                                        <span className="lowercase">{advisorEmail}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     );
                                                 })()}
@@ -1667,164 +2190,322 @@ export default function AdminDashboard() {
                                 </button>
                             </div>
 
-                            <form onSubmit={handleSaveProductData} className="p-8 space-y-6">
-                                <div className="grid grid-cols-1 gap-5">
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ciudad o Región</label>
-                                        <select
-                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
-                                            value={productModal.data.ciudad}
-                                            onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, ciudad: e.target.value } })}
-                                            required
-                                        >
-                                            <option value="" disabled>Selecciona una ciudad</option>
-                                            {locations.map(l => <option key={l.id} value={l.ciudad}>{l.ciudad} ({l.estado})</option>)}
-                                        </select>
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre del Sistema</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            placeholder="Ej: TH FORTE XL"
-                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
-                                            value={productModal.data.title}
-                                            onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, title: e.target.value } })}
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
+                            <form onSubmit={handleSaveProductData} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
+                                {productModal.isMaster ? (
+                                    <>
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Precio Contado $/m²</label>
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">ID Interno (Ej: th-fix)</label>
                                             <input
-                                                type="number"
+                                                type="text"
                                                 required
-                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-black text-secondary outline-none focus:ring-4 focus:ring-primary/10 transition-all"
-                                                value={productModal.data.precio_contado_m2}
-                                                onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, precio_contado_m2: e.target.value } })}
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                                value={productModal.data.internal_id}
+                                                onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, internal_id: e.target.value } })}
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Precio MSI $/m²</label>
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre Comercial</label>
                                             <input
-                                                type="number"
+                                                type="text"
                                                 required
-                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-black text-primary outline-none focus:ring-4 focus:ring-primary/10 transition-all"
-                                                value={productModal.data.precio_msi_m2}
-                                                onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, precio_msi_m2: e.target.value } })}
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                                value={productModal.data.title}
+                                                onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, title: e.target.value } })}
                                             />
                                         </div>
-                                    </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Categoría</label>
+                                            <select
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                                value={productModal.data.category}
+                                                onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, category: e.target.value } })}
+                                            >
+                                                <option value="concrete">Solo Concreto</option>
+                                                <option value="sheet">Solo Lámina</option>
+                                                <option value="both">Ambas Superficies</option>
+                                            </select>
+                                        </div>
 
-                                    <div className="space-y-4">
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">ID Interno</label>
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Espesor (Grosor)</label>
                                                 <input
                                                     type="text"
-                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black text-slate-400 outline-none uppercase"
-                                                    value={productModal.data.internal_id}
-                                                    onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, internal_id: e.target.value.toLowerCase() } })}
+                                                    placeholder="Ej: 1 cm"
+                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                                    value={productModal.data.grosor || ''}
+                                                    onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, grosor: e.target.value } })}
                                                 />
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Orden de Aparición</label>
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Orden Maestro</label>
                                                 <input
                                                     type="number"
-                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none"
+                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
                                                     value={productModal.data.orden}
                                                     onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, orden: e.target.value } })}
                                                 />
                                             </div>
                                         </div>
 
-                                        {/* Characteristics Editing */}
-                                        <div className="border-t border-slate-100 pt-6 space-y-4">
-                                            <h4 className="text-[10px] font-black text-primary uppercase tracking-widest">Características del Sistema</h4>
-                                            <div className="space-y-3">
-                                                <div className="space-y-1">
-                                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Grosor / Espesor</label>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Resumen de Beneficio</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Ej: Aislamiento Térmico Óptimo"
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                                value={productModal.data.beneficio_principal || ''}
+                                                onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, beneficio_principal: e.target.value } })}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Detalle Extendido de Sistema</label>
+                                            <textarea
+                                                rows={3}
+                                                placeholder="Descripción detallada para el reporte..."
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all resize-none"
+                                                value={productModal.data.detalle_costo_beneficio || ''}
+                                                onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, detalle_costo_beneficio: e.target.value } })}
+                                            />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 mb-2">
+                                            <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-1">Configuración de Tarifa Regional</p>
+                                            <p className="text-[10px] font-bold text-slate-500 leading-tight">Define los precios específicos para una ciudad. Las características técnicas se heredan del catálogo maestro automáticamente.</p>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ciudad o Región</label>
+                                            <select
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                                value={productModal.data.ciudad}
+                                                onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, ciudad: e.target.value } })}
+                                                required
+                                            >
+                                                <option value="" disabled>Selecciona una ciudad</option>
+                                                {locations.map(l => <option key={l.id} value={l.ciudad}>{l.ciudad} ({l.estado})</option>)}
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Producto del Catálogo</label>
+                                            <select
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                                value={productModal.data.internal_id}
+                                                onChange={e => {
+                                                    const master = masterProducts.find(m => m.internal_id === e.target.value) ||
+                                                        (masterProducts.length === 0 && Array.from(new Set(products.map(p => p.internal_id))).map(id => products.find(prod => prod.internal_id === id)).find((m: any) => m.internal_id === e.target.value));
+
+                                                    if (master) {
+                                                        setProductModal({
+                                                            ...productModal,
+                                                            data: {
+                                                                ...productModal.data,
+                                                                internal_id: master.internal_id,
+                                                                title: master.title,
+                                                                category: master.category,
+                                                                grosor: master.grosor,
+                                                                beneficio_principal: master.beneficio_principal,
+                                                                detalle_costo_beneficio: master.detalle_costo_beneficio,
+                                                                orden: master.orden
+                                                            }
+                                                        });
+                                                    }
+                                                }}
+                                                required
+                                            >
+                                                <option value="" disabled>Selecciona producto para esta ciudad</option>
+                                                {(masterProducts.length > 0 ? masterProducts : Array.from(new Set(products.map(p => p.internal_id))).map(id => products.find(prod => prod.internal_id === id))).map((m: any) => (
+                                                    <option key={m.id || m.internal_id} value={m.internal_id}>{m.title}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Precio Contado $/m²</label>
+                                                <div className="relative">
+                                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
                                                     <input
-                                                        type="text"
-                                                        className="w-full px-4 py-2.5 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-primary/5 transition-all"
-                                                        placeholder="Ej: 1000 micras, 5mm..."
-                                                        value={productModal.data.grosor || ''}
-                                                        onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, grosor: e.target.value } })}
+                                                        type="number"
+                                                        required
+                                                        className="w-full pl-8 pr-4 py-3 bg-white border-2 border-slate-100 rounded-xl text-sm font-black text-secondary outline-none focus:border-primary transition-all"
+                                                        value={productModal.data.precio_contado_m2}
+                                                        onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, precio_contado_m2: e.target.value } })}
                                                     />
                                                 </div>
-                                                <div className="space-y-1">
-                                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Beneficio Principal</label>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Precio MSI $/m²</label>
+                                                <div className="relative">
+                                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
                                                     <input
-                                                        type="text"
-                                                        className="w-full px-4 py-2.5 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-primary/5 transition-all"
-                                                        placeholder="Ej: Impermeabilidad Total..."
-                                                        value={productModal.data.beneficio_principal || ''}
-                                                        onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, beneficio_principal: e.target.value } })}
-                                                    />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Detalle Costo/Beneficio</label>
-                                                    <textarea
-                                                        className="w-full px-4 py-2.5 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-primary/5 transition-all min-h-[60px]"
-                                                        placeholder="Descripción corta para la tarjeta de cotización..."
-                                                        value={productModal.data.detalle_costo_beneficio || ''}
-                                                        onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, detalle_costo_beneficio: e.target.value } })}
+                                                        type="number"
+                                                        required
+                                                        className="w-full pl-8 pr-4 py-3 bg-white border-2 border-slate-100 rounded-xl text-sm font-black text-primary outline-none focus:border-primary transition-all"
+                                                        value={productModal.data.precio_msi_m2}
+                                                        onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, precio_msi_m2: e.target.value } })}
                                                     />
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Orden Local (Opcional)</label>
+                                            <input
+                                                type="number"
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                                value={productModal.data.orden}
+                                                onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, orden: e.target.value } })}
+                                            />
+                                        </div>
+                                    </>
+                                )}
 
-                                <button
-                                    disabled={isSavingProduct}
-                                    className="w-full bg-secondary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-secondary/20 flex items-center justify-center gap-3 active:scale-[0.98] mt-4"
-                                >
-                                    {isSavingProduct ? <Clock className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                                    {productModal.type === 'edit' ? 'Actualizar Producto' : 'Crear Tarifa Tarifa'}
-                                </button>
+                                <div className="pt-4 flex gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setProductModal({ ...productModal, open: false })}
+                                        className="flex-1 bg-slate-100 text-slate-400 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                                    > Cancelar </button>
+                                    <button
+                                        disabled={isSavingProduct}
+                                        className="flex-[2] bg-primary text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-3"
+                                    >
+                                        {isSavingProduct ? <Clock className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                        {productModal.type === 'create' ? 'Crear Registro' : 'Guardar Cambios'}
+                                    </button>
+                                </div>
                             </form>
                         </div>
                     </div>
                 )
             }
+
+            {/* Password Reset Modal */}
+            {
+                passwordModal.open && (
+                    <div className="fixed inset-0 bg-secondary/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+                        <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                            <div className="bg-slate-50 p-8 border-b border-slate-100 flex justify-between items-center">
+                                <div>
+                                    <h3 className="text-2xl font-black text-secondary uppercase tracking-tight flex items-center gap-3">
+                                        <Key className="w-7 h-7 text-primary" />
+                                        Cambiar Clave
+                                    </h3>
+                                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Usuario: {passwordModal.userName}</p>
+                                </div>
+                                <button onClick={() => setPasswordModal({ open: false, userId: null, userName: '' })} className="p-3 bg-white border border-slate-200 rounded-2xl">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div className="p-8 space-y-6">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nueva Contraseña</label>
+                                    <input
+                                        type="password"
+                                        autoFocus
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                        placeholder="Mínimo 6 caracteres"
+                                        value={newPassword}
+                                        onChange={e => setNewPassword(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && confirmResetPassword()}
+                                    />
+                                </div>
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={() => setPasswordModal({ open: false, userId: null, userName: '' })}
+                                        className="flex-1 py-4 bg-slate-100 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                                    > Cancelar </button>
+                                    <button
+                                        onClick={confirmResetPassword}
+                                        disabled={isCreatingUser || !newPassword}
+                                        className="flex-[2] py-4 bg-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-3"
+                                    >
+                                        {isCreatingUser ? <Clock className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                        Actualizar Clave
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Delete Confirmation Modal */}
+            {
+                deleteModal.open && (
+                    <div className="fixed inset-0 bg-secondary/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+                        <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                            <div className="p-8 text-center space-y-6">
+                                <div className="w-20 h-20 bg-red-50 text-red-500 rounded-[2rem] flex items-center justify-center mx-auto shadow-lg shadow-red-500/10">
+                                    <Trash2 className="w-10 h-10" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-black text-secondary uppercase tracking-tight">
+                                        {deleteModal.type === 'user' ? '¿Eliminar Asesor?' :
+                                            deleteModal.type === 'product' ? '¿Eliminar Tarifa?' : '¿Eliminar Ubicación?'}
+                                    </h3>
+                                    <p className="text-slate-400 text-sm mt-2 font-bold px-4">
+                                        Confirma que deseas eliminar <span className="text-secondary">{deleteModal.name}</span>. {deleteModal.details}
+                                    </p>
+                                </div>
+                                <div className="flex gap-4 pt-2">
+                                    <button
+                                        onClick={() => setDeleteModal({ ...deleteModal, open: false })}
+                                        className="flex-1 py-4 bg-slate-100 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                                    > Cancelar </button>
+                                    <button
+                                        onClick={confirmDeleteAction}
+                                        disabled={isCreatingUser}
+                                        className="flex-[2] py-4 bg-red-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 flex items-center justify-center gap-3"
+                                    >
+                                        {isCreatingUser ? <Clock className="w-5 h-5 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                        Confirmar Eliminación
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
             {/* Print Styles */}
             <style jsx global>{`
                 @media print {
                     @page {
                         size: letter portrait;
-                        margin: 1.5cm;
+                        margin: 1cm;
                     }
 
-                    /* 1. Hide the entire dashboard background */
-                    .admin-dashboard-layout {
+                    /* Force US Letter width on any device when printing */
+                    html, body {
+                        width: 215.9mm !important;
+                        height: 279.4mm !important;
+                        background: white !important;
+                        overflow: visible !important;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+
+                    .admin-dashboard-layout, 
+                    .admin-sidebar,
+                    .print\:hidden {
                         display: none !important;
                     }
 
-                    /* 2. Reset Body/HTML for clean print */
-                    html, body {
-                        background: white !important;
-                        height: auto !important;
-                        overflow: visible !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                    }
-
-                    /* 3. Force the Modal Overlay to become the main page */
                     .lead-modal-overlay {
-                        position: static !important;
-                        display: block !important;
-                        background: white !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                        z-index: auto !important;
+                        position: absolute !important;
+                        top: 0 !important;
+                        left: 0 !important;
                         width: 100% !important;
-                        height: auto !important;
-                        backdrop-filter: none !important;
+                        background: white !important;
+                        display: block !important;
+                        z-index: 9999 !important;
                     }
 
-                    /* 4. Transform the modal card into a full-page document */
                     .lead-modal-overlay > div {
                         width: 100% !important;
                         max-width: none !important;
@@ -1835,30 +2516,16 @@ export default function AdminDashboard() {
                         border-radius: 0 !important;
                     }
 
-                    /* 5. Hide modal UI elements (Header bar, Close buttons, Print button itself) */
+                    /* Hide UI elements */
                     .lead-modal-overlay > div > div:first-child,
-                    .lead-modal-overlay button,
-                    .print\\:hidden {
+                    .lead-modal-overlay form > div:last-child {
                         display: none !important;
                     }
 
-                    /* 6. Ensure the quote content is visible and fills page */
                     #printable-quote {
                         display: block !important;
-                        visibility: visible !important;
                         width: 100% !important;
                         padding: 0 !important;
-                        margin: 0 !important;
-                    }
-
-                    #printable-quote * {
-                        visibility: visible !important;
-                    }
-
-                    /* 7. Force colors for logos/lines */
-                    * {
-                        -webkit-print-color-adjust: exact !important;
-                        print-color-adjust: exact !important;
                     }
                 }
             `}</style>

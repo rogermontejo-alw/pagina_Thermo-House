@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Script from 'next/script';
 import { Search, Map as MapIcon, RotateCcw, Crosshair, PencilRuler, Keyboard } from 'lucide-react';
+import { MEXICAN_CITIES_BY_STATE } from '@/lib/mexico-data';
 
 import { getAppConfig } from '@/app/actions/get-config';
 import { getLocations } from '@/app/actions/admin-locations';
@@ -15,40 +16,7 @@ interface MapCalculatorProps {
 }
 
 // Fallback in case DB fetch fails or is empty
-const FALLBACK_REGIONS: Record<string, string[]> = {
-    'Aguascalientes': ['Aguascalientes'],
-    'Baja California': ['Tijuana', 'Mexicali', 'Ensenada', 'Rosarito'],
-    'Baja California Sur': ['La Paz', 'Los Cabos', 'San José del Cabo'],
-    'Campeche': ['Campeche', 'Ciudad del Carmen'],
-    'Chiapas': ['Tuxtla Gutiérrez', 'San Cristóbal de las Casas', 'Tapachula'],
-    'Chihuahua': ['Chihuahua', 'Ciudad Juárez', 'Delicias', 'Cuauhtémoc', 'Parral'],
-    'Ciudad de México': ['CDMX'],
-    'Coahuila': ['Saltillo', 'Torreón', 'Monclova', 'Piedras Negras'],
-    'Colima': ['Colima', 'Manzanillo'],
-    'Durango': ['Durango', 'Gómez Palacio'],
-    'Estado de México': ['Toluca', 'Naucalpan', 'Tlalnepantla', 'Huixquilucan', 'Metepec'],
-    'Guanajuato': ['León', 'Irapuato', 'Celaya', 'Guanajuato', 'San Miguel de Allende'],
-    'Guerrero': ['Acapulco', 'Chilpancingo', 'Zihuatanejo', 'Iguala'],
-    'Hidalgo': ['Pachuca', 'Tula', 'Tulancingo'],
-    'Jalisco': ['Guadalajara', 'Zapopan', 'Puerto Vallarta', 'Tlaquepaque', 'Tonalá'],
-    'Michoacán': ['Morelia', 'Uruapan', 'Lázaro Cárdenas'],
-    'Morelos': ['Cuernavaca', 'Jiutepec', 'Cuautla', 'Temixco'],
-    'Nayarit': ['Tepic', 'Bahía de Banderas'],
-    'Nuevo León': ['Monterrey', 'San Pedro Garza García', 'Santa Catarina', 'Guadalupe'],
-    'Oaxaca': ['Oaxaca de Juárez', 'Salina Cruz', 'Huatulco'],
-    'Puebla': ['Puebla', 'Tehuacán', 'San Andrés Cholula', 'Atlixco'],
-    'Querétaro': ['Querétaro', 'San Juan del Río', 'Corregidora'],
-    'Quintana Roo': ['Cancún', 'Playa del Carmen', 'Tulum', 'Cozumel', 'Chetumal'],
-    'San Luis Potosí': ['San Luis Potosí', 'Ciudad Valles', 'Matehuala'],
-    'Sinaloa': ['Culiacán', 'Mazatlán', 'Los Mochis'],
-    'Sonora': ['Hermosillo', 'Ciudad Obregón', 'Nogales', 'Puerto Peñasco'],
-    'Tabasco': ['Villahermosa', 'Cárdenas'],
-    'Tamaulipas': ['Reynosa', 'Matamoros', 'Nuevo Laredo', 'Tampico', 'Ciudad Victoria'],
-    'Tlaxcala': ['Tlaxcala', 'Apizaco'],
-    'Veracruz': ['Veracruz', 'Xalapa', 'Boca del Río', 'Coatzacoalcos'],
-    'Yucatán': ['Mérida', 'Progreso', 'Umán', 'Kanasín', 'Valladolid', 'Tizimín'],
-    'Zacatecas': ['Zacatecas', 'Fresnillo', 'Guadalupe']
-};
+const FALLBACK_REGIONS: Record<string, string[]> = MEXICAN_CITIES_BY_STATE;
 
 declare global {
     interface Window {

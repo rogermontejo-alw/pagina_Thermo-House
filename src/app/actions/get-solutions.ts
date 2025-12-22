@@ -8,6 +8,7 @@ export async function getAllSolutions() {
         const { data, error } = await supabaseAdmin
             .from('soluciones_precios')
             .select('*')
+            .eq('activo', true)
             .order('orden', { ascending: true });
 
         if (error) {

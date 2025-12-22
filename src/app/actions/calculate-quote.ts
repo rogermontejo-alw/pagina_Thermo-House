@@ -24,6 +24,7 @@ export async function calculateQuote(area: number, solutionId: string, city?: st
         const { data: allSolsRaw, error } = await supabaseAdmin
             .from('soluciones_precios')
             .select('*')
+            .eq('activo', true)
             .order('orden', { ascending: true });
 
         if (error || !allSolsRaw || allSolsRaw.length === 0) {

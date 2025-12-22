@@ -101,3 +101,88 @@ export async function deleteProduct(id: string) {
         return { success: false, message: err.message };
     }
 }
+
+// --- Master Products (productos table) ---
+
+export async function getMasterProducts() {
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('productos')
+            .select('*')
+            .order('orden', { ascending: true });
+
+        // If table doesn't exist yet, return empty but descriptive error for UI to handle
+        if (error) {
+            if (error.code === '42P01') return { success: true, data: [], isLegacy: true };
+            throw error;
+        }
+        return { success: true, data };
+    } catch (err) {
+        return { success: false, message: 'Error al cargar los productos maestros.' };
+    }
+}
+
+export async function createMasterProduct(productData: any) {
+    try {
+        const session = await getAdminSession();
+        if (!session || session.role !== 'admin') {
+            return { success: false, message: 'No tienes permisos.' };
+        }
+
+        const { error } = await supabaseAdmin
+            .from('productos')
+            .insert(productData);
+
+        if (error) throw error;
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, message: err.message };
+    }
+}
+
+export async function updateMasterProduct(id: string, updates: any) {
+    try {
+        const session = await getAdminSession();
+        if (!session || session.role !== 'admin') {
+            return { success: false, message: 'No tienes permisos.' };
+        }
+
+        const { error } = await supabaseAdmin
+            .from('productos')
+            .update(updates)
+            .eq('id', id);
+
+        if (error) throw error;
+
+        // If pausing/activating master, cascade to regional prices
+        if (updates.activo !== undefined) {
+            await supabaseAdmin
+                .from('soluciones_precios')
+                .update({ activo: updates.activo })
+                .eq('producto_id', id);
+        }
+
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, message: err.message };
+    }
+}
+
+export async function deleteMasterProduct(id: string) {
+    try {
+        const session = await getAdminSession();
+        if (!session || session.role !== 'admin') {
+            return { success: false, message: 'No tienes permisos.' };
+        }
+
+        const { error } = await supabaseAdmin
+            .from('productos')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, message: err.message };
+    }
+}
