@@ -447,6 +447,9 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                     >
                         <div className="bg-white rounded-3xl p-6 md:p-10 border border-slate-100 shadow-xl relative overflow-hidden text-center">
                             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-orange-400 to-amber-300" />
+                            <div className="flex justify-center mb-6">
+                                <img src="/logo.png" alt="Thermo House" className="h-10 md:h-14 w-auto filter brightness-110 drop-shadow-md" />
+                            </div>
                             <div className="inline-flex items-center gap-2 bg-green-50 text-green-600 px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold mb-3 md:mb-4 border border-green-100 uppercase tracking-widest">
                                 <Check className="w-3.5 h-3.5" /> Cotización Generada
                             </div>

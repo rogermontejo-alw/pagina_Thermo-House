@@ -76,9 +76,12 @@ export default function Navbar() {
             >
                 <div className="mx-auto px-4 sm:px-6">
                     <div className="flex items-center justify-between h-14 md:h-14">
-                        <div className="flex-shrink-0 flex items-center gap-2">
-                            <Link href="/" className="text-lg md:text-xl font-bold text-secondary tracking-tighter">
-                                Thermo<span className="font-light text-primary">House</span>
+                        <div className="flex-shrink-0 flex items-center justify-center h-full">
+                            <Link href="/" className="flex items-center gap-2 group h-full">
+                                <img src="/logo.png" alt="Thermo House Logo" className="h-5 md:h-6 w-auto object-contain filter brightness-110 drop-shadow-sm self-center" />
+                                <span className="text-[12px] md:text-sm font-black text-secondary tracking-tight uppercase self-center leading-none">
+                                    Thermo<span className="text-primary font-bold">House</span>
+                                </span>
                             </Link>
                         </div>
 
@@ -137,7 +140,10 @@ export default function Navbar() {
                             exit={{ height: 0, opacity: 0 }}
                             className="md:hidden bg-background border-t border-border overflow-hidden relative z-[50]"
                         >
-                            <div className="px-2 pt-2 pb-6 space-y-1 sm:px-3 text-center">
+                            <div className="px-2 pt-6 pb-6 space-y-1 sm:px-3 text-center">
+                                <div className="flex justify-center mb-6">
+                                    <img src="/logo.png" alt="Thermo House" className="h-10 w-auto filter brightness-110" />
+                                </div>
                                 {menuItems.map((item) => (
                                     <a
                                         key={item.name}

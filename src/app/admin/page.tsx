@@ -599,14 +599,19 @@ export default function AdminDashboard() {
             <div className="max-w-7xl mx-auto space-y-8 admin-dashboard-layout">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] px-2 py-0.5 bg-primary/10 text-primary rounded-md">
-                                {session.role === 'admin' ? 'Acceso Total' : `Zona: ${session.ciudad}`}
-                            </span>
+                    <div className="flex items-center gap-4">
+                        <div className="hidden sm:block">
+                            <img src="/logo.png" alt="Thermo House" className="h-12 w-auto filter brightness-110 drop-shadow-sm" />
                         </div>
-                        <h1 className="text-3xl font-black text-secondary uppercase tracking-tight">Management Suite</h1>
-                        <p className="text-slate-400 text-sm">Bienvenido de nuevo, {session.name}</p>
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] px-2 py-0.5 bg-primary/10 text-primary rounded-md">
+                                    {session.role === 'admin' ? 'Acceso Total' : `Zona: ${session.ciudad}`}
+                                </span>
+                            </div>
+                            <h1 className="text-3xl font-black text-secondary uppercase tracking-tight">Management Suite</h1>
+                            <p className="text-slate-400 text-sm">Bienvenido de nuevo, {session.name}</p>
+                        </div>
                     </div>
                     <div className="flex gap-3">
                         <div className="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-1">
@@ -2013,19 +2018,19 @@ export default function AdminDashboard() {
                                     <button
                                         type="button"
                                         onClick={() => setShowQuotePreview(true)}
-                                        className="bg-white text-secondary border-2 border-slate-200 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+                                        className="bg-white text-secondary border-2 border-slate-200 py-3.5 rounded-xl font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2 active:scale-[0.98] text-[10px]"
                                         title="Generar y previsualizar reporte formal para el cliente"
                                     >
-                                        <FileText className="w-5 h-5" />
+                                        <FileText className="w-4 h-4" />
                                         Vista Previa Cotización
                                     </button>
                                     {(session.role === 'admin' || (session.role === 'editor' && selectedLeadForDetail.status === 'Nuevo')) && (
                                         <button
                                             disabled={isSavingDetail}
-                                            className="bg-secondary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-secondary/20 flex items-center justify-center gap-3 active:scale-[0.98]"
+                                            className="bg-secondary text-white py-3.5 rounded-xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg flex items-center justify-center gap-2 active:scale-[0.98] text-[10px]"
                                             title="Guardar cambios técnicos, comerciales y notas"
                                         >
-                                            {isSavingDetail ? <Clock className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                            {isSavingDetail ? <Clock className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                             Actualizar Ficha
                                         </button>
                                     )}
@@ -2090,24 +2095,27 @@ export default function AdminDashboard() {
                                     <div id="printable-quote" className="bg-white p-8 md:p-16 text-slate-800 font-sans print:p-0 print:m-0">
                                         {/* Header Logo */}
                                         <div className="flex flex-row justify-between items-start mb-10 border-b-4 border-primary pb-6">
-                                            <div className="w-2/3">
-                                                <h2 className="text-3xl font-black text-secondary tracking-tighter mb-0.5">THERMO HOUSE</h2>
-                                                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Aislamiento Térmico & Acústico</p>
+                                            <div className="flex items-center gap-3">
+                                                <img src="/logo.png" alt="Thermo House" className="h-10 w-auto" />
+                                                <div>
+                                                    <h2 className="text-xl font-black text-secondary tracking-tighter leading-tight">THERMO HOUSE</h2>
+                                                    <p className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">Aislamiento Térmico & Acústico</p>
+                                                </div>
                                             </div>
                                             <div className="w-1/3 text-right">
-                                                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">Cotización Automática</div>
-                                                <div className="text-sm font-black text-secondary">#{selectedLeadForDetail.id.slice(0, 8).toUpperCase()}</div>
+                                                <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">Cotización Automática</div>
+                                                <div className="text-xs font-black text-secondary">#{selectedLeadForDetail.id.slice(0, 8).toUpperCase()}</div>
                                                 <div className="text-[9px] font-bold text-slate-400 mt-0.5 uppercase">Vence en: 7 días hábiles</div>
                                             </div>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-8 mb-10" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
                                             <div>
-                                                <h4 className="text-[9px] font-black uppercase tracking-widest text-primary mb-3">Información del Cliente</h4>
-                                                <div className="space-y-1.5">
-                                                    <p className="text-lg font-black text-secondary uppercase leading-none">{selectedLeadForDetail.contact_info.name}</p>
-                                                    <p className="text-xs font-bold text-slate-600 flex items-center gap-2">
-                                                        <Phone className="w-3 h-3" /> +52 {selectedLeadForDetail.contact_info.phone}
+                                                <h4 className="text-[8px] font-black uppercase tracking-widest text-primary mb-2">Información del Cliente</h4>
+                                                <div className="space-y-1">
+                                                    <p className="text-base font-black text-secondary uppercase leading-none">{selectedLeadForDetail.contact_info.name}</p>
+                                                    <p className="text-[10px] font-bold text-slate-600 flex items-center gap-2">
+                                                        <Phone className="w-2.5 h-2.5" /> +52 {selectedLeadForDetail.contact_info.phone}
                                                     </p>
                                                     <p className="text-[10px] font-medium text-slate-400 flex items-center gap-2 mt-1.5">
                                                         <MapPin className="w-3 h-3 text-primary" />
@@ -2116,19 +2124,19 @@ export default function AdminDashboard() {
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <h4 className="text-[9px] font-black uppercase tracking-widest text-primary mb-3">Detalles del Presupuesto</h4>
+                                                <h4 className="text-[8px] font-black uppercase tracking-widest text-primary mb-2">Detalles del Presupuesto</h4>
                                                 <div className="space-y-1">
-                                                    <p className="text-xs font-bold text-slate-600">Fecha: {new Date(selectedLeadForDetail.created_at).toLocaleString('es-MX')}</p>
-                                                    <p className="text-xs font-bold text-slate-600">Vigente hasta: {new Date(new Date(selectedLeadForDetail.created_at).getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
-                                                    <p className="text-xs font-black text-secondary mt-3 uppercase tracking-tight">Área Verificada: {selectedLeadForDetail.area} m²</p>
+                                                    <p className="text-[10px] font-bold text-slate-600">Fecha: {new Date(selectedLeadForDetail.created_at).toLocaleString('es-MX')}</p>
+                                                    <p className="text-[10px] font-bold text-slate-600">Vigente hasta: {new Date(new Date(selectedLeadForDetail.created_at).getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
+                                                    <p className="text-[10px] font-black text-secondary mt-2 uppercase tracking-tight">Área Verificada: {selectedLeadForDetail.area} m²</p>
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Product Section */}
                                         <div className="mb-10">
-                                            <div className="bg-slate-900 text-white p-5 rounded-t-xl">
-                                                <div className="grid grid-cols-4 text-[9px] font-black uppercase tracking-widest">
+                                            <div className="bg-slate-900 text-white p-4 rounded-t-lg">
+                                                <div className="grid grid-cols-4 text-[8px] font-black uppercase tracking-[0.2em]">
                                                     <div className="col-span-2">Concepto / Sistema Aplicado</div>
                                                     <div className="text-center">Área</div>
                                                     <div className="text-right">Cantidades</div>
@@ -2137,9 +2145,9 @@ export default function AdminDashboard() {
                                             <div className="border-x border-b border-slate-100 p-6 space-y-6">
                                                 <div className="grid grid-cols-4 items-start">
                                                     <div className="col-span-2">
-                                                        <h5 className="text-base font-black text-secondary uppercase mb-1.5">
+                                                        <h5 className="text-sm font-black text-secondary uppercase mb-1">
                                                             {products.find(p => p.id === selectedLeadForDetail.solution_id)?.title || 'Sistema Thermo House'}
-                                                            <span className="ml-2 text-[8px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full border border-slate-200 align-middle">
+                                                            <span className="ml-2 text-[7px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full border border-slate-200 align-middle font-bold">
                                                                 P. {selectedLeadForDetail.pricing_type === 'lista' ? 'LISTA' : 'CONTADO'}
                                                             </span>
                                                         </h5>
@@ -2171,11 +2179,11 @@ export default function AdminDashboard() {
                                                 {logistics > 0 && (
                                                     <div className="grid grid-cols-4 items-center bg-orange-50/50 p-3 rounded-lg border border-orange-100">
                                                         <div className="col-span-2">
-                                                            <h6 className="text-[9px] font-black text-orange-800 uppercase tracking-widest">Cargos por Logística Foránea</h6>
-                                                            <p className="text-[8px] font-bold text-orange-600/70">Traslado de equipo y personal a zona {selectedLeadForDetail.ciudad}</p>
+                                                            <h6 className="text-[8px] font-black text-orange-800 uppercase tracking-widest">Cargos por Logística Foránea</h6>
+                                                            <p className="text-[7.5px] font-bold text-orange-600/70">Traslado de equipo y personal a zona {selectedLeadForDetail.ciudad}</p>
                                                         </div>
-                                                        <div className="text-center text-xs">--</div>
-                                                        <div className="text-right text-xs font-black text-orange-800">
+                                                        <div className="text-center text-[10px]">--</div>
+                                                        <div className="text-right text-[10px] font-black text-orange-800">
                                                             + ${logistics.toLocaleString()}
                                                         </div>
                                                     </div>
@@ -2199,8 +2207,8 @@ export default function AdminDashboard() {
                                                         )}
                                                         <div className="h-px bg-slate-200 ml-12" />
                                                         <div className="flex justify-between items-center pl-12">
-                                                            <span className="text-xs font-black text-secondary uppercase tracking-widest">Total Final</span>
-                                                            <span className="text-2xl font-black text-primary">${grandTotal.toLocaleString()}</span>
+                                                            <span className="text-[10px] font-black text-secondary uppercase tracking-widest">Total Final</span>
+                                                            <span className="text-xl font-black text-primary">${grandTotal.toLocaleString()}</span>
                                                         </div>
                                                         {selectedLeadForDetail.pricing_type === 'lista' && (
                                                             <p className="text-[7.5px] font-extrabold text-slate-400 text-right uppercase leading-tight">* Sujeto a 12 Meses Sin Intereses con tarjetas participantes.</p>

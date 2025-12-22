@@ -40,8 +40,8 @@ export default function AdminLoginPage() {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
 
                 <div className="text-center mb-10 relative">
-                    <div className="w-20 h-20 bg-secondary rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-secondary/20 transform rotate-3 hover:rotate-0 transition-transform duration-500">
-                        <Lock className="w-10 h-10 text-white" />
+                    <div className="flex justify-center mb-8">
+                        <img src="/logo.png" alt="Thermo House Logo" className="h-16 w-auto filter brightness-110 drop-shadow-2xl" />
                     </div>
                     <h1 className="text-3xl font-black text-secondary uppercase tracking-tight mb-2">Acceso Seguro</h1>
                     <p className="text-slate-400 text-sm font-medium tracking-wide">PANEL DE CONTROL THERMO HOUSE</p>
