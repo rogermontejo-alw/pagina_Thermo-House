@@ -2530,15 +2530,16 @@ export default function AdminDashboard() {
 
                     /* Scale fonts for single page security */
                     #printable-quote * {
-                        font-size: 0.98em !important;
+                        font-size: 0.92em !important;
                         color: black !important;
                         -webkit-print-color-adjust: exact;
                         print-color-adjust: exact;
                     }
                     
-                    #printable-quote h2 { font-size: 26pt !important; }
-                    #printable-quote h5 { font-size: 14pt !important; }
-                    #printable-quote .text-2xl { font-size: 20pt !important; }
+                    #printable-quote h2 { font-size: 22pt !important; }
+                    #printable-quote h5 { font-size: 12pt !important; }
+                    #printable-quote .text-2xl { font-size: 18pt !important; }
+                    #printable-quote .text-lg { font-size: 13pt !important; }
                     
                     /* Force background colors to show in PDF */
                     .bg-primary { background-color: #ff5722 !important; -webkit-print-color-adjust: exact; }
