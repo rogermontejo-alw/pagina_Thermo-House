@@ -345,13 +345,13 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
         return (
             <div className="w-full h-[400px] flex flex-col items-center justify-center bg-slate-50 border border-slate-200 rounded-2xl animate-pulse">
                 <MapIcon className="w-12 h-12 text-slate-300 mb-4" />
-                <p className="text-slate-400 font-medium tracking-tight">Verificando configuración...</p>
+                <p className="text-slate-400 dark:text-slate-300 font-medium tracking-tight">Verificando configuración...</p>
             </div>
         );
     }
 
     return (
-        <div className="w-full space-y-6 p-6 bg-white">
+        <div className="w-full space-y-6 p-6 bg-white dark:bg-slate-900 transition-colors duration-500">
             {GOOGLE_MAPS_API_KEY ? (
                 <Script
                     src={`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=drawing,geometry,places`}
@@ -365,34 +365,49 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
             {/* Header / Mode Switcher */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="space-y-1">
-                    <h3 className="text-xl font-bold text-secondary flex items-center gap-2">
+                    <h3 className="text-xl font-bold text-secondary dark:text-white flex items-center gap-2">
                         <span className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm shadow-sm">1</span>
                         Medir Superficie
                     </h3>
                     <p className="text-sm text-muted-foreground ml-10">Elija su método preferido:</p>
                 </div>
 
-                <div className="flex bg-muted p-1 rounded-lg self-center md:self-auto">
+                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-full relative h-12 w-full max-w-[320px] self-center md:self-auto overflow-hidden shadow-inner border border-slate-200 dark:border-slate-700">
+                    {/* Sliding Capsule */}
+                    <motion.div
+                        className="absolute bg-white dark:bg-slate-700 h-[calc(100%-8px)] rounded-full shadow-md z-0"
+                        initial={false}
+                        animate={{
+                            x: mode === 'map' ? 0 : '100%',
+                            left: mode === 'map' ? 4 : -4,
+                            width: 'calc(50% - 4px)'
+                        }}
+                        transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 30
+                        }}
+                    />
                     <button
                         onClick={() => setMode('map')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${mode === 'map' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground hover:text-secondary'}`}
+                        className={`relative z-10 flex-1 flex items-center justify-center gap-2 px-4 rounded-full text-xs font-bold transition-colors duration-300 ${mode === 'map' ? 'text-primary' : 'text-slate-500'}`}
                     >
-                        <PencilRuler className="w-4 h-4" /> Mapa Satelital
+                        <PencilRuler className="w-4 h-4" /> Mapa
                     </button>
                     <button
                         onClick={() => setMode('manual')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${mode === 'manual' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground hover:text-secondary'}`}
+                        className={`relative z-10 flex-1 flex items-center justify-center gap-2 px-4 rounded-full text-xs font-bold transition-colors duration-300 ${mode === 'manual' ? 'text-primary' : 'text-slate-500'}`}
                     >
-                        <Keyboard className="w-4 h-4" /> Entrada Manual
+                        <Keyboard className="w-4 h-4" /> Manual
                     </button>
                 </div>
             </div>
 
             {/* Manual Input Mode */}
-            <div className={`${mode === 'manual' ? 'block' : 'hidden'} bg-muted/30 p-8 rounded-xl border border-border space-y-6 animate-in fade-in slide-in-from-top-4 duration-300 max-w-2xl mx-auto w-full`}>
+            <div className={`${mode === 'manual' ? 'block' : 'hidden'} bg-muted/30 dark:bg-slate-800/20 p-8 rounded-xl border border-border dark:border-slate-800 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300 max-w-2xl mx-auto w-full`}>
                 <div className="text-center space-y-4">
                     <Keyboard className="w-12 h-12 text-primary mx-auto mb-4" />
-                    <h4 className="text-lg font-bold text-secondary">Ingrese los Detalles Manualmente</h4>
+                    <h4 className="text-lg font-bold text-secondary dark:text-white">Ingrese los Detalles Manualmente</h4>
                     <p className="text-muted-foreground text-sm max-w-sm mx-auto">
                         Complete la información para generar su cotización exacta.
                     </p>
@@ -400,7 +415,7 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="col-span-1 md:col-span-2">
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 flex items-center gap-1">
+                        <label className="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase mb-1.5 ml-1 flex items-center gap-1">
                             Área del Techo (m²) <span className="text-primary">*</span>
                         </label>
                         <div className="relative">
@@ -412,15 +427,15 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                                     setArea(val);
                                     onAreaCalculated(val);
                                 }}
-                                className="w-full bg-white border border-slate-200 text-2xl font-black text-secondary rounded-xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-2xl font-black text-secondary dark:text-white rounded-xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 placeholder="0"
                             />
-                            <span className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold pointer-events-none">m²</span>
+                            <span className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold pointer-events-none">m²</span>
                         </div>
                     </div>
 
                     <div className="col-span-1 md:col-span-2">
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 flex items-center gap-1">
+                        <label className="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase mb-1.5 ml-1 flex items-center gap-1">
                             Dirección Completa <span className="text-primary">*</span>
                         </label>
                         <input
@@ -431,13 +446,13 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                                 setManualLocation(newLoc);
                                 notifyLocation({ ...newLoc, maps_link: '', city: newLoc.city === 'Otro' ? newLoc.customCity : newLoc.city, state: newLoc.state === 'Otro' ? newLoc.customState : newLoc.state });
                             }}
-                            className={`w-full bg-white border ${!manualLocation.address && area > 0 ? 'border-red-300 bg-red-50/30' : 'border-slate-200'} text-sm font-medium text-secondary rounded-xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all`}
+                            className={`w-full bg-white dark:bg-slate-800 border ${!manualLocation.address && area > 0 ? 'border-red-300 bg-red-50/30' : 'border-slate-200 dark:border-slate-700'} text-sm font-medium text-secondary dark:text-white rounded-xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all`}
                             placeholder="Calle, Número, Colonia..."
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 flex items-center gap-1">
+                        <label className="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase mb-1.5 ml-1 flex items-center gap-1">
                             Código Postal <span className="text-primary">*</span>
                         </label>
                         <input
@@ -448,14 +463,14 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                                 setManualLocation(newLoc);
                                 notifyLocation({ ...newLoc, maps_link: '', city: newLoc.city === 'Otro' ? newLoc.customCity : newLoc.city, state: newLoc.state === 'Otro' ? newLoc.customState : newLoc.state });
                             }}
-                            className="w-full bg-white border border-slate-200 text-sm font-bold text-secondary rounded-xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-secondary dark:text-white rounded-xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                             placeholder="CP (5 dígitos)"
                             maxLength={5}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 flex items-center gap-1">
+                        <label className="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase mb-1.5 ml-1 flex items-center gap-1">
                             Estado <span className="text-primary">*</span>
                         </label>
                         <select
@@ -472,7 +487,7 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                                     maps_link: ''
                                 });
                             }}
-                            className={`w-full bg-white border ${!manualLocation.state && area > 0 ? 'border-red-300 bg-red-50/30' : 'border-slate-200'} text-sm font-medium text-secondary rounded-xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none cursor-pointer`}
+                            className={`w-full bg-white dark:bg-slate-800 border ${!manualLocation.state && area > 0 ? 'border-red-300 bg-red-50/30' : 'border-slate-200 dark:border-slate-700'} text-sm font-medium text-secondary dark:text-slate-200 rounded-xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none cursor-pointer`}
                         >
                             <option value="">Seleccione Estado</option>
                             {Object.keys(activeRegions).sort().map(state => (
@@ -497,7 +512,7 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 flex items-center gap-1">
+                        <label className="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase mb-1.5 ml-1 flex items-center gap-1">
                             Ciudad <span className="text-primary">*</span>
                         </label>
                         <select
@@ -513,7 +528,7 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                                     maps_link: ''
                                 });
                             }}
-                            className={`w-full bg-white border ${!manualLocation.city && area > 0 ? 'border-red-300 bg-red-50/30' : 'border-slate-200'} text-sm font-medium text-secondary rounded-xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none cursor-pointer`}
+                            className={`w-full bg-white dark:bg-slate-800 border ${!manualLocation.city && area > 0 ? 'border-red-300 bg-red-50/30' : 'border-slate-200 dark:border-slate-700'} text-sm font-medium text-secondary dark:text-slate-200 rounded-xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none cursor-pointer`}
                         >
                             <option value="">Seleccione Ciudad</option>
                             {(activeRegions[manualLocation.state] || []).map(city => (
@@ -550,13 +565,13 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                         ref={searchInputRef}
                         type="text"
                         placeholder={mapLoaded ? "Busque su dirección para centrar el mapa..." : "Cargando mapa..."}
-                        className="w-full bg-muted border border-border text-secondary text-sm rounded-lg block pl-10 p-3 focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder-muted-foreground transition-all"
+                        className="w-full bg-muted dark:bg-slate-800 border border-border dark:border-slate-700 text-secondary dark:text-white text-sm rounded-lg block pl-10 p-3 focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder-muted-foreground transition-all"
                         disabled={!mapLoaded}
                     />
                 </div>
 
                 {/* Map Container */}
-                <div className="relative w-full h-[450px] sm:h-[550px] rounded-2xl overflow-hidden shadow-2xl border border-border bg-slate-100">
+                <div className="relative w-full h-[450px] sm:h-[550px] rounded-2xl overflow-hidden shadow-2xl border border-border dark:border-slate-800 bg-slate-100 dark:bg-slate-900">
 
                     {/* CENTER CROSSHAIR (Helpful for initial click) */}
                     <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none transition-opacity duration-300 ${(area > 0 || !showInstructions) ? 'opacity-20' : 'opacity-100'}`}>
@@ -577,15 +592,15 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                                 className="absolute inset-0 z-40 bg-secondary/60 backdrop-blur-[2px] flex items-center justify-center p-6 text-center cursor-pointer"
                                 onClick={() => setShowInstructions(false)}
                             >
-                                <div className="bg-white rounded-3xl p-8 shadow-2xl max-w-sm border border-slate-100 animate-in zoom-in-95 duration-300">
+                                <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-2xl max-w-sm border border-slate-100 dark:border-slate-800 animate-in zoom-in-95 duration-300">
                                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                                         <PencilRuler className="w-8 h-8 text-primary" />
                                     </div>
-                                    <h4 className="text-xl font-bold text-secondary mb-2">¡Mide tu techo!</h4>
-                                    <p className="text-sm text-slate-500 leading-relaxed mb-6">
+                                    <h4 className="text-xl font-bold text-secondary dark:text-white mb-2">¡Mide tu techo!</h4>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
                                         Ubica tu casa y <span className="text-primary font-bold">haz clic en cada esquina</span> de tu techo. <br />Para calcular m², haz clic en la primera esquina al terminar.
                                     </p>
-                                    <button className="bg-secondary text-white px-6 py-2.5 rounded-xl font-bold text-sm w-full">
+                                    <button className="bg-secondary dark:bg-primary text-white px-6 py-2.5 rounded-xl font-bold text-sm w-full">
                                         EMPEZAR AHORA
                                     </button>
                                 </div>
@@ -603,14 +618,14 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                     <div className="absolute bottom-6 right-14 flex flex-col gap-2 z-20">
                         <button
                             onClick={locateUser}
-                            className="p-3 bg-white text-secondary rounded-lg shadow-lg hover:bg-slate-50 transition-colors border border-border"
+                            className="p-3 bg-white dark:bg-slate-800 text-secondary dark:text-white rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-border dark:border-slate-700"
                             title="Mi Ubicación"
                         >
                             <Crosshair className="w-5 h-5" />
                         </button>
                         <button
                             onClick={clearMap}
-                            className="p-3 bg-white text-red-500 rounded-lg shadow-lg hover:bg-red-50 transition-colors border border-border"
+                            className="p-3 bg-white dark:bg-slate-800 text-red-500 rounded-lg shadow-lg hover:bg-red-50 dark:hover:bg-slate-700 transition-colors border border-border dark:border-slate-700"
                             title="Limpiar Mapa"
                         >
                             <RotateCcw className="w-5 h-5" />
@@ -619,10 +634,10 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                 </div>
 
                 {/* Result Bar */}
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border">
+                <div className="flex items-center justify-between p-4 bg-muted/50 dark:bg-slate-800/50 rounded-lg border border-border dark:border-slate-700">
                     <div>
-                        <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Área Dibujada</p>
-                        <p className="text-2xl font-bold text-secondary">{area} m²</p>
+                        <p className="text-xs text-muted-foreground dark:text-slate-400 font-semibold uppercase tracking-wider">Área Dibujada</p>
+                        <p className="text-2xl font-bold text-secondary dark:text-white">{area} m²</p>
                     </div>
                     {area > 0 && <span className="text-green-600 font-medium text-sm flex items-center gap-1">✓ Área capturada</span>}
                 </div>

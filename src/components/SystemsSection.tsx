@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Shield, Hammer, Feather, Sparkles, Zap, Package, Building2, Factory, Check } from 'lucide-react';
 import { getAllSolutions } from '@/app/actions/get-solutions';
 import { Solution } from '@/types';
@@ -105,11 +106,11 @@ export default function SystemsSection() {
     );
 
     return (
-        <section id="sistemas" className="py-8 md:py-12 bg-muted/20">
+        <section id="sistemas" className="py-2 transition-colors duration-500">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="text-center max-w-3xl mx-auto mb-6 md:mb-10">
-                    <h2 className="text-2xl sm:text-4xl font-black text-secondary tracking-tight uppercase mb-3 md:mb-4">
+                    <h2 className="text-2xl sm:text-4xl font-black text-secondary dark:text-white tracking-tight uppercase mb-3 md:mb-4">
                         SISTEMAS ELITE THERMO HOUSE
                     </h2>
                     <p className="text-sm md:text-base text-muted-foreground mb-8 md:mb-10">
@@ -118,16 +119,33 @@ export default function SystemsSection() {
 
                     {/* Selector de Tipo de Techo */}
                     <div className="flex justify-center mb-6 md:mb-8">
-                        <div className="inline-flex p-1.5 bg-slate-100 rounded-[2rem] shadow-inner border border-slate-200">
+                        <div className="inline-flex p-1.5 bg-slate-100 dark:bg-slate-800/50 rounded-full shadow-inner border border-slate-200 dark:border-slate-700 relative h-16 w-full max-w-sm overflow-hidden">
+                            {/* Sliding Capsule */}
+                            <motion.div
+                                className="absolute bg-secondary dark:bg-primary h-[calc(100%-12px)] rounded-full shadow-lg"
+                                layoutId="roofTypeCapsule"
+                                initial={false}
+                                animate={{
+                                    x: roofType === 'concrete' ? 0 : '100%',
+                                    left: roofType === 'concrete' ? 6 : -6,
+                                    width: 'calc(50% - 6px)'
+                                }}
+                                transition={{
+                                    type: "spring",
+                                    stiffness: 400,
+                                    damping: 30
+                                }}
+                            />
+
                             <button
                                 onClick={() => setRoofType('concrete')}
-                                className={`flex items-center gap-2 px-6 md:px-10 py-3 md:py-4 rounded-[1.5rem] text-sm font-black transition-all duration-500 ${roofType === 'concrete' ? 'bg-secondary text-white shadow-xl scale-105' : 'text-slate-500 hover:text-secondary'}`}
+                                className={`relative z-10 flex-1 flex items-center justify-center gap-2 px-4 rounded-full text-[10px] md:text-sm font-black transition-colors duration-300 ${roofType === 'concrete' ? 'text-white' : 'text-slate-500 dark:text-slate-200'}`}
                             >
                                 <Building2 className="w-4 h-4" /> Techo de Concreto
                             </button>
                             <button
                                 onClick={() => setRoofType('sheet')}
-                                className={`flex items-center gap-2 px-6 md:px-10 py-3 md:py-4 rounded-[1.5rem] text-sm font-black transition-all duration-500 ${roofType === 'sheet' ? 'bg-secondary text-white shadow-xl scale-105' : 'text-slate-500 hover:text-secondary'}`}
+                                className={`relative z-10 flex-1 flex items-center justify-center gap-2 px-4 rounded-full text-[10px] md:text-sm font-black transition-colors duration-300 ${roofType === 'sheet' ? 'text-white' : 'text-slate-500 dark:text-slate-200'}`}
                             >
                                 <Factory className="w-4 h-4" /> Techo de Lámina
                             </button>
@@ -143,25 +161,25 @@ export default function SystemsSection() {
                         const isBestSeller = sys.internal_id === 'th-light';
 
                         return (
-                            <div key={sys.id} className={`group bg-white rounded-[2.5rem] p-6 md:p-7 border-2 transition-all duration-500 relative overflow-hidden flex flex-col ${isPremium ? 'border-primary/20 shadow-xl' : 'border-slate-100 hover:border-slate-200 shadow-sm hover:shadow-2xl'}`}>
+                            <div key={sys.id} className={`group bg-white dark:bg-slate-800 rounded-[2.5rem] p-6 md:p-7 border-2 transition-all duration-500 relative overflow-hidden flex flex-col ${isPremium ? 'border-primary/20 dark:border-primary/20 shadow-xl' : 'border-slate-100 dark:border-slate-700/50 hover:border-slate-200 dark:hover:border-slate-600 shadow-sm hover:shadow-2xl'}`}>
                                 {isBestSeller && (
                                     <div className="absolute top-0 right-0 bg-primary text-white text-[9px] md:text-[10px] font-black px-4 md:px-6 py-1.5 md:py-2 rounded-bl-3xl shadow-lg uppercase tracking-widest z-10">Más Vendido</div>
                                 )}
                                 {isPremium && (
-                                    <div className="absolute top-0 right-0 bg-secondary text-white text-[9px] md:text-[10px] font-black px-4 md:px-6 py-1.5 md:py-2 rounded-bl-3xl shadow-lg uppercase tracking-widest z-10">Grado Experto</div>
+                                    <div className="absolute top-0 right-0 bg-secondary dark:bg-slate-700 text-white text-[9px] md:text-[10px] font-black px-4 md:px-6 py-1.5 md:py-2 rounded-bl-3xl shadow-lg uppercase tracking-widest z-10">Grado Experto</div>
                                 )}
 
                                 <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
 
                                 <div className="relative z-10 flex flex-col h-full">
-                                    <div className={`w-14 h-14 md:w-11 md:h-11 rounded-2xl flex items-center justify-center mb-6 md:mb-3 shadow-lg transition-all duration-500 ${isPremium ? 'bg-secondary text-white rotate-3 scale-110' : 'bg-slate-50 text-primary group-hover:bg-primary group-hover:text-white group-hover:-rotate-3'}`}>
+                                    <div className={`w-14 h-14 md:w-11 md:h-11 rounded-2xl flex items-center justify-center mb-6 md:mb-3 shadow-lg transition-all duration-500 ${isPremium ? 'bg-secondary dark:bg-slate-700 text-white rotate-3 scale-110' : 'bg-slate-50 dark:bg-slate-900 text-primary group-hover:bg-primary group-hover:text-white group-hover:-rotate-3'}`}>
                                         <Icon className="w-7 h-7 md:w-5 md:h-5" />
                                     </div>
 
-                                    <h3 className="text-xl md:text-2xl font-black text-secondary mb-1 uppercase tracking-tighter">{sys.title}</h3>
+                                    <h3 className="text-xl md:text-2xl font-black text-secondary dark:text-white mb-1 uppercase tracking-tighter">{sys.title}</h3>
                                     <p className="text-[10px] font-black text-primary mb-4 md:mb-3 uppercase tracking-[0.2em] opacity-80">{sys.grosor || 'Espesor Estándar'}</p>
 
-                                    <div className="bg-slate-50/50 rounded-2xl p-5 md:p-4 border border-slate-100 mb-6 md:mb-4 flex-grow">
+                                    <div className="bg-slate-50/50 dark:bg-slate-900/50 rounded-2xl p-5 md:p-4 border border-slate-100 dark:border-slate-700 mb-6 md:mb-4 flex-grow">
                                         <ul className="space-y-3 md:space-y-2">
                                             {(() => {
                                                 const featureText = `${sys.beneficio_principal || ''}\n${sys.detalle_costo_beneficio || ''}`;
@@ -185,7 +203,7 @@ export default function SystemsSection() {
 
                                                     if (isFirst) {
                                                         return (
-                                                            <li key={idx} className="flex items-start gap-3 text-[13px] text-secondary font-medium leading-tight">
+                                                            <li key={idx} className="flex items-start gap-3 text-[13px] text-secondary dark:text-white font-medium leading-tight">
                                                                 <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                                                                     <Check className="w-3 h-3 text-green-600 stroke-[4]" />
                                                                 </div>
@@ -195,7 +213,7 @@ export default function SystemsSection() {
                                                     }
 
                                                     return (
-                                                        <li key={idx} className="flex items-start gap-3 text-[12px] text-slate-600 font-medium leading-tight">
+                                                        <li key={idx} className="flex items-start gap-3 text-[12px] text-slate-600 dark:text-slate-300 font-medium leading-tight">
                                                             <div className="w-1.5 h-1.5 rounded-full bg-slate-400 flex-shrink-0 mt-1.5" />
                                                             <span>{feature}</span>
                                                         </li>
@@ -207,7 +225,7 @@ export default function SystemsSection() {
 
                                     <button
                                         onClick={() => document.getElementById('cotizador')?.scrollIntoView({ behavior: 'smooth' })}
-                                        className={`w-full py-4 md:py-3.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${isPremium ? 'bg-primary text-white hover:bg-orange-600' : 'bg-secondary text-white hover:bg-slate-800'}`}
+                                        className={`w-full py-4 md:py-3.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${isPremium ? 'bg-primary text-white hover:bg-orange-600' : 'bg-secondary dark:bg-slate-700 text-white hover:bg-slate-800'}`}
                                     >
                                         Cotizar este Sistema
                                     </button>
@@ -219,32 +237,32 @@ export default function SystemsSection() {
                 </div>
 
                 {/* Comparison Table */}
-                <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden">
-                    <div className="p-10 bg-secondary border-b border-white/5 relative overflow-hidden text-center">
+                <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl dark:shadow-none border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-500">
+                    <div className="p-10 bg-secondary dark:bg-slate-950 border-b border-white/5 relative overflow-hidden text-center">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full -mr-32 -mt-32 blur-3xl" />
                         <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Comparativa Técnica {roofType === 'concrete' ? 'Concreto' : 'Lámina'}</h3>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm whitespace-nowrap">
-                            <thead className="bg-slate-50 border-b border-slate-100">
+                            <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700">
                                 <tr>
-                                    <th className="p-8 font-black text-slate-400 uppercase text-[10px] tracking-widest">Atributo</th>
+                                    <th className="p-8 font-black text-slate-400 dark:text-slate-300 uppercase text-[10px] tracking-widest">Atributo</th>
                                     {filteredSolutions.map(sys => (
-                                        <th key={sys.id} className="p-8 font-black text-secondary border-l border-slate-100 uppercase tracking-tighter text-sm">{sys.title}</th>
+                                        <th key={sys.id} className="p-8 font-black text-secondary dark:text-white border-l border-slate-100 dark:border-slate-700 uppercase tracking-tighter text-sm">{sys.title}</th>
                                     ))}
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                                 <tr className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="p-8 font-black text-slate-700 bg-slate-50/10">ESPESOR FINAL</td>
+                                    <td className="p-8 font-black text-slate-700 dark:text-slate-200 bg-slate-50/10">ESPESOR FINAL</td>
                                     {filteredSolutions.map(sys => <td key={sys.id} className="p-8 text-primary font-black border-l border-slate-100">{sys.grosor || '1000 micras'}</td>)}
                                 </tr>
                                 <tr className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="p-8 font-black text-slate-700 bg-slate-50/10">BENEFICIOS CLAVE</td>
+                                    <td className="p-8 font-black text-slate-700 dark:text-slate-200 bg-slate-50/10">BENEFICIOS CLAVE</td>
                                     {filteredSolutions.map(sys => (
-                                        <td key={sys.id} className="p-8 text-slate-600 border-l border-slate-100 text-[10px] text-wrap max-w-[220px] leading-relaxed">
-                                            <ul className="space-y-1.5 uppercase font-bold text-slate-500">
-                                                <li className="text-secondary flex items-center gap-2">
+                                        <td key={sys.id} className="p-8 text-slate-600 dark:text-slate-300 border-l border-slate-100 dark:border-slate-800 text-[10px] text-wrap max-w-[220px] leading-relaxed">
+                                            <ul className="space-y-1.5 uppercase font-bold text-slate-500 dark:text-slate-200">
+                                                <li className="text-secondary dark:text-white flex items-center gap-2">
                                                     <div className="w-1 h-1 rounded-full bg-primary" />
                                                     {sys.beneficio_principal}
                                                 </li>
@@ -259,9 +277,9 @@ export default function SystemsSection() {
                                     ))}
                                 </tr>
                                 <tr className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="p-8 font-black text-slate-700 bg-slate-50/10">ESPECIALIDAD</td>
+                                    <td className="p-8 font-black text-slate-700 dark:text-slate-200 bg-slate-50/10">ESPECIALIDAD</td>
                                     {filteredSolutions.map(sys => (
-                                        <td key={sys.id} className="p-8 text-slate-600 border-l border-slate-100 text-[10px] font-bold uppercase tracking-widest">
+                                        <td key={sys.id} className="p-8 text-slate-600 dark:text-slate-300 border-l border-slate-100 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest">
                                             {sys.category === 'sheet' ? 'Siderúrgicos' : (sys.category === 'concrete' ? 'Estructural' : 'Híbrido')}
                                         </td>
                                     ))}
@@ -271,6 +289,6 @@ export default function SystemsSection() {
                     </div>
                 </div>
             </div>
-        </section>
+        </section >
     );
 }

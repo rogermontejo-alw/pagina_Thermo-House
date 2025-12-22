@@ -6,6 +6,7 @@ import { Menu, X, ArrowRight, MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getLocations } from '@/app/actions/admin-locations';
 import { Location } from '@/types';
+import ThemeToggle from './ThemeToggle';
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
@@ -109,7 +110,7 @@ export default function Navbar() {
                                         key={item.name}
                                         href={item.href}
                                         onClick={(e) => scrollToSection(e, item.href)}
-                                        className="text-slate-600 hover:text-white hover:bg-secondary px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300"
+                                        className="text-slate-600 dark:text-slate-300 hover:text-white dark:hover:text-secondary-foreground hover:bg-secondary px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300"
                                     >
                                         {item.name}
                                     </a>
@@ -117,7 +118,8 @@ export default function Navbar() {
                             </div>
                         </div>
 
-                        <div className="hidden md:block">
+                        <div className="hidden md:flex items-center gap-4">
+                            <ThemeToggle minimal />
                             <button
                                 onClick={(e) => scrollToSection(e, '#cotizador')}
                                 className="bg-primary hover:bg-orange-600 text-white px-5 py-2 rounded-full font-black transition-all shadow-md hover:shadow-primary/20 active:scale-95 text-[10px] uppercase tracking-widest"
@@ -126,7 +128,8 @@ export default function Navbar() {
                             </button>
                         </div>
 
-                        <div className="-mr-2 flex md:hidden z-[60]">
+                        <div className="-mr-2 flex items-center gap-2 md:hidden z-[60]">
+                            <ThemeToggle minimal />
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
                                 className={`inline-flex items-center justify-center p-2 rounded-full transition-all duration-300 ${isOpen ? 'bg-primary text-white scale-110' : 'text-muted-foreground hover:text-primary hover:bg-slate-100'}`}
@@ -143,7 +146,7 @@ export default function Navbar() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 h-screen w-screen bg-secondary/98 backdrop-blur-3xl z-[55] md:hidden flex flex-col"
+                            className="fixed inset-0 h-screen w-screen bg-secondary/98 dark:bg-slate-950/98 backdrop-blur-3xl z-[55] md:hidden flex flex-col"
                         >
                             {/* Header: Logo en cápsula de cristal */}
                             <div className="pt-12 pb-8 flex flex-col items-center">
@@ -199,11 +202,11 @@ export default function Navbar() {
                                     </button>
 
                                     <div className="w-full flex flex-col gap-2 pt-6 border-t border-white/5">
-                                        <div className="flex justify-between items-center text-[9px] text-white/40 font-bold uppercase tracking-[0.2em]">
+                                        <div className="flex justify-between items-center text-[9px] text-white/60 font-bold uppercase tracking-[0.2em]">
                                             <span>Cobertura Peninsular</span>
                                             <span>© 2025</span>
                                         </div>
-                                        <p className="text-[10px] text-white/20 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                                        <p className="text-[10px] text-white/40 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
                                             {branches.length > 0
                                                 ? branches.join(' • ')
                                                 : 'Mérida • Playa del Carmen • Cancún • Tulum'}

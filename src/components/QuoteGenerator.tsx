@@ -192,19 +192,20 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
         });
     };
 
-    const getIcon = (id: string) => {
+    const getIcon = (id: string, isSelected: boolean) => {
+        const colorClass = isSelected ? 'text-white' : 'text-primary';
         switch (id) {
-            case 'th-fix': return <Package className="w-8 h-8 text-primary" />;
-            case 'th-light': return <Droplets className="w-8 h-8 text-primary" />;
-            case 'th-forte': return <Shield className="w-8 h-8 text-primary" />;
-            case 'th-3-4': return <Zap className="w-8 h-8 text-primary" />;
-            case 'th-ingles': return <Sparkles className="w-8 h-8 text-primary" />;
-            default: return <Package className="w-8 h-8 text-primary" />;
+            case 'th-fix': return <Package className={`w-8 h-8 ${colorClass}`} />;
+            case 'th-light': return <Droplets className={`w-8 h-8 ${colorClass}`} />;
+            case 'th-forte': return <Shield className={`w-8 h-8 ${colorClass}`} />;
+            case 'th-3-4': return <Zap className={`w-8 h-8 ${colorClass}`} />;
+            case 'th-ingles': return <Sparkles className={`w-8 h-8 ${colorClass}`} />;
+            default: return <Package className={`w-8 h-8 ${colorClass}`} />;
         }
     };
 
     return (
-        <div ref={containerRef} className="space-y-8 w-full max-w-5xl mx-auto scroll-mt-24">
+        <div ref={containerRef} className="space-y-8 w-full max-w-5xl mx-auto scroll-mt-24 dark:text-slate-200">
             <AnimatePresence mode="wait">
                 {currentStep === 'selection' && (
                     <motion.div key="selection" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-8">
@@ -222,8 +223,8 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                             transition={{ duration: 0.4, ease: "circOut" }}
                                             className="overflow-hidden"
                                         >
-                                            <div className="p-6 md:p-8 rounded-2xl border border-border shadow-sm bg-white mb-8">
-                                                <h3 className="text-lg font-bold text-secondary mb-6 flex items-center gap-2">
+                                            <div className="p-6 md:p-8 rounded-2xl border border-border dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 mb-8 transition-colors duration-500">
+                                                <h3 className="text-lg font-bold text-secondary dark:text-white mb-6 flex items-center gap-2">
                                                     <div className="w-2 h-6 bg-primary rounded-full" />
                                                     PRÓXIMO PASO: TIPO DE TECHO
                                                 </h3>
@@ -235,16 +236,16 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                                                 document.getElementById('systems-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                                             }, 100);
                                                         }
-                                                    }} className={`relative p-4 md:p-8 rounded-2xl md:rounded-[2rem] border-2 transition-all flex flex-col items-center gap-3 md:gap-5 group overflow-hidden ${roofType === 'concrete' ? 'border-primary bg-primary/5 shadow-2xl scale-[1.02]' : 'border-slate-100 hover:border-slate-300 bg-white hover:shadow-xl'}`}>
+                                                    }} className={`relative p-4 md:p-8 rounded-2xl md:rounded-[2rem] border-2 transition-all flex flex-col items-center gap-3 md:gap-5 group overflow-hidden ${roofType === 'concrete' ? 'border-primary bg-primary/5 dark:bg-primary/10 shadow-2xl scale-[1.02]' : 'border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-800 hover:shadow-xl'}`}>
                                                         {roofType === 'concrete' && <div className="absolute top-0 right-0 w-16 h-16 md:w-24 md:h-24 bg-primary/10 rounded-bl-full -mr-6 -mt-6 md:-mr-10 md:-mt-10" />}
-                                                        <div className={`w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl flex items-center justify-center shadow-lg transition-all duration-500 ${roofType === 'concrete' ? 'bg-primary text-white rotate-3' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:rotate-3'}`}>
+                                                        <div className={`w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl flex items-center justify-center shadow-lg transition-all duration-500 ${roofType === 'concrete' ? 'bg-primary text-white rotate-3' : 'bg-slate-50 dark:bg-slate-900 text-slate-400 group-hover:bg-slate-100 dark:group-hover:bg-slate-800 group-hover:rotate-3'}`}>
                                                             <Building2 className="w-6 h-6 md:w-10 md:h-10" />
                                                         </div>
                                                         <div className="text-center space-y-1">
-                                                            <span className="block font-black text-secondary text-xs md:text-xl tracking-tighter">LOSA CONCRETO</span>
-                                                            <p className="hidden md:block text-[11px] text-slate-500 font-medium px-4">Ideal para casas habitacionales, departamentos y comercios urbanos.</p>
+                                                            <span className="block font-black text-secondary dark:text-white text-xs md:text-xl tracking-tighter">LOSA CONCRETO</span>
+                                                            <p className="hidden md:block text-[11px] text-slate-500 dark:text-slate-200 font-medium px-4">Ideal para casas habitacionales, departamentos y comercios urbanos.</p>
                                                         </div>
-                                                        <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center transition-all ${roofType === 'concrete' ? 'border-primary bg-primary text-white scale-110' : 'border-slate-200'}`}>
+                                                        <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center transition-all ${roofType === 'concrete' ? 'border-primary bg-primary text-white scale-110' : 'border-slate-200 dark:border-slate-700'}`}>
                                                             {roofType === 'concrete' && <Check className="w-3 h-3 md:w-4 md:h-4" />}
                                                         </div>
                                                     </button>
@@ -255,16 +256,16 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                                                 document.getElementById('systems-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                                             }, 100);
                                                         }
-                                                    }} className={`relative p-4 md:p-8 rounded-2xl md:rounded-[2rem] border-2 transition-all flex flex-col items-center gap-3 md:gap-5 group overflow-hidden ${roofType === 'sheet' ? 'border-primary bg-primary/5 shadow-2xl scale-[1.02]' : 'border-slate-100 hover:border-slate-300 bg-white hover:shadow-xl'}`}>
+                                                    }} className={`relative p-4 md:p-8 rounded-2xl md:rounded-[2rem] border-2 transition-all flex flex-col items-center gap-3 md:gap-5 group overflow-hidden ${roofType === 'sheet' ? 'border-primary bg-primary/5 dark:bg-primary/10 shadow-2xl scale-[1.02]' : 'border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-800 hover:shadow-xl'}`}>
                                                         {roofType === 'sheet' && <div className="absolute top-0 right-0 w-16 h-16 md:w-24 md:h-24 bg-primary/10 rounded-bl-full -mr-6 -mt-6 md:-mr-10 md:-mt-10" />}
-                                                        <div className={`w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl flex items-center justify-center shadow-lg transition-all duration-500 ${roofType === 'sheet' ? 'bg-primary text-white -rotate-3' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:-rotate-3'}`}>
+                                                        <div className={`w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl flex items-center justify-center shadow-lg transition-all duration-500 ${roofType === 'sheet' ? 'bg-primary text-white -rotate-3' : 'bg-slate-50 dark:bg-slate-900 text-slate-400 group-hover:bg-slate-100 dark:group-hover:bg-slate-800 group-hover:-rotate-3'}`}>
                                                             <Factory className="w-6 h-6 md:w-10 md:h-10" />
                                                         </div>
                                                         <div className="text-center space-y-1">
-                                                            <span className="block font-black text-secondary text-xs md:text-xl tracking-tighter">TECHO LÁMINA</span>
-                                                            <p className="hidden md:block text-[11px] text-slate-500 font-medium px-4">Bodegas industriales, anexos metálicos y proyectos de gran escala.</p>
+                                                            <span className="block font-black text-secondary dark:text-white text-xs md:text-xl tracking-tighter">TECHO LÁMINA</span>
+                                                            <p className="hidden md:block text-[11px] text-slate-500 dark:text-slate-200 font-medium px-4">Bodegas industriales, anexos metálicos y proyectos de gran escala.</p>
                                                         </div>
-                                                        <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center transition-all ${roofType === 'sheet' ? 'border-primary bg-primary text-white scale-110' : 'border-slate-200'}`}>
+                                                        <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center transition-all ${roofType === 'sheet' ? 'border-primary bg-primary text-white scale-110' : 'border-slate-200 dark:border-slate-700'}`}>
                                                             {roofType === 'sheet' && <Check className="w-3 h-3 md:w-4 md:h-4" />}
                                                         </div>
                                                     </button>
@@ -278,7 +279,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
 
                         {roofType && (
                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                                <h3 id="systems-title" className="text-lg font-bold text-secondary flex items-center gap-2">
+                                <h3 id="systems-title" className="text-lg font-bold text-secondary dark:text-white flex items-center gap-2">
                                     <div className="w-2 h-6 bg-primary rounded-full" />
                                     ELITE SYSTEMS: SELECCIONA TU NIVEL DE PROTECCIÓN
                                 </h3>
@@ -292,7 +293,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                             <button
                                                 key={sol.id}
                                                 onClick={() => handleSolutionSelect(sol.internal_id)}
-                                                className={`relative p-6 md:p-7 rounded-[2.5rem] border-2 text-left transition-all h-full flex flex-col group overflow-hidden ${isSelected ? 'border-primary bg-primary/5 shadow-2xl ring-4 ring-primary/10 scale-[1.02]' : 'border-slate-100 hover:border-slate-200 bg-white hover:shadow-xl'}`}
+                                                className={`relative p-6 md:p-7 rounded-[2.5rem] border-2 text-left transition-all h-full flex flex-col group overflow-hidden ${isSelected ? 'border-primary bg-primary/5 dark:bg-primary/10 shadow-2xl ring-4 ring-primary/10 scale-[1.02]' : 'border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 bg-white dark:bg-slate-800 hover:shadow-xl'}`}
                                             >
                                                 {isBestSeller && (
                                                     <div className="absolute -top-1 -right-1 bg-primary text-white text-[9px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-widest z-10">Best Seller</div>
@@ -301,22 +302,22 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                                     <div className="absolute -top-1 -right-1 bg-secondary text-white text-[9px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-widest z-10">Experto</div>
                                                 )}
 
-                                                <div className={`mb-4 md:mb-3 w-12 h-12 md:w-11 md:h-11 rounded-2xl flex items-center justify-center transition-colors ${isSelected ? 'bg-primary text-white' : 'bg-slate-50 text-primary group-hover:bg-primary group-hover:text-white'}`}>
-                                                    {getIcon(sol.internal_id)}
+                                                <div className={`mb-4 md:mb-3 w-12 h-12 md:w-11 md:h-11 rounded-2xl flex items-center justify-center transition-colors ${isSelected ? 'bg-primary text-white' : 'bg-slate-50 dark:bg-slate-900 text-primary group-hover:bg-primary group-hover:text-white'}`}>
+                                                    {getIcon(sol.internal_id, isSelected)}
                                                 </div>
 
                                                 <div className="space-y-1 mb-4 md:mb-3">
-                                                    <h4 className="text-xl md:text-2xl font-black text-secondary leading-none uppercase tracking-tighter">{sol.title}</h4>
+                                                    <h4 className="text-xl md:text-2xl font-black text-secondary dark:text-white leading-none uppercase tracking-tighter">{sol.title}</h4>
                                                     <div className="flex items-center gap-2">
                                                         <p className="text-[10px] text-primary font-bold uppercase tracking-widest opacity-70">SISTEMA {isPremium ? 'PROFESIONAL' : 'VITAL'}</p>
-                                                        <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-black">${sol.precio_contado_m2} /m²</span>
+                                                        <span className="text-[10px] bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-200 px-2 py-0.5 rounded font-black">${sol.precio_contado_m2} /m²</span>
                                                     </div>
                                                 </div>
 
                                                 <ul className="space-y-2 md:space-y-1.5 mb-6 md:mb-4 flex-grow">
                                                     {getSolutionFeatures(sol).slice(0, 3).map((f, i) => (
-                                                        <li key={i} className="flex items-start text-xs text-slate-600 gap-2.5 font-medium leading-normal">
-                                                            <div className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${isSelected ? 'bg-primary/20 text-primary' : 'bg-green-50 text-green-500'}`}>
+                                                        <li key={i} className="flex items-start text-xs text-slate-600 dark:text-slate-200 gap-2.5 font-medium leading-normal">
+                                                            <div className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${isSelected ? 'bg-primary/20 text-primary' : 'bg-green-50 dark:bg-green-900/30 text-green-500'}`}>
                                                                 <Check className="w-2.5 h-2.5 stroke-[4]" />
                                                             </div>
                                                             {f}
@@ -324,8 +325,8 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                                     ))}
                                                 </ul>
 
-                                                <div className={`mt-auto pt-6 border-t ${isSelected ? 'border-primary/20' : 'border-slate-100'}`}>
-                                                    <div className={`flex items-center justify-between text-[10px] font-bold uppercase tracking-widest ${isSelected ? 'text-primary' : 'text-slate-400 group-hover:text-secondary'}`}>
+                                                <div className={`mt-auto pt-6 border-t ${isSelected ? 'border-primary/20' : 'border-slate-100 dark:border-slate-700'}`}>
+                                                    <div className={`flex items-center justify-between text-[10px] font-bold uppercase tracking-widest ${isSelected ? 'text-primary' : 'text-slate-400 dark:text-slate-300 group-hover:text-secondary dark:group-hover:text-white'}`}>
                                                         <span>{isSelected ? 'SISTEMA SELECCIONADO' : 'VER PRESUPUESTO'}</span>
                                                         <ArrowRight className={`w-3 h-3 transition-transform ${isSelected ? 'translate-x-1' : 'group-hover:translate-x-1'}`} />
                                                     </div>
@@ -376,11 +377,11 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
 
                 {currentStep === 'contact' && (
                     <motion.div key="contact" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="max-w-2xl mx-auto">
-                        <div className="bg-white rounded-3xl p-8 md:p-12 border border-slate-100 shadow-2xl relative overflow-hidden">
+                        <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 md:p-12 border border-slate-100 dark:border-slate-800 shadow-2xl relative overflow-hidden transition-colors duration-500">
                             <div className="absolute top-0 left-0 w-full h-2 bg-primary" />
                             <div className="mb-8 text-center">
-                                <h3 className="text-3xl font-black text-secondary tracking-tight mb-2 uppercase">¡Casi Listo!</h3>
-                                <p className="text-slate-500 font-medium">Déjanos tus datos para enviarte el desglose oficial.</p>
+                                <h3 className="text-3xl font-black text-secondary dark:text-white tracking-tight mb-2 uppercase">¡Casi Listo!</h3>
+                                <p className="text-slate-500 dark:text-slate-200 font-medium">Déjanos tus datos para enviarte el desglose oficial.</p>
                             </div>
                             <form className="space-y-6" onSubmit={(e) => {
                                 e.preventDefault();
@@ -406,18 +407,18 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                             }}>
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Nombre Completo</label>
-                                        <input type="text" name="name" required minLength={3} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-secondary focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="Tu nombre..." />
+                                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-200 uppercase ml-1">Nombre Completo</label>
+                                        <input type="text" name="name" required minLength={3} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-secondary dark:text-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="Tu nombre..." />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">WhatsApp (10 dígitos)</label>
+                                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-200 uppercase ml-1">WhatsApp (10 dígitos)</label>
                                         <input
                                             type="tel"
                                             name="phone"
                                             required
                                             pattern="[0-9]{10}"
                                             maxLength={10}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-secondary focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+                                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-secondary dark:text-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all"
                                             placeholder="Ej: 9991234567"
                                             onChange={(e) => {
                                                 e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
@@ -427,17 +428,17 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                 </div>
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Correo Electrónico (Opcional)</label>
-                                        <input type="email" name="email" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-secondary focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="ejemplo@correo.com" />
+                                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-200 uppercase ml-1">Correo Electrónico (Opcional)</label>
+                                        <input type="email" name="email" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-secondary dark:text-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="ejemplo@correo.com" />
                                     </div>
                                     {!postalCode && (
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Código Postal</label>
+                                            <label className="text-[10px] font-bold text-slate-500 dark:text-slate-200 uppercase ml-1">Código Postal</label>
                                             <input
                                                 type="text"
                                                 name="postalCode"
                                                 defaultValue={postalCode}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-secondary focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-bold"
+                                                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-secondary dark:text-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-bold"
                                                 placeholder="CP"
                                                 maxLength={5}
                                                 onChange={(e) => {
@@ -462,26 +463,26 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                         animate={{ opacity: 1, scale: 1 }}
                         className="space-y-8 py-8 md:py-12"
                     >
-                        <div className="bg-white rounded-3xl p-6 md:p-10 border border-slate-100 shadow-xl relative overflow-hidden text-center">
+                        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-10 border border-slate-100 dark:border-slate-800 shadow-xl relative overflow-hidden text-center transition-colors duration-500">
                             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-orange-400 to-amber-300" />
                             <div className="flex justify-center mb-6">
                                 <img src="/logo.png" alt="Thermo House" className="h-10 md:h-14 w-auto filter brightness-110 drop-shadow-md" />
                             </div>
-                            <div className="inline-flex items-center gap-2 bg-green-50 text-green-600 px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold mb-3 md:mb-4 border border-green-100 uppercase tracking-widest">
+                            <div className="inline-flex items-center gap-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold mb-3 md:mb-4 border border-green-100 dark:border-green-800/50 uppercase tracking-widest">
                                 <Check className="w-3.5 h-3.5" /> Cotización Generada
                             </div>
-                            <h3 className="text-2xl md:text-5xl font-black text-secondary tracking-tighter">¡Todo Listo, {leadName.split(' ')[0] || 'Cliente'}!</h3>
-                            <p className="text-slate-500 text-xs md:text-xl mt-2">Tu proyecto de <strong>{initialArea}m²</strong> en <strong>{city || address || 'tu ubicación'}</strong></p>
+                            <h3 className="text-2xl md:text-5xl font-black text-secondary dark:text-white tracking-tighter">¡Todo Listo, {leadName.split(' ')[0] || 'Cliente'}!</h3>
+                            <p className="text-slate-500 dark:text-slate-200 text-xs md:text-xl mt-2">Tu proyecto de <strong>{initialArea}m²</strong> en <strong>{city || address || 'tu ubicación'}</strong></p>
 
                             <div className="mt-8 mb-4">
-                                <p className="text-secondary font-bold text-sm md:text-base px-6">Haz clic en la opción que prefieras para finalizar:</p>
+                                <p className="text-secondary dark:text-slate-300 font-bold text-sm md:text-base px-6">Selecciona un sistema y te enviaremos la cotización detallada:</p>
                             </div>
 
                             {isOutOfZone && (
-                                <div className="mt-8 p-4 md:p-6 bg-orange-50 border border-orange-100 rounded-2xl md:rounded-[2rem] text-orange-800 text-xs md:text-base font-bold flex items-center justify-center gap-4 animate-in fade-in zoom-in duration-500">
+                                <div className="mt-8 p-4 md:p-6 bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-900/30 rounded-2xl md:rounded-[2rem] text-orange-800 dark:text-orange-300 text-xs md:text-base font-bold flex items-center justify-center gap-4 animate-in fade-in zoom-in duration-500">
                                     <AlertTriangle className="w-6 h-6 md:w-8 md:h-8 text-orange-500 flex-shrink-0" />
                                     <div className="text-left">
-                                        <p className="text-orange-950">Nota de Ubicación Especial</p>
+                                        <p className="text-orange-950 dark:text-orange-200">Nota de Ubicación Especial</p>
                                         <p className="text-[10px] md:text-sm font-medium opacity-80">Esta es una cotización basada en precios de Mérida. Debido a la distancia, podrían incurrir costos extras de logística y viáticos tras la visita técnica.</p>
                                     </div>
                                 </div>
@@ -499,28 +500,28 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                             <button
                                 disabled={isPendingSave}
                                 onClick={() => handleSaveAndAction('Contado')}
-                                className="bg-white rounded-3xl shadow-xl flex flex-col transition-all border border-slate-100 overflow-hidden min-h-[380px] text-left hover:scale-[1.02] hover:border-primary/50 group"
+                                className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl flex flex-col transition-all border border-slate-100 dark:border-slate-800 overflow-hidden min-h-[380px] text-left hover:scale-[1.02] hover:border-primary/50 group"
                             >
-                                <div className="bg-secondary px-6 py-4 w-full">
+                                <div className="bg-secondary dark:bg-slate-800 px-6 py-4 w-full">
                                     <div className="text-white font-black text-[10px] md:text-xs uppercase tracking-[0.2em] flex items-center gap-2">
                                         <Check className="w-4 h-4 text-primary" /> Precio de Promoción
                                     </div>
                                 </div>
                                 <div className="p-6 space-y-4 flex flex-col flex-grow w-full">
-                                    <h4 className="text-2xl md:text-3xl font-black text-secondary leading-tight">{selectedSolution?.title}</h4>
-                                    <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-100">
+                                    <h4 className="text-2xl md:text-3xl font-black text-secondary dark:text-white leading-tight">{selectedSolution?.title}</h4>
+                                    <div className="bg-slate-50/50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
                                         <ul className="space-y-1">
                                             {getSolutionFeatures(selectedSolution).slice(0, 3).map((f, i) => (
-                                                <li key={i} className="flex items-start text-slate-600 text-[10px] md:text-xs gap-2 font-medium leading-tight">
+                                                <li key={i} className="flex items-start text-slate-600 dark:text-slate-200 text-[10px] md:text-xs gap-2 font-medium leading-tight">
                                                     <div className="w-1 rounded-full bg-primary flex-shrink-0 mt-1.5 h-1" />{f}
                                                 </li>
                                             ))}
                                         </ul>
                                     </div>
                                     <div className="text-center mt-auto pt-4">
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Inversión Final:</span>
-                                        <div className="text-3xl md:text-4xl font-black text-secondary tracking-tight">${quote?.totalCash.toLocaleString()}</div>
-                                        <span className="text-[9px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded mt-2 inline-block">Ahorro del 14% aplicado</span>
+                                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase tracking-widest mb-1 block">Inversión Final:</span>
+                                        <div className="text-3xl md:text-4xl font-black text-secondary dark:text-white tracking-tight">${quote?.totalCash.toLocaleString()}</div>
+                                        <span className="text-[9px] font-bold text-green-600 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded mt-2 inline-block">Ahorro del 14% aplicado</span>
                                     </div>
                                 </div>
                             </button>
@@ -528,7 +529,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                             <button
                                 disabled={isPendingSave}
                                 onClick={() => handleSaveAndAction('12 MSI')}
-                                className="bg-white rounded-3xl shadow-xl border-2 border-primary/20 flex flex-col relative overflow-hidden min-h-[380px] text-left hover:scale-[1.02] hover:border-primary transition-all group"
+                                className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border-2 border-primary/20 dark:border-primary/10 flex flex-col relative overflow-hidden min-h-[380px] text-left hover:scale-[1.02] hover:border-primary transition-all group"
                             >
                                 <div className="bg-primary px-6 py-4 w-full">
                                     <div className="text-white font-black text-[10px] md:text-xs uppercase tracking-[0.2em] flex items-center gap-2">
@@ -536,18 +537,18 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                     </div>
                                 </div>
                                 <div className="p-6 space-y-4 flex flex-col flex-grow w-full">
-                                    <h4 className="text-2xl md:text-3xl font-black text-secondary leading-tight">{selectedSolution?.title}</h4>
-                                    <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-100">
-                                        <ul className="space-y-1 text-slate-600 font-medium text-[10px] md:text-xs">
+                                    <h4 className="text-2xl md:text-3xl font-black text-secondary dark:text-white leading-tight">{selectedSolution?.title}</h4>
+                                    <div className="bg-slate-50/50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
+                                        <ul className="space-y-1 text-slate-600 dark:text-slate-200 font-medium text-[10px] md:text-xs">
                                             <li className="flex items-center gap-2 font-black text-primary"><Check className="w-4 h-4 text-primary" /> ¡Protege hoy, paga mañana!</li>
                                             <li className="flex items-center gap-2 font-black text-secondary"><Check className="w-4 h-4 text-green-500" /> Sin Intereses</li>
                                             <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-500" /> Saldo diferido</li>
                                         </ul>
                                     </div>
                                     <div className="text-center mt-auto pt-4">
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">12 pagos fijos de:</span>
+                                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-300 uppercase tracking-widest mb-1 block">12 pagos fijos de:</span>
                                         <div className="text-3xl md:text-4xl font-black text-primary tracking-tight">${Math.round((quote?.totalMsi || 0) / 12).toLocaleString()}</div>
-                                        <div className="text-[9px] text-slate-400 mt-2 uppercase font-black tracking-widest leading-none">Inversión anual: ${quote?.totalMsi.toLocaleString()}</div>
+                                        <div className="text-[9px] text-slate-400 dark:text-slate-300 mt-2 uppercase font-black tracking-widest leading-none">Inversión anual: ${quote?.totalMsi.toLocaleString()}</div>
                                     </div>
                                 </div>
                             </button>
@@ -556,7 +557,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                 <button
                                     disabled={isPendingSave}
                                     onClick={() => handleSaveAndAction('Upgrade')}
-                                    className="bg-secondary rounded-3xl shadow-xl relative flex flex-col overflow-hidden min-h-[380px] text-left hover:scale-[1.02] transition-all group border-2 border-transparent hover:border-primary/50"
+                                    className="bg-secondary dark:bg-slate-950 rounded-3xl shadow-xl relative flex flex-col overflow-hidden min-h-[380px] text-left hover:scale-[1.02] transition-all group border-2 border-transparent hover:border-primary/50"
                                 >
                                     <div className="bg-primary/20 backdrop-blur-sm px-6 py-4 w-full">
                                         <div className="text-white font-black text-[10px] md:text-xs uppercase tracking-[0.2em] flex items-center gap-2">
@@ -593,12 +594,12 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                             )}
                         </div>
 
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-10 border-t border-slate-100 text-[10px] md:text-xs font-bold text-slate-400">
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-10 border-t border-slate-100 dark:border-slate-800 text-[10px] md:text-xs font-bold text-slate-400 dark:text-slate-200">
                             <div className="flex flex-col gap-1">
                                 <div className="flex items-center gap-4 uppercase tracking-widest"><Loader2 className="w-4 h-4" /><span>Precios sujetos a visita técnica de validación. Válido por 7 días.</span></div>
                                 <div className="flex items-center gap-4 text-primary opacity-80 italic"><span>*12 MSI disponible con tarjetas de crédito Visa y Mastercard de bancos mexicanos. No aplica para American Express.</span></div>
                             </div>
-                            <button onClick={() => setCurrentStep('selection')} className="group flex items-center gap-2 text-secondary font-bold hover:text-primary transition-colors py-2 px-4 rounded-full hover:bg-slate-50 uppercase tracking-widest"><RotateCcw className="w-4 h-4" /> Volver a los Sistemas</button>
+                            <button onClick={() => setCurrentStep('selection')} className="group flex items-center gap-2 text-secondary dark:text-white font-bold hover:text-primary transition-colors py-2 px-4 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 uppercase tracking-widest"><RotateCcw className="w-4 h-4" /> Volver a los Sistemas</button>
                         </div>
                     </motion.div>
                 )
@@ -607,12 +608,12 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
 
             {showSuccessModal && (
                 <div className="fixed inset-0 bg-secondary/90 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
-                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white w-full max-w-lg rounded-[3rem] overflow-hidden shadow-2xl p-10 md:p-14 text-center space-y-6">
-                        <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-green-100"><CheckCircle2 className="w-10 h-10" /></div>
-                        <h3 className="text-3xl md:text-4xl font-black text-secondary uppercase tracking-tighter leading-none">¡Gracias por <br /> <span className="text-primary">Considerarnos!</span></h3>
-                        <p className="text-slate-500 font-medium text-base md:text-lg">Tu cotización ha sido registrada con éxito.</p>
-                        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-slate-600 font-bold text-sm">En breve uno de nuestros especialistas te enviará la información detallada al medio de contacto que nos proporcionaste.</p></div>
-                        <button onClick={() => { window.location.href = '/'; }} className="w-full bg-secondary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all">Entendido</button>
+                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[3rem] overflow-hidden shadow-2xl p-10 md:p-14 text-center space-y-6 border border-slate-100 dark:border-slate-800">
+                        <div className="w-20 h-20 bg-green-50 dark:bg-green-900/30 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-green-100 dark:border-green-800/50"><CheckCircle2 className="w-10 h-10" /></div>
+                        <h3 className="text-3xl md:text-4xl font-black text-secondary dark:text-white uppercase tracking-tighter leading-none">¡Gracias por <br /> <span className="text-primary">Considerarnos!</span></h3>
+                        <p className="text-slate-500 dark:text-slate-200 font-medium text-base md:text-lg">Tu cotización ha sido registrada con éxito.</p>
+                        <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700"><p className="text-slate-600 dark:text-slate-300 font-bold text-sm">En breve uno de nuestros especialistas te enviará la información detallada al medio de contacto que nos proporcionaste.</p></div>
+                        <button onClick={() => { window.location.href = '/'; }} className="w-full bg-secondary dark:bg-primary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-primary/90 transition-all">Entendido</button>
                     </motion.div>
                 </div>
             )}

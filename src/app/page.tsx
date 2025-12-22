@@ -28,22 +28,24 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen font-sans selection:bg-primary/30 bg-slate-50/30 overflow-y-auto scroll-smooth scroll-snap-y">
+    <main className="min-h-screen font-sans selection:bg-primary/30 bg-slate-50 dark:bg-slate-950 overflow-y-auto scroll-smooth transition-colors duration-500">
       <Navbar />
-      <div className="max-w-[1440px] mx-auto shadow-2xl shadow-slate-200/50 bg-white min-h-screen scroll-snap-type-y-mandatory">
-        <section className="scroll-snap-align-start">
+      <div className="max-w-[1440px] mx-auto min-h-screen transition-colors duration-500">
+        <section className="bg-white dark:bg-slate-950">
           <Hero />
         </section>
 
-        <div className="max-w-5xl mx-auto space-y-0">
+        <div className="space-y-0">
           <motion.section
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
-            className="scroll-snap-align-start"
+            className="bg-slate-50 dark:bg-slate-900/50 py-16 md:py-24"
           >
-            <SystemsSection />
+            <div className="max-w-5xl mx-auto px-4">
+              <SystemsSection />
+            </div>
           </motion.section>
 
           <motion.section
@@ -51,9 +53,11 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
-            className="scroll-snap-align-start"
+            className="bg-white dark:bg-slate-950 py-16 md:py-24"
           >
-            <MethodSection />
+            <div className="max-w-5xl mx-auto px-4">
+              <MethodSection />
+            </div>
           </motion.section>
 
           <motion.section
@@ -61,9 +65,11 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
-            className="scroll-snap-align-start"
+            className="bg-slate-50 dark:bg-slate-900/50 py-16 md:py-24"
           >
-            <TechComparisonSection />
+            <div className="max-w-5xl mx-auto px-4">
+              <TechComparisonSection />
+            </div>
           </motion.section>
 
           <motion.section
@@ -71,9 +77,11 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
-            className="scroll-snap-align-start"
+            className="bg-white dark:bg-slate-950 py-16 md:py-24"
           >
-            <WarrantySection />
+            <div className="max-w-5xl mx-auto px-4">
+              <WarrantySection />
+            </div>
           </motion.section>
         </div>
 
@@ -83,11 +91,11 @@ export default function Home() {
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, margin: "-100px" }}
-          className="py-10 md:py-16 relative px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t border-slate-100 scroll-snap-align-start bg-muted/20"
+          className="py-16 md:py-24 relative px-4 sm:px-6 lg:px-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80"
         >
-          <div className="space-y-4 md:space-y-6">
-            <div className="text-center max-w-2xl mx-auto space-y-4 md:space-y-6 mb-8">
-              <h2 className="text-2xl sm:text-4xl font-black text-secondary tracking-tight">
+          <div className="max-w-5xl mx-auto space-y-8 md:space-y-12">
+            <div className="text-center max-w-2xl mx-auto space-y-4 md:space-y-6">
+              <h2 className="text-2xl sm:text-4xl font-black text-secondary dark:text-white uppercase tracking-tight">
                 ¿Listo para su Cotización?
               </h2>
               <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
@@ -95,7 +103,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="bg-white rounded-3xl shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 overflow-hidden">
               <MapCalculator
                 onAreaCalculated={handleArea}
                 onLocationUpdated={handleLocation}
@@ -118,9 +126,11 @@ export default function Home() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.8 }}
-          className="scroll-snap-align-start"
+          className="bg-white dark:bg-slate-950 py-16 md:py-24"
         >
-          <BranchesSection />
+          <div className="max-w-5xl mx-auto px-4">
+            <BranchesSection />
+          </div>
         </motion.section>
 
         {/* Final Call to Action */}
@@ -128,14 +138,14 @@ export default function Home() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="dark-section py-12 md:py-20 text-center rounded-[3rem] mx-4 md:mx-12 mb-8 scroll-snap-align-start"
+          className="dark-section py-16 md:py-24 text-center rounded-[3rem] mx-4 md:mx-12 mb-12"
         >
           <div className="max-w-3xl mx-auto px-4">
-            <h2 className="text-2xl md:text-4xl font-black text-white mb-4">¿Preparado para la Tranquilidad?</h2>
-            <p className="text-sm md:text-lg text-slate-300 mb-8 opacity-80">Permita que Thermo House proteja su hogar de por vida.</p>
+            <h2 className="text-2xl md:text-5xl font-black text-white mb-6 uppercase tracking-tighter">¿Preparado para la Tranquilidad?</h2>
+            <p className="text-sm md:text-xl text-slate-300 mb-10 opacity-90 leading-relaxed">Permita que Thermo House proteja su hogar contra el calor y las filtraciones de por vida.</p>
             <button
               onClick={() => document.getElementById('cotizador')?.scrollIntoView({ behavior: 'smooth' })}
-              className="w-full sm:w-auto bg-white text-secondary hover:bg-slate-100 px-10 py-4 rounded-xl font-black transition-all shadow-xl active:scale-95"
+              className="w-full sm:w-auto bg-primary hover:bg-orange-600 text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest transition-all shadow-2xl active:scale-95 text-sm"
             >
               Obtenga su Cotización Gratis
             </button>

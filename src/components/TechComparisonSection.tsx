@@ -30,10 +30,10 @@ export default function TechComparisonSection() {
     ];
 
     return (
-        <section className="py-10 md:py-16 bg-muted/20">
+        <section className="py-2 transition-colors duration-500">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-3xl mx-auto mb-4">
-                    <h2 className="text-2xl sm:text-4xl font-bold text-secondary mb-4 md:mb-5">
+                    <h2 className="text-2xl sm:text-4xl font-bold text-secondary dark:text-white mb-4 md:mb-5">
                         La Solución Moderna vs. Lo Tradicional
                     </h2>
                     <p className="text-base md:text-lg text-muted-foreground mb-6 md:mb-8">
@@ -41,19 +41,19 @@ export default function TechComparisonSection() {
                     </p>
                 </div>
 
-                <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                     {/* Desktop Header */}
-                    <div className="hidden md:grid grid-cols-12 border-b border-slate-200 bg-slate-50/50 uppercase tracking-widest text-[10px] font-black text-slate-400">
+                    <div className="hidden md:grid grid-cols-12 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 uppercase tracking-widest text-[10px] font-black text-slate-400 dark:text-slate-500">
                         <div className="p-6 col-span-3">Característica</div>
-                        <div className="p-6 col-span-4 border-l border-slate-100 bg-secondary text-white">Thermo House (Propuesta)</div>
-                        <div className="p-6 col-span-5 border-l border-slate-100">Sistemas Tradicionales</div>
+                        <div className="p-6 col-span-4 border-l border-slate-100 dark:border-slate-700 bg-secondary dark:bg-primary text-white">Thermo House (Propuesta)</div>
+                        <div className="p-6 col-span-5 border-l border-slate-100 dark:border-slate-700">Sistemas Tradicionales</div>
                     </div>
 
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
                         {comparisons.map((item, idx) => (
-                            <div key={idx} className="flex flex-col md:grid md:grid-cols-12 hover:bg-slate-50/50 transition-colors">
+                            <div key={idx} className="flex flex-col md:grid md:grid-cols-12 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                                 {/* Feature Title - Mobile Header */}
-                                <div className="p-4 md:p-6 md:col-span-3 font-bold text-secondary bg-slate-50 md:bg-transparent flex items-center gap-3">
+                                <div className="p-4 md:p-6 md:col-span-3 font-bold text-secondary dark:text-white bg-slate-50 dark:bg-slate-800/50 md:bg-transparent flex items-center gap-3">
                                     <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs md:hidden">
                                         {idx + 1}
                                     </div>
@@ -61,26 +61,26 @@ export default function TechComparisonSection() {
                                 </div>
 
                                 {/* Thermo House Column */}
-                                <div className="p-5 md:p-6 md:col-span-4 border-t md:border-t-0 md:border-l border-slate-100 flex items-start gap-4">
+                                <div className="p-5 md:p-6 md:col-span-4 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 flex items-start gap-4">
                                     <div className="flex-shrink-0 mt-1">
                                         <CheckCircle2 className="w-5 h-5 text-green-500" />
                                     </div>
                                     <div className="space-y-1">
                                         <span className="text-[10px] font-black text-primary uppercase tracking-tighter md:hidden">Thermo House</span>
-                                        <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                                        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                                             {item.thermo}
                                         </p>
                                     </div>
                                 </div>
 
                                 {/* Traditional Column */}
-                                <div className="p-5 md:p-6 md:col-span-5 border-t md:border-t-0 md:border-l border-slate-100 flex items-start gap-4 bg-slate-50/30 md:bg-transparent">
+                                <div className="p-5 md:p-6 md:col-span-5 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 flex items-start gap-4 bg-slate-50/30 dark:bg-slate-800/10 md:bg-transparent">
                                     <div className="flex-shrink-0 mt-1">
                                         <XCircle className="w-5 h-5 text-red-400/70" />
                                     </div>
                                     <div className="space-y-1">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter md:hidden">Sistemas Tradicionales</span>
-                                        <p className="text-sm text-slate-500 leading-relaxed">
+                                        <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-tighter md:hidden">Sistemas Tradicionales</span>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                                             {item.traditional}
                                         </p>
                                     </div>
@@ -93,7 +93,7 @@ export default function TechComparisonSection() {
                 <div className="mt-8 md:mt-12 text-center">
                     <button
                         onClick={() => document.getElementById('cotizador')?.scrollIntoView({ behavior: 'smooth' })}
-                        className="w-full sm:w-auto bg-secondary hover:bg-slate-800 text-white px-8 py-3 rounded-lg font-semibold transition-all"
+                        className="w-full sm:w-auto bg-secondary dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white px-8 py-3 rounded-lg font-semibold transition-all"
                     >
                         Obtenga una Consulta Gratuita
                     </button>

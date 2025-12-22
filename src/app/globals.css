@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -42,6 +44,22 @@
 
   --border: #e2e8f0;
   /* Slate 200 - Divisores */
+}
+
+.dark {
+  --background: #020617;
+  /* Slate 950 */
+  --foreground: #f1f5f9;
+  /* Slate 100 */
+  --secondary: #ffffff;
+  /* Pure white for headers */
+  --secondary-foreground: #020617;
+  --muted: #0f172a;
+  /* Slate 900 */
+  --muted-foreground: #cbd5e1;
+  /* Slate 300 - Much better legibility */
+  --border: #1e293b;
+  /* Slate 800 */
 }
 
 /* Typography & Base Reset */

@@ -85,9 +85,30 @@ export async function getQuote(id: string) {
 
         if (error) throw error;
         return { success: true, data };
-    } catch (err) {
+    } catch (err: any) {
         console.error('Error fetching single quote:', err);
-        return { success: false };
+        return { success: false, message: err.message || 'Error al obtener la cotización.' };
+    }
+}
+
+export async function createQuote(data: any) {
+    try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, message: 'Sesión no válida.' };
+
+        const { error } = await supabaseAdmin
+            .from('cotizaciones')
+            .insert({
+                ...data,
+                created_by: session.id,
+                created_at: new Date().toISOString()
+            });
+
+        if (error) throw error;
+        return { success: true };
+    } catch (err) {
+        console.error('Error creating manual quote:', err);
+        return { success: false, message: 'Error al crear el lead manual.' };
     }
 }
 
@@ -108,8 +129,8 @@ export async function updateQuote(id: string, updates: any) {
                 return { success: false, message: 'No se pudo verificar el estado de la cotización.' };
             }
 
-            if (currentQuote.status !== 'Nuevo' && !updates.assigned_to) {
-                return { success: false, message: 'Esta cotización ya fue procesada y no puede ser modificada por un asesor. Contacte a administración.' };
+            if (currentQuote.status === 'Cerrado' && !updates.assigned_to) {
+                return { success: false, message: 'Esta cotización está cerrada y no puede ser modificada por un asesor. Contacte a administración.' };
             }
         } else if (session.role !== 'admin' && session.role !== 'manager') {
             return { success: false, message: 'No tienes permisos para realizar esta acción.' };

@@ -23,10 +23,10 @@ export default function MethodSection() {
     ];
 
     return (
-        <section className="py-10 md:py-16 bg-white">
+        <section className="py-10 transition-colors duration-500">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-3xl mx-auto mb-6">
-                    <h2 className="text-2xl sm:text-4xl font-bold text-secondary mb-4 md:mb-5">
+                    <h2 className="text-2xl sm:text-4xl font-bold text-secondary dark:text-white mb-4 md:mb-5">
                         El Método Thermo House
                     </h2>
                     <p className="text-base md:text-lg text-muted-foreground mb-8 md:mb-10">
@@ -39,9 +39,9 @@ export default function MethodSection() {
                         <div key={step.id} className={`flex flex-col lg:flex-row items-center gap-8 md:gap-12 ${index % 2 !== 0 ? 'lg:flex-row-reverse' : ''}`}>
                             {/* Image Placeholder Area */}
                             <div className="w-full lg:w-1/2">
-                                <div className={`aspect-video rounded-2xl shadow-lg border border-border relative overflow-hidden ${step.imageColor}`}>
+                                <div className={`aspect-video rounded-2xl shadow-lg border border-border dark:border-slate-800 relative overflow-hidden ${step.imageColor} dark:opacity-80`}>
                                     {/* Visual Placeholder text */}
-                                    <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/30 font-bold text-xl md:text-2xl">
+                                    <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/30 dark:text-slate-400/20 font-bold text-xl md:text-2xl">
                                         Imagen: {step.title}
                                     </div>
                                 </div>
@@ -55,7 +55,7 @@ export default function MethodSection() {
                                 </div>
 
                                 <div className="pt-4 lg:pl-8">
-                                    <h3 className="text-xl md:text-2xl font-bold text-secondary mb-3 md:mb-4">{step.title}</h3>
+                                    <h3 className="text-xl md:text-2xl font-bold text-secondary dark:text-white mb-3 md:mb-4">{step.title}</h3>
                                     <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
                                         {step.description}
                                     </p>
