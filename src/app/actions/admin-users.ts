@@ -7,7 +7,7 @@ import { cookies } from 'next/headers';
 export async function getAdminUsers() {
     try {
         const session = await getAdminSession();
-        if (!session || session.role !== 'admin') {
+        if (!session || (session.role !== 'admin' && session.role !== 'manager')) {
             return { success: false, message: 'No tienes permisos.' };
         }
 
@@ -28,7 +28,7 @@ export async function createAdminUser(payload: {
     password: string;
     name: string;
     apellido?: string;
-    role: 'admin' | 'editor';
+    role: 'admin' | 'manager' | 'editor';
     ciudad?: string;
     base?: string;
     telefono?: string;
@@ -36,7 +36,7 @@ export async function createAdminUser(payload: {
 }) {
     try {
         const session = await getAdminSession();
-        if (!session || session.role !== 'admin') {
+        if (!session || (session.role !== 'admin' && session.role !== 'manager')) {
             return { success: false, message: 'No tienes permisos para crear usuarios.' };
         }
 
@@ -53,7 +53,7 @@ export async function createAdminUser(payload: {
             .from('admin_users')
             .insert({
                 ...payload,
-                ciudad: payload.ciudad || (payload.role === 'admin' ? 'Todas' : 'General')
+                ciudad: payload.ciudad || ((payload.role === 'admin' || payload.role === 'manager') ? 'Todas' : 'General')
             });
 
         if (error) throw error;
@@ -66,7 +66,7 @@ export async function createAdminUser(payload: {
 export async function updateAdminUser(id: string, payload: Partial<{
     name: string;
     apellido: string;
-    role: 'admin' | 'editor';
+    role: 'admin' | 'manager' | 'editor';
     ciudad: string;
     base: string;
     telefono: string;
@@ -76,7 +76,7 @@ export async function updateAdminUser(id: string, payload: Partial<{
 }>) {
     try {
         const session = await getAdminSession();
-        if (!session || session.role !== 'admin') {
+        if (!session || (session.role !== 'admin' && session.role !== 'manager')) {
             return { success: false, message: 'No tienes permisos para modificar usuarios.' };
         }
 
@@ -106,7 +106,7 @@ export async function updateAdminUser(id: string, payload: Partial<{
 export async function resetAdminPassword(id: string, newPassword: string) {
     try {
         const session = await getAdminSession();
-        if (!session || session.role !== 'admin') {
+        if (!session || (session.role !== 'admin' && session.role !== 'manager')) {
             return { success: false, message: 'No tienes permisos para resetear contraseñas.' };
         }
 
@@ -125,7 +125,7 @@ export async function resetAdminPassword(id: string, newPassword: string) {
 export async function deleteAdminUser(id: string) {
     try {
         const session = await getAdminSession();
-        if (!session || session.role !== 'admin') {
+        if (!session || (session.role !== 'admin' && session.role !== 'manager')) {
             return { success: false, message: 'No tienes permisos para eliminar usuarios.' };
         }
 

@@ -112,7 +112,7 @@ export default function AdminDashboard() {
         apellido: '',
         email: '',
         password: '',
-        role: 'editor' as 'admin' | 'editor',
+        role: 'editor' as 'admin' | 'manager' | 'editor',
         ciudad: '',
         base: '',
         telefono: '',
@@ -156,7 +156,7 @@ export default function AdminDashboard() {
     const [showQuotePreview, setShowQuotePreview] = useState(false);
 
     // Permission helper
-    const canEditQuote = (q: any) => session?.role === 'admin' || (session?.role === 'editor' && q?.status === 'Nuevo');
+    const canEditQuote = (q: any) => session?.role === 'admin' || session?.role === 'manager' || (session?.role === 'editor' && q?.status === 'Nuevo');
 
     // Product Modal State
     const [productModal, setProductModal] = useState<{
@@ -208,32 +208,42 @@ export default function AdminDashboard() {
                     table: 'cotizaciones'
                 },
                 async (payload) => {
-                    if (payload.eventType === 'INSERT') {
-                        // Check if it belongs to the current user's city if they are not admin
-                        const newQuoteRaw = payload.new;
-                        if (session.role !== 'admin' && newQuoteRaw.ciudad !== session.ciudad) return;
+                    const isGlobal = session.role === 'admin' || session.role === 'manager';
 
-                        // Fetch the full quote with joins
+                    if (payload.eventType === 'INSERT') {
+                        const newQuoteRaw = payload.new;
+                        if (!isGlobal && newQuoteRaw.ciudad !== session.ciudad) return;
+
                         const res = await getQuote(newQuoteRaw.id);
                         if (res.success && res.data) {
                             setQuotes(prev => {
-                                // Prevent duplicates if it was already somehow added
                                 if (prev.some(q => q.id === res.data.id)) return prev;
                                 return [res.data, ...prev];
                             });
                         }
                     } else if (payload.eventType === 'UPDATE') {
                         const updatedQuoteRaw = payload.new;
-                        if (session.role !== 'admin' && updatedQuoteRaw.ciudad !== session.ciudad) {
-                            // If it was moved out of the city, remove it
-                            setQuotes(prev => prev.filter(q => q.id !== updatedQuoteRaw.id));
-                            return;
+
+                        if (!isGlobal) {
+                            const isAssignedToMe = updatedQuoteRaw.assigned_to === session.id;
+                            const isLocalUnassigned = !updatedQuoteRaw.assigned_to && updatedQuoteRaw.ciudad === session.ciudad;
+
+                            if (!isAssignedToMe && !isLocalUnassigned) {
+                                setQuotes(prev => prev.filter(q => q.id !== updatedQuoteRaw.id));
+                                return;
+                            }
                         }
 
-                        // Fetch full update to get joins (advisor etc)
                         const res = await getQuote(updatedQuoteRaw.id);
                         if (res.success && res.data) {
-                            setQuotes(prev => prev.map(q => q.id === res.data.id ? res.data : q));
+                            setQuotes(prev => {
+                                const exists = prev.some(q => q.id === res.data.id);
+                                if (exists) {
+                                    return prev.map(q => q.id === res.data.id ? res.data : q);
+                                } else {
+                                    return [res.data, ...prev];
+                                }
+                            });
                         }
                     } else if (payload.eventType === 'DELETE') {
                         setQuotes(prev => prev.filter(q => q.id !== payload.old.id));
@@ -249,11 +259,11 @@ export default function AdminDashboard() {
 
     const fetchData = async (currSession: any) => {
         setLoading(true);
-        const cityFilter = currSession.role === 'admin' ? 'Todas' : currSession.ciudad;
+        const cityFilter = (currSession.role === 'admin' || currSession.role === 'manager') ? 'Todas' : currSession.ciudad;
 
         const [qRes, uRes, pRes, mRes, lRes, configKey] = await Promise.all([
             getQuotes(cityFilter),
-            currSession.role === 'admin' ? getAdminUsers() : Promise.resolve({ success: true, data: [] }),
+            (currSession.role === 'admin' || currSession.role === 'manager') ? getAdminUsers() : Promise.resolve({ success: true, data: [] }),
             getProducts(cityFilter),
             getMasterProducts(),
             getLocations(),
@@ -335,6 +345,26 @@ export default function AdminDashboard() {
             alert('Error: ' + res.message);
         }
         setIsSavingDetail(false);
+    };
+
+    const handleAssignLead = async (leadId: string, userId: string) => {
+        const res = await updateQuote(leadId, { assigned_to: userId || null });
+        if (res.success) {
+            // Actualización local optimista
+            setQuotes(prev => prev.map(q => {
+                if (q.id === leadId) {
+                    const assignedUser = users.find(u => u.id === userId);
+                    return {
+                        ...q,
+                        assigned_to: userId || null,
+                        assigned_user: assignedUser ? { id: assignedUser.id, name: assignedUser.name, apellido: assignedUser.apellido } : null
+                    };
+                }
+                return q;
+            }));
+        } else {
+            alert('Error al asignar: ' + res.message);
+        }
     };
 
     const handleCreateUser = async (e: React.FormEvent) => {
@@ -741,7 +771,7 @@ export default function AdminDashboard() {
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] px-2 py-0.5 bg-primary/10 text-primary rounded-md">
-                                    {session.role === 'admin' ? 'Acceso Total' : `Zona: ${session.ciudad}`}
+                                    {session.role === 'admin' ? 'Acceso Total' : session.role === 'manager' ? 'Gerencia Global' : `Zona: ${session.ciudad}`}
                                 </span>
                             </div>
                             <h1 className="text-3xl font-black text-secondary uppercase tracking-tight">Management Suite</h1>
@@ -750,18 +780,28 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex gap-3">
                         <div className="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-1">
-                            {session.role === 'admin' && (
+                            {(session.role === 'admin' || session.role === 'manager') && (
                                 <button onClick={() => setActiveTab('dashboard')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Resumen general de métricas">Dashboard</button>
                             )}
                             <button onClick={() => setActiveTab('quotes')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'quotes' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Gestión de prospectos y cotizaciones">Leads</button>
                             {session.role === 'admin' && (
                                 <>
                                     <button onClick={() => setActiveTab('products')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'products' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Fichas técnicas y productos maestros">Productos</button>
+                                </>
+                            )}
+                            {(session.role === 'admin' || session.role === 'manager') && (
+                                <>
                                     <button onClick={() => setActiveTab('prices')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'prices' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Control de tarifas regionales">Precios</button>
+                                </>
+                            )}
+                            {session.role === 'admin' && (
+                                <>
                                     <button onClick={() => setActiveTab('locations')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'locations' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Configuración de ciudades">Ubicaciones</button>
                                     <button onClick={() => setActiveTab('config')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'config' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Ajustes globales del sistema">Configuración</button>
-                                    <button onClick={() => setActiveTab('users')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Administración de equipo">Equipo</button>
                                 </>
+                            )}
+                            {(session.role === 'admin' || session.role === 'manager') && (
+                                <button onClick={() => setActiveTab('users')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Administración de equipo">Equipo</button>
                             )}
                         </div>
                         <button onClick={handleLogout} className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-bold border border-red-100 hover:bg-red-100 transition-all"><LogOut className="w-4 h-4" /></button>
@@ -769,7 +809,7 @@ export default function AdminDashboard() {
                 </div>
 
 
-                {activeTab === 'dashboard' && session.role === 'admin' && (
+                {activeTab === 'dashboard' && (session.role === 'admin' || session.role === 'manager') && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
                         {/* Dashboard Header with Range Selectors */}
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1102,7 +1142,26 @@ export default function AdminDashboard() {
                                                             <span className="text-[6px] font-black px-1 py-0.5 bg-primary text-white rounded uppercase tracking-tighter">Elegido</span>
                                                         )}
                                                     </div>
-                                                    <div className="text-[9px] font-bold text-slate-400 capitalize mt-1">{q.advisor?.name || 'Sistema'}</div>
+                                                    <div className="mt-1 flex flex-col items-end">
+                                                        <div className="text-[7px] text-slate-300 font-bold uppercase mb-0.5">Asignado a:</div>
+                                                        {(session.role === 'admin' || session.role === 'manager') ? (
+                                                            <select
+                                                                value={q.assigned_to || ''}
+                                                                onChange={(e) => handleAssignLead(q.id, e.target.value)}
+                                                                className="text-[8px] font-black uppercase bg-slate-100 border-none rounded-md px-2 py-0.5 outline-none max-w-[120px]"
+                                                            >
+                                                                <option value="">Por Asignar</option>
+                                                                {users.map(u => (
+                                                                    <option key={u.id} value={u.id}>{u.name}</option>
+                                                                ))}
+                                                            </select>
+                                                        ) : (
+                                                            <div className="text-[9px] font-black text-secondary flex items-center gap-1">
+                                                                {q.assigned_user ? q.assigned_user.name : 'Sin asignar'}
+                                                            </div>
+                                                        )}
+                                                        <div className="text-[7px] font-bold text-slate-300 capitalize mt-1">Vía: {q.advisor?.name || 'Sistema'}</div>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="flex flex-wrap gap-2 text-[10px] font-bold text-slate-500">
@@ -1150,8 +1209,8 @@ export default function AdminDashboard() {
                                         </th>
                                         <th className="px-8 py-5">Fecha</th>
                                         <th className="px-8 py-5">Cliente</th>
-                                        <th className="px-8 py-5">Proyecto</th>
-                                        <th className="px-8 py-5">Atendido por</th>
+                                        <th className="px-8 py-5">Proyecto / Info</th>
+                                        <th className="px-8 py-5">Presupuesto / Asignación</th>
                                         <th className="px-8 py-5">Estado</th>
                                         <th className="px-8 py-5 text-right">Canal</th>
                                     </tr>
@@ -1214,8 +1273,37 @@ export default function AdminDashboard() {
                                                             )}
                                                         </div>
                                                     </div>
-                                                    <div className="text-[9px] text-slate-400 font-bold uppercase flex items-center gap-1 mt-1">
-                                                        <UserCircle className="w-3 h-3" /> {q.advisor?.name || 'Sistema'}
+                                                    <div className="mt-3 pt-2 border-t border-slate-50">
+                                                        <div className="text-[7px] font-black text-slate-400 uppercase tracking-tighter mb-1.5 flex items-center gap-1 px-1">
+                                                            <div className="w-1 h-1 rounded-full bg-primary animate-pulse" /> Seguimiento / Asignación
+                                                        </div>
+                                                        {(session.role === 'admin' || session.role === 'manager') ? (
+                                                            <div className="relative group/sel">
+                                                                <select
+                                                                    value={q.assigned_to || ''}
+                                                                    onChange={(e) => handleAssignLead(q.id, e.target.value)}
+                                                                    className="w-full text-[9px] font-black uppercase bg-slate-100/80 hover:bg-slate-200/50 border border-slate-200/50 rounded-lg px-2.5 py-2 outline-none transition-all cursor-pointer appearance-none"
+                                                                >
+                                                                    <option value="">🔘 Por Asignar</option>
+                                                                    {users.map(u => (
+                                                                        <option key={u.id} value={u.id}>👤 {u.name} {u.apellido || ''}</option>
+                                                                    ))}
+                                                                </select>
+                                                                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-40 group-hover/sel:opacity-100 transition-opacity">
+                                                                    <ChevronRight className="w-3 h-3 rotate-90" />
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className={`text-[9px] font-black uppercase flex items-center gap-1.5 px-3 py-2 rounded-lg ${q.assigned_to === session.id ? 'bg-primary/10 text-primary border border-primary/10' : 'bg-slate-100/50 text-slate-400'}`}>
+                                                                <UserCircle className="w-3 h-3" />
+                                                                {q.assigned_user ?
+                                                                    (q.assigned_to === session.id ? '⚠️ Asignado a Ti' : `${q.assigned_user.name} ${q.assigned_user.apellido || ''}`)
+                                                                    : 'Sin Asignar'}
+                                                            </div>
+                                                        )}
+                                                        <div className="text-[7px] text-slate-300 font-bold uppercase mt-1.5 px-1 flex items-center gap-1">
+                                                            Originado por: <span className="text-slate-400">{q.advisor?.name || 'Sistema Web'}</span>
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td className="px-8 py-5">
@@ -1367,7 +1455,7 @@ export default function AdminDashboard() {
                                                 >
                                                     {p.activo !== false ? 'Activo' : 'Pausado'}
                                                 </button>
-                                                {session.role === 'admin' && (
+                                                {(session.role === 'admin' || session.role === 'manager') && (
                                                     <>
                                                         <button onClick={() => setProductModal({ open: true, type: 'edit', data: p })} className="p-2 bg-slate-50 text-slate-400 border border-slate-100 rounded-lg"><Edit3 className="w-4 h-4" /></button>
                                                         <button onClick={() => handleClone(p)} className="p-2 bg-blue-50 text-blue-400 border border-blue-100 rounded-lg"><Plus className="w-4 h-4" /></button>
@@ -1502,15 +1590,31 @@ export default function AdminDashboard() {
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Rol</label>
                                         <select className="w-full px-2 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold" value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value as any })}>
-                                            <option value="editor">Editor</option>
-                                            <option value="admin">Admin</option>
+                                            <option value="editor">Editor / Asesor</option>
+                                            <option value="manager">Gerencia</option>
+                                            <option value="admin">Administrador</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ciudad Asignada</label>
+                                        <select className="w-full px-2 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold" value={newUser.ciudad} onChange={e => setNewUser({ ...newUser, ciudad: e.target.value })}>
+                                            {locations.map(l => <option key={l.id} value={l.ciudad}>{l.ciudad}</option>)}
+                                            {(newUser.role === 'admin' || newUser.role === 'manager') && <option value="Todas">Todas (Global)</option>}
                                         </select>
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sede / Base</label>
                                         <input type="text" placeholder="Ej: Matriz" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={newUser.base} onChange={e => setNewUser({ ...newUser, base: e.target.value })} />
                                     </div>
-                                    <div className="md:col-span-2">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">WhatsApp Profesional</label>
+                                        <input type="text" placeholder="10 dígitos" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={newUser.telefono} onChange={e => setNewUser({ ...newUser, telefono: e.target.value })} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Público</label>
+                                        <input type="email" placeholder="ventas@..." className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none" value={newUser.contacto_email} onChange={e => setNewUser({ ...newUser, contacto_email: e.target.value })} />
+                                    </div>
+                                    <div className="md:col-span-1">
                                         <button disabled={isCreatingUser} className="w-full bg-secondary text-white py-3 rounded-xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-secondary/20 flex items-center justify-center gap-2">
                                             {isCreatingUser ? 'Guardando...' : 'Registrar Perfil'}
                                         </button>
@@ -1536,13 +1640,16 @@ export default function AdminDashboard() {
                                                 <div className="font-black text-secondary uppercase tracking-tight">{u.name} {u.apellido}</div>
                                                 <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 mt-1"><Building2 className="w-3 h-3" /> {u.base || 'Gral'} • {u.ciudad}</div>
                                                 <div className="mt-3 flex gap-2">
-                                                    <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${u.role === 'admin' ? 'bg-purple-50 text-purple-600 border-purple-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                                                    <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${u.role === 'admin' ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                                        u.role === 'manager' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                                                            'bg-blue-50 text-blue-600 border-blue-100'
+                                                        }`}>
                                                         {u.role}
                                                     </span>
                                                 </div>
                                             </div>
                                         </div>
-                                        {session.role === 'admin' && (
+                                        {(session.role === 'admin' || session.role === 'manager') && (
                                             <div className="flex flex-row sm:flex-col gap-2 pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-50 sm:opacity-0 sm:group-hover:opacity-100 transition-all overflow-x-auto">
                                                 <button onClick={() => setUserModal({ open: true, type: 'edit', data: u })} className="flex-1 sm:flex-none p-3 bg-slate-50 text-slate-400 border border-slate-200 shadow-sm hover:bg-white hover:text-primary rounded-xl transition-all flex items-center justify-center gap-2" title="Editar Perfil">
                                                     <Edit3 className="w-4 h-4" />
@@ -1558,7 +1665,7 @@ export default function AdminDashboard() {
                                                 </button>
                                             </div>
                                         )}
-                                        {session.role !== 'admin' && (
+                                        {session.role !== 'admin' && session.role !== 'manager' && (
                                             <div className="px-3 py-1 bg-slate-50 border border-slate-100 rounded-lg text-[9px] font-black text-slate-300 uppercase italic self-start">Solo Lectura</div>
                                         )}
                                     </div>
@@ -1605,7 +1712,7 @@ export default function AdminDashboard() {
                                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ciudad</label>
                                                 <select className="w-full px-2 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold" value={userModal.data.ciudad} onChange={e => setUserModal({ ...userModal, data: { ...userModal.data, ciudad: e.target.value } })}>
                                                     {locations.map(l => <option key={l.id} value={l.ciudad}>{l.ciudad}</option>)}
-                                                    {userModal.data.role === 'admin' && <option value="Todas">Todas</option>}
+                                                    {(userModal.data.role === 'admin' || userModal.data.role === 'manager') && <option value="Todas">Todas</option>}
                                                 </select>
                                             </div>
                                             <div className="space-y-1">

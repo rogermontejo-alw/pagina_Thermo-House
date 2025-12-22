@@ -5,22 +5,39 @@ import { getAdminSession } from './admin-auth';
 
 export async function getQuotes(cityFilter?: string) {
     try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, message: 'No session' };
+
         let query = supabaseAdmin
             .from('cotizaciones')
             .select(`
-                *,
-                soluciones_precios (
-                    title,
-                    internal_id
-                ),
-                advisor:admin_users!created_by (
-                    name,
-                    apellido,
-                    telefono,
-                    email,
-                    contacto_email
-                )
-            `);
+                        *,
+                        soluciones_precios (
+                            title,
+                            internal_id
+                        ),
+                        advisor:admin_users!created_by (
+                            name,
+                            apellido,
+                            telefono,
+                            email,
+                            contacto_email
+                        ),
+                        assigned_user:admin_users!assigned_to (
+                            id,
+                            name,
+                            apellido
+                        )
+                    `);
+
+        // Access Logic:
+        // Admin & Manager see EVERYTHING (Global)
+        // Editor sees: Leads assigned to them OR Leads in their city NOT assigned to anyone
+        if (session.role === 'editor') {
+            query = query.or(`assigned_to.eq.${session.id},and(assigned_to.is.null,ciudad.eq.${session.ciudad})`);
+        } else if (session.role !== 'admin' && session.role !== 'manager') {
+            return { success: false, message: 'Rol no admitido' };
+        }
 
         if (cityFilter && cityFilter !== 'Todas') {
             query = query.eq('ciudad', cityFilter);
@@ -56,6 +73,11 @@ export async function getQuote(id: string) {
                     telefono,
                     email,
                     contacto_email
+                ),
+                assigned_user:admin_users!assigned_to (
+                    id,
+                    name,
+                    apellido
                 )
             `)
             .eq('id', id)
@@ -86,10 +108,10 @@ export async function updateQuote(id: string, updates: any) {
                 return { success: false, message: 'No se pudo verificar el estado de la cotización.' };
             }
 
-            if (currentQuote.status !== 'Nuevo') {
+            if (currentQuote.status !== 'Nuevo' && !updates.assigned_to) {
                 return { success: false, message: 'Esta cotización ya fue procesada y no puede ser modificada por un asesor. Contacte a administración.' };
             }
-        } else if (session.role !== 'admin') {
+        } else if (session.role !== 'admin' && session.role !== 'manager') {
             return { success: false, message: 'No tienes permisos para realizar esta acción.' };
         }
 
