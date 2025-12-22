@@ -2143,7 +2143,7 @@ export default function AdminDashboard() {
                                                                 P. {selectedLeadForDetail.pricing_type === 'lista' ? 'LISTA' : 'CONTADO'}
                                                             </span>
                                                         </h5>
-                                                        <div className="text-[10px] text-slate-500 font-medium leading-relaxed pr-8 space-y-1 uppercase">
+                                                        <div className="text-[10px] text-slate-500 font-medium leading-relaxed pr-8 space-y-1">
                                                             {(() => {
                                                                 const product = products.find(p => p.id === selectedLeadForDetail.solution_id);
                                                                 const text = `${product?.beneficio_principal || ''}\n${product?.detalle_costo_beneficio || ''}`;
