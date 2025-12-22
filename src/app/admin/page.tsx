@@ -156,7 +156,10 @@ export default function AdminDashboard() {
     const [showQuotePreview, setShowQuotePreview] = useState(false);
 
     // Permission helper
-    const canEditQuote = (q: any) => session?.role === 'admin' || session?.role === 'manager' || (session?.role === 'editor' && q?.status === 'Nuevo');
+    const canEditQuote = (q: any) =>
+        session?.role === 'admin' ||
+        session?.role === 'manager' ||
+        (session?.role === 'editor' && q?.status !== 'Cerrado');
 
     // Product Modal State
     const [productModal, setProductModal] = useState<{
@@ -285,6 +288,12 @@ export default function AdminDashboard() {
             }
         }
         if (configKey) setMapsKey(configKey);
+
+        // Sales team (editor) view only their city's prices by default
+        if (currSession.role === 'editor') {
+            setPriceCityFilter(currSession.ciudad);
+        }
+
         setLoading(false);
     };
 
@@ -812,9 +821,9 @@ export default function AdminDashboard() {
                                     <button onClick={() => setActiveTab('products')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'products' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Fichas técnicas y productos maestros">Productos</button>
                                 </>
                             )}
-                            {(session.role === 'admin' || session.role === 'manager') && (
+                            {(session.role === 'admin' || session.role === 'manager' || session.role === 'editor') && (
                                 <>
-                                    <button onClick={() => setActiveTab('prices')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'prices' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Control de tarifas regionales">Precios</button>
+                                    <button onClick={() => setActiveTab('prices')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'prices' ? 'bg-secondary text-white shadow-lg' : 'text-slate-400 hover:text-secondary'}`} title="Consulta de tarifas regionales">Precios</button>
                                 </>
                             )}
                             {session.role === 'admin' && (
@@ -1418,11 +1427,12 @@ export default function AdminDashboard() {
                                     />
                                 </div>
                                 <select
-                                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-[10px] font-black uppercase tracking-widest outline-none focus:ring-4 focus:ring-primary/10 transition-all cursor-pointer bg-white"
+                                    disabled={session.role === 'editor'}
+                                    className={`px-4 py-2.5 rounded-xl border border-slate-200 text-[10px] font-black uppercase tracking-widest outline-none focus:ring-4 focus:ring-primary/10 transition-all cursor-pointer bg-white ${session.role === 'editor' ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     value={priceCityFilter}
                                     onChange={e => setPriceCityFilter(e.target.value)}
                                 >
-                                    <option value="Todas">Todas las Ciudades</option>
+                                    {session.role !== 'editor' && <option value="Todas">Todas las Ciudades</option>}
                                     {Array.from(new Set(products.map(p => p.ciudad))).sort().map(c => (
                                         <option key={c} value={c}>{c}</option>
                                     ))}
@@ -1473,8 +1483,9 @@ export default function AdminDashboard() {
                                             </div>
                                             <div className="flex justify-end gap-2">
                                                 <button
+                                                    disabled={session.role === 'editor'}
                                                     onClick={() => toggleProductActive(p.id, p.activo !== false)}
-                                                    className={`p-2 rounded-lg border text-[8px] font-black uppercase tracking-tighter ${p.activo !== false ? 'bg-green-50 text-green-600 border-green-100' : 'bg-slate-50 text-slate-400 border-slate-200'}`}
+                                                    className={`p-2 rounded-lg border text-[8px] font-black uppercase tracking-tighter ${p.activo !== false ? 'bg-green-50 text-green-600 border-green-100' : 'bg-slate-50 text-slate-400 border-slate-200'} ${session.role === 'editor' ? 'opacity-80' : 'cursor-pointer'}`}
                                                 >
                                                     {p.activo !== false ? 'Activo' : 'Pausado'}
                                                 </button>
@@ -1535,8 +1546,9 @@ export default function AdminDashboard() {
                                                     </td>
                                                     <td className="px-8 py-5">
                                                         <button
+                                                            disabled={session.role === 'editor'}
                                                             onClick={() => toggleProductActive(p.id, !(p.activo !== false))}
-                                                            className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${p.activo !== false ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}
+                                                            className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${p.activo !== false ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-slate-100 text-slate-400 border border-slate-200'} ${session.role === 'editor' ? 'opacity-80' : 'cursor-pointer hover:scale-105 active:scale-95'}`}
                                                         >
                                                             {p.activo !== false ? '● Activo' : '○ Pausado'}
                                                         </button>
@@ -2091,9 +2103,9 @@ export default function AdminDashboard() {
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre del Cliente</label>
                                         <input
                                             type="text"
-                                            className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 ${(session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo') ? 'bg-slate-50' : ''}`}
+                                            className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50' : ''}`}
                                             value={selectedLeadForDetail.contact_info.name}
-                                            readOnly={session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo'}
+                                            readOnly={!canEditQuote(selectedLeadForDetail)}
                                             onChange={e => setSelectedLeadForDetail({
                                                 ...selectedLeadForDetail,
                                                 contact_info: { ...selectedLeadForDetail.contact_info, name: e.target.value }
@@ -2104,9 +2116,9 @@ export default function AdminDashboard() {
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">WhatsApp</label>
                                         <input
                                             type="text"
-                                            className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all ${(session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo') ? 'bg-slate-50' : ''}`}
+                                            className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50' : ''}`}
                                             value={selectedLeadForDetail.contact_info.phone}
-                                            readOnly={session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo'}
+                                            readOnly={!canEditQuote(selectedLeadForDetail)}
                                             onChange={e => setSelectedLeadForDetail({
                                                 ...selectedLeadForDetail,
                                                 contact_info: { ...selectedLeadForDetail.contact_info, phone: e.target.value }
@@ -2117,10 +2129,10 @@ export default function AdminDashboard() {
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Correo Electrónico</label>
                                         <input
                                             type="email"
-                                            className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all ${(session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo') ? 'bg-slate-50' : ''}`}
+                                            className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50' : ''}`}
                                             value={selectedLeadForDetail.contact_info.email || ''}
                                             placeholder="No proporcionado"
-                                            readOnly={session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo'}
+                                            readOnly={!canEditQuote(selectedLeadForDetail)}
                                             onChange={e => setSelectedLeadForDetail({
                                                 ...selectedLeadForDetail,
                                                 contact_info: { ...selectedLeadForDetail.contact_info, email: e.target.value }
@@ -2131,9 +2143,9 @@ export default function AdminDashboard() {
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Fecha de Nacimiento</label>
                                         <input
                                             type="date"
-                                            className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 ${(session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo') ? 'bg-slate-50' : ''}`}
+                                            className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50' : ''}`}
                                             value={selectedLeadForDetail.fecha_nacimiento || ''}
-                                            readOnly={session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo'}
+                                            readOnly={!canEditQuote(selectedLeadForDetail)}
                                             onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, fecha_nacimiento: e.target.value })}
                                         />
                                     </div>
@@ -2141,9 +2153,9 @@ export default function AdminDashboard() {
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Dirección de Obra / Proyecto</label>
                                         <input
                                             type="text"
-                                            className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all ${(session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo') ? 'bg-slate-50' : ''}`}
+                                            className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50' : ''}`}
                                             value={selectedLeadForDetail.address}
-                                            readOnly={session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo'}
+                                            readOnly={!canEditQuote(selectedLeadForDetail)}
                                             onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, address: e.target.value })}
                                         />
                                     </div>
@@ -2151,9 +2163,9 @@ export default function AdminDashboard() {
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ciudad</label>
                                         <input
                                             type="text"
-                                            className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all ${(session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo') ? 'bg-slate-50' : ''}`}
+                                            className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50' : ''}`}
                                             value={selectedLeadForDetail.ciudad}
-                                            readOnly={session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo'}
+                                            readOnly={!canEditQuote(selectedLeadForDetail)}
                                             onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, ciudad: e.target.value })}
                                         />
                                     </div>
@@ -2161,9 +2173,9 @@ export default function AdminDashboard() {
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Estado</label>
                                         <input
                                             type="text"
-                                            className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all ${(session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo') ? 'bg-slate-50' : ''}`}
+                                            className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50' : ''}`}
                                             value={selectedLeadForDetail.estado}
-                                            readOnly={session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo'}
+                                            readOnly={!canEditQuote(selectedLeadForDetail)}
                                             onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, estado: e.target.value })}
                                         />
                                     </div>
@@ -2171,16 +2183,16 @@ export default function AdminDashboard() {
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Código Postal</label>
                                         <input
                                             type="text"
-                                            className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono ${(session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo') ? 'bg-slate-50' : ''}`}
+                                            className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50' : ''}`}
                                             value={selectedLeadForDetail.postal_code || ''}
                                             placeholder="CP"
                                             maxLength={5}
-                                            readOnly={session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo'}
+                                            readOnly={!canEditQuote(selectedLeadForDetail)}
                                             onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, postal_code: e.target.value.replace(/\D/g, '').slice(0, 5) })}
                                         />
                                     </div>
                                     <div className="space-y-1 flex flex-col justify-end pb-1 ml-1">
-                                        <label className={`flex items-center gap-3 group ${(session.role === 'admin' || (session.role === 'editor' && selectedLeadForDetail.status === 'Nuevo')) ? 'cursor-pointer' : 'cursor-default opacity-60'}`}>
+                                        <label className={`flex items-center gap-3 group ${canEditQuote(selectedLeadForDetail) ? 'cursor-pointer' : 'cursor-default opacity-60'}`}>
                                             <div className={`w-12 h-6 rounded-full transition-all relative ${selectedLeadForDetail.factura ? 'bg-primary' : 'bg-slate-200'}`}>
                                                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${selectedLeadForDetail.factura ? 'left-7' : 'left-1'}`} />
                                             </div>
@@ -2188,7 +2200,7 @@ export default function AdminDashboard() {
                                                 type="checkbox"
                                                 className="hidden"
                                                 checked={selectedLeadForDetail.factura || false}
-                                                disabled={session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo'}
+                                                disabled={!canEditQuote(selectedLeadForDetail)}
                                                 onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, factura: e.target.checked })}
                                             />
                                             <span className={`text-sm font-black text-secondary uppercase tracking-tight transition-colors ${(session.role === 'admin' || (session.role === 'editor' && selectedLeadForDetail.status === 'Nuevo')) ? 'group-hover:text-primary' : ''}`}>¿Requiere Factura? (IVA 16%)</span>
@@ -2208,24 +2220,24 @@ export default function AdminDashboard() {
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">ÁREA VERIFICADA (m²)</label>
                                             <input
                                                 type="number"
-                                                className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 ${(session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo') ? 'bg-slate-50' : ''}`}
+                                                className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50' : ''}`}
                                                 value={selectedLeadForDetail.area}
-                                                readOnly={session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo'}
+                                                readOnly={!canEditQuote(selectedLeadForDetail)}
                                                 onChange={e => updateLeadWithRecalculation({ area: Number(e.target.value) })}
                                             />
                                         </div>
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">TIPO DE PRECIO PARA REPORTE</label>
-                                            <div className={`flex bg-white p-1 rounded-xl border border-slate-200 ${(session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo') ? 'bg-slate-50 opacity-60' : ''}`}>
+                                            <div className={`flex bg-white p-1 rounded-xl border border-slate-200 ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 opacity-60' : ''}`}>
                                                 <button
                                                     type="button"
-                                                    disabled={session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo'}
+                                                    disabled={!canEditQuote(selectedLeadForDetail)}
                                                     onClick={() => updateLeadWithRecalculation({ pricing_type: 'contado' })}
                                                     className={`flex-1 py-2 text-[10px] font-black uppercase rounded-lg transition-all ${(!selectedLeadForDetail.pricing_type || selectedLeadForDetail.pricing_type === 'contado') ? 'bg-secondary text-white shadow-md' : 'text-slate-400'}`}
                                                 >Contado</button>
                                                 <button
                                                     type="button"
-                                                    disabled={session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo'}
+                                                    disabled={!canEditQuote(selectedLeadForDetail)}
                                                     onClick={() => updateLeadWithRecalculation({ pricing_type: 'lista' })}
                                                     className={`flex-1 py-2 text-[10px] font-black uppercase rounded-lg transition-all ${selectedLeadForDetail.pricing_type === 'lista' ? 'bg-primary text-white shadow-md' : 'text-slate-400'}`}
                                                 >Lista/Promoción</button>
@@ -2260,9 +2272,9 @@ export default function AdminDashboard() {
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Estatus</label>
                                             <select
-                                                className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none ${(session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo') ? 'bg-slate-50 opacity-60' : ''}`}
+                                                className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 opacity-60' : ''}`}
                                                 value={selectedLeadForDetail.status}
-                                                disabled={session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo'}
+                                                disabled={!canEditQuote(selectedLeadForDetail)}
                                                 onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, status: e.target.value })}
                                             >
                                                 {['Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado'].map(s => <option key={s} value={s}>{s}</option>)}
@@ -2271,9 +2283,9 @@ export default function AdminDashboard() {
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">SISTEMA FINAL COMPRADO</label>
                                             <select
-                                                className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-primary outline-none ${(session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo') ? 'bg-slate-50 opacity-60' : ''}`}
+                                                className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-primary outline-none ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 opacity-60' : ''}`}
                                                 value={selectedLeadForDetail.solution_id}
-                                                disabled={session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo'}
+                                                disabled={!canEditQuote(selectedLeadForDetail)}
                                                 onChange={e => updateLeadWithRecalculation({ solution_id: e.target.value })}
                                             >
                                                 {products.filter(p => p.ciudad === selectedLeadForDetail.ciudad || p.ciudad === 'Mérida').map(p => (
@@ -2290,9 +2302,9 @@ export default function AdminDashboard() {
                                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
                                                 <input
                                                     type="number"
-                                                    className={`w-full pl-8 pr-4 py-3 bg-white border border-orange-200 rounded-xl text-sm font-bold text-orange-600 outline-none focus:ring-4 focus:ring-orange-100 ${(session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo') ? 'bg-slate-50 opacity-60' : ''}`}
+                                                    className={`w-full pl-8 pr-4 py-3 bg-white border border-orange-200 rounded-xl text-sm font-bold text-orange-600 outline-none focus:ring-4 focus:ring-orange-100 ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 opacity-60' : ''}`}
                                                     value={selectedLeadForDetail.costo_logistico || 0}
-                                                    readOnly={session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo'}
+                                                    readOnly={!canEditQuote(selectedLeadForDetail)}
                                                     onChange={e => updateLeadWithRecalculation({ costo_logistico: Number(e.target.value) })}
                                                 />
                                             </div>
@@ -2323,10 +2335,10 @@ export default function AdminDashboard() {
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Notas y Comentarios Internos</label>
                                     <textarea
-                                        className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium min-h-[100px] outline-none focus:ring-4 focus:ring-primary/10 ${(session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo') ? 'bg-slate-50' : ''}`}
+                                        className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium min-h-[100px] outline-none focus:ring-4 focus:ring-primary/10 ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50' : ''}`}
                                         placeholder="Escribe notas sobre el cliente o el proceso de venta..."
                                         value={selectedLeadForDetail.notas || ''}
-                                        readOnly={session.role !== 'admin' && selectedLeadForDetail.status !== 'Nuevo'}
+                                        readOnly={!canEditQuote(selectedLeadForDetail)}
                                         onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, notas: e.target.value })}
                                     />
                                 </div>
@@ -2341,7 +2353,7 @@ export default function AdminDashboard() {
                                         <FileText className="w-4 h-4" />
                                         Vista Previa Cotización
                                     </button>
-                                    {(session.role === 'admin' || (session.role === 'editor' && selectedLeadForDetail.status === 'Nuevo')) && (
+                                    {canEditQuote(selectedLeadForDetail) && (
                                         <button
                                             disabled={isSavingDetail}
                                             className="bg-secondary text-white py-3.5 rounded-xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg flex items-center justify-center gap-2 active:scale-[0.98] text-[10px]"
@@ -2351,11 +2363,11 @@ export default function AdminDashboard() {
                                             Actualizar Ficha
                                         </button>
                                     )}
-                                    {session.role === 'editor' && selectedLeadForDetail.status !== 'Nuevo' && (
+                                    {!canEditQuote(selectedLeadForDetail) && (
                                         <div className="col-span-1 bg-slate-50 border border-slate-100 rounded-2xl p-4 flex flex-col items-center justify-center text-center space-y-2">
                                             <Shield className="w-5 h-5 text-slate-300" />
                                             <p className="italic text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                * Cotización Bloqueada. <br />Solo Administradores pueden modificar datos después de imprimir.
+                                                * Cotización Bloqueada. <br />No se permiten cambios una vez que el lead está Cerrado.
                                             </p>
                                         </div>
                                     )}
