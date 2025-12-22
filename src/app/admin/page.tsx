@@ -2052,7 +2052,7 @@ export default function AdminDashboard() {
                                         {/* Product Section */}
                                         <div className="mb-10">
                                             <div className="bg-slate-900 text-white p-5 rounded-t-xl">
-                                                <div className="grid grid-cols-4 text-[9px] font-black uppercase tracking-widest opacity-60">
+                                                <div className="grid grid-cols-4 text-[9px] font-black uppercase tracking-widest">
                                                     <div className="col-span-2">Concepto / Sistema Aplicado</div>
                                                     <div className="text-center">Área</div>
                                                     <div className="text-right">Cantidades</div>
@@ -2092,26 +2092,29 @@ export default function AdminDashboard() {
                                             </div>
 
                                             {/* Totals Bar */}
-                                            <div className="bg-slate-50 p-6 flex justify-end">
-                                                <div className="space-y-3 w-full max-w-xs">
-                                                    <div className="flex justify-between items-center text-slate-400 font-bold text-[10px] uppercase tracking-widest">
-                                                        <span>Subtotal</span>
-                                                        <span>${subtotal.toLocaleString()}</span>
-                                                    </div>
-                                                    {selectedLeadForDetail.factura && (
-                                                        <div className="flex justify-between items-center font-bold text-[10px] uppercase tracking-widest text-blue-500">
-                                                            <span>IVA (16%)</span>
-                                                            <span>${iva.toLocaleString()}</span>
+                                            <div className="bg-slate-50 p-6">
+                                                <div className="grid grid-cols-4 items-start w-full">
+                                                    <div className="col-span-2" />
+                                                    <div className="col-span-2 space-y-3">
+                                                        <div className="flex justify-between items-center text-slate-400 font-bold text-[10px] uppercase tracking-widest pl-12">
+                                                            <span>Subtotal</span>
+                                                            <span className="font-black text-secondary">${subtotal.toLocaleString()}</span>
                                                         </div>
-                                                    )}
-                                                    <div className="h-px bg-slate-200" />
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-xs font-black text-secondary uppercase tracking-widest">Total Final</span>
-                                                        <span className="text-2xl font-black text-primary">${grandTotal.toLocaleString()}</span>
+                                                        {selectedLeadForDetail.factura && (
+                                                            <div className="flex justify-between items-center font-bold text-[10px] uppercase tracking-widest text-blue-500 pl-12">
+                                                                <span>IVA (16%)</span>
+                                                                <span className="font-black">${iva.toLocaleString()}</span>
+                                                            </div>
+                                                        )}
+                                                        <div className="h-px bg-slate-200 ml-12" />
+                                                        <div className="flex justify-between items-center pl-12">
+                                                            <span className="text-xs font-black text-secondary uppercase tracking-widest">Total Final</span>
+                                                            <span className="text-2xl font-black text-primary">${grandTotal.toLocaleString()}</span>
+                                                        </div>
+                                                        {selectedLeadForDetail.pricing_type === 'lista' && (
+                                                            <p className="text-[7.5px] font-extrabold text-slate-400 text-right uppercase leading-tight">* Sujeto a 12 Meses Sin Intereses con tarjetas participantes.</p>
+                                                        )}
                                                     </div>
-                                                    {selectedLeadForDetail.pricing_type === 'lista' && (
-                                                        <p className="text-[7.5px] font-extrabold text-slate-400 text-right uppercase leading-tight">* Sujeto a 12 Meses Sin Intereses con tarjetas participantes.</p>
-                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -2131,7 +2134,7 @@ export default function AdminDashboard() {
                                                     </p>
                                                 </div>
                                             </div>
-                                            <div className="text-center pt-4">
+                                            <div className="text-right pt-4">
                                                 <div className="h-px bg-slate-200 mb-3" />
                                                 <p className="text-[9px] font-black uppercase tracking-widest text-secondary">Thermo House México</p>
                                                 {(() => {
