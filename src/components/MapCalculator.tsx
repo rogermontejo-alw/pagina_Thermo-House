@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Script from 'next/script';
-import { Search, Map as MapIcon, RotateCcw, Crosshair, PencilRuler, Keyboard } from 'lucide-react';
+import { Search, Map as MapIcon, RotateCcw, Crosshair, PencilRuler, Keyboard, ArrowRight } from 'lucide-react';
 import { MEXICAN_CITIES_BY_STATE } from '@/lib/mexico-data';
 
 import { getAppConfig } from '@/app/actions/get-config';
@@ -552,6 +552,25 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                         )}
                     </div>
                 </div>
+
+                {/* Continue Button for Manual Mode */}
+                {area > 0 && manualLocation.address && manualLocation.state && manualLocation.city && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="pt-4 flex justify-center"
+                    >
+                        <button
+                            onClick={() => {
+                                document.getElementById('roof-type-selector')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }}
+                            className="bg-secondary dark:bg-primary text-white font-black px-12 py-4 rounded-2xl shadow-xl hover:scale-105 transition-all uppercase tracking-widest flex items-center gap-2 group"
+                        >
+                            Ver Opciones de Techo
+                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </button>
+                    </motion.div>
+                )}
             </div>
 
             {/* Map Mode */}

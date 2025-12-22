@@ -35,10 +35,17 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
             isFirstRender.current = false;
             return;
         }
-        if (containerRef.current) {
+        if (currentStep === 'selection') {
+            // If area is set but no roof type, scroll specifically to roof type selector
+            if (initialArea > 0 && !roofType) {
+                setTimeout(() => {
+                    document.getElementById('roof-type-selector')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 500);
+            }
+        } else if (containerRef.current) {
             containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-    }, [currentStep]);
+    }, [currentStep, initialArea, roofType]);
 
     const fallbackSolutions: Solution[] = [
         { id: '1', internal_id: 'th-fix', title: 'TH FIX', category: 'concrete', precio_contado_m2: 79, precio_msi_m2: 94, grosor: '1000 micras', beneficio_principal: 'Sellado básico y reflectividad', detalle_costo_beneficio: 'Sistema de mantenimiento preventivo. Protege contra filtraciones leves.', orden: 1 },
@@ -224,18 +231,16 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                             className="overflow-hidden"
                                         >
                                             <div className="p-6 md:p-8 rounded-2xl border border-border dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 mb-8 transition-colors duration-500">
-                                                <h3 className="text-lg font-bold text-secondary dark:text-white mb-6 flex items-center gap-2">
+                                                <h3 id="roof-type-selector" className="text-lg font-bold text-secondary dark:text-white mb-6 flex items-center gap-2 scroll-mt-32">
                                                     <div className="w-2 h-6 bg-primary rounded-full" />
                                                     PRÓXIMO PASO: TIPO DE TECHO
                                                 </h3>
                                                 <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-6">
                                                     <button onClick={() => {
                                                         setRoofType('concrete');
-                                                        if (window.innerWidth < 768) {
-                                                            setTimeout(() => {
-                                                                document.getElementById('systems-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                                            }, 100);
-                                                        }
+                                                        setTimeout(() => {
+                                                            document.getElementById('systems-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                        }, 100);
                                                     }} className={`relative p-4 md:p-8 rounded-2xl md:rounded-[2rem] border-2 transition-all flex flex-col items-center gap-3 md:gap-5 group overflow-hidden ${roofType === 'concrete' ? 'border-primary bg-primary/5 dark:bg-primary/10 shadow-2xl scale-[1.02]' : 'border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-800 hover:shadow-xl'}`}>
                                                         {roofType === 'concrete' && <div className="absolute top-0 right-0 w-16 h-16 md:w-24 md:h-24 bg-primary/10 rounded-bl-full -mr-6 -mt-6 md:-mr-10 md:-mt-10" />}
                                                         <div className={`w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl flex items-center justify-center shadow-lg transition-all duration-500 ${roofType === 'concrete' ? 'bg-primary text-white rotate-3' : 'bg-slate-50 dark:bg-slate-900 text-slate-400 group-hover:bg-slate-100 dark:group-hover:bg-slate-800 group-hover:rotate-3'}`}>
@@ -251,11 +256,9 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                                     </button>
                                                     <button onClick={() => {
                                                         setRoofType('sheet');
-                                                        if (window.innerWidth < 768) {
-                                                            setTimeout(() => {
-                                                                document.getElementById('systems-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                                            }, 100);
-                                                        }
+                                                        setTimeout(() => {
+                                                            document.getElementById('systems-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                        }, 100);
                                                     }} className={`relative p-4 md:p-8 rounded-2xl md:rounded-[2rem] border-2 transition-all flex flex-col items-center gap-3 md:gap-5 group overflow-hidden ${roofType === 'sheet' ? 'border-primary bg-primary/5 dark:bg-primary/10 shadow-2xl scale-[1.02]' : 'border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-800 hover:shadow-xl'}`}>
                                                         {roofType === 'sheet' && <div className="absolute top-0 right-0 w-16 h-16 md:w-24 md:h-24 bg-primary/10 rounded-bl-full -mr-6 -mt-6 md:-mr-10 md:-mt-10" />}
                                                         <div className={`w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl flex items-center justify-center shadow-lg transition-all duration-500 ${roofType === 'sheet' ? 'bg-primary text-white -rotate-3' : 'bg-slate-50 dark:bg-slate-900 text-slate-400 group-hover:bg-slate-100 dark:group-hover:bg-slate-800 group-hover:-rotate-3'}`}>
@@ -308,9 +311,11 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
 
                                                 <div className="space-y-1 mb-4 md:mb-3">
                                                     <h4 className="text-xl md:text-2xl font-black text-secondary dark:text-white leading-none uppercase tracking-tighter">{sol.title}</h4>
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex flex-col gap-1">
                                                         <p className="text-[10px] text-primary font-bold uppercase tracking-widest opacity-70">SISTEMA {isPremium ? 'PROFESIONAL' : 'VITAL'}</p>
-                                                        <span className="text-[10px] bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-200 px-2 py-0.5 rounded font-black">${sol.precio_contado_m2} /m²</span>
+                                                        <span className="text-sm md:text-base bg-primary/10 dark:bg-slate-900 text-primary dark:text-primary px-3 py-1 rounded-lg font-black w-fit border border-primary/20">
+                                                            ${sol.precio_contado_m2} <span className="text-[10px] opacity-70">/m² en {city || 'Mérida'}</span>
+                                                        </span>
                                                     </div>
                                                 </div>
 
@@ -431,7 +436,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                         <label className="text-[10px] font-bold text-slate-500 dark:text-slate-200 uppercase ml-1">Correo Electrónico (Opcional)</label>
                                         <input type="email" name="email" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-secondary dark:text-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="ejemplo@correo.com" />
                                     </div>
-                                    {!postalCode && (
+                                    {(!postalCode || postalCode.length < 5) && (
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-slate-500 dark:text-slate-200 uppercase ml-1">Código Postal</label>
                                             <input
@@ -474,8 +479,14 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                             <h3 className="text-2xl md:text-5xl font-black text-secondary dark:text-white tracking-tighter">¡Todo Listo, {leadName.split(' ')[0] || 'Cliente'}!</h3>
                             <p className="text-slate-500 dark:text-slate-200 text-xs md:text-xl mt-2">Tu proyecto de <strong>{initialArea}m²</strong> en <strong>{city || address || 'tu ubicación'}</strong></p>
 
-                            <div className="mt-8 mb-4">
-                                <p className="text-secondary dark:text-slate-300 font-bold text-sm md:text-base px-6">Selecciona un sistema y te enviaremos la cotización detallada:</p>
+                            <div className="mt-8 mb-4 space-y-4">
+                                <div className="bg-primary/10 dark:bg-primary/5 border-2 border-primary/30 rounded-2xl p-6 md:p-8 animate-pulse shadow-lg">
+                                    <h4 className="text-xl md:text-3xl font-black text-primary uppercase tracking-tighter mb-2">¡ELIGE TU FORMA DE PAGO!</h4>
+                                    <p className="text-secondary dark:text-slate-300 font-bold text-xs md:text-lg">
+                                        Selecciona la opción que más te convenga y recibe tu presupuesto oficial al instante.
+                                    </p>
+                                </div>
+                                <p className="text-slate-500 dark:text-slate-300 font-bold text-[10px] md:text-sm uppercase tracking-widest">Desplaza hacia abajo para ver las opciones:</p>
                             </div>
 
                             {isOutOfZone && (
@@ -599,24 +610,31 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                 <div className="flex items-center gap-4 uppercase tracking-widest"><Loader2 className="w-4 h-4" /><span>Precios sujetos a visita técnica de validación. Válido por 7 días.</span></div>
                                 <div className="flex items-center gap-4 text-primary opacity-80 italic"><span>*12 MSI disponible con tarjetas de crédito Visa y Mastercard de bancos mexicanos. No aplica para American Express.</span></div>
                             </div>
-                            <button onClick={() => setCurrentStep('selection')} className="group flex items-center gap-2 text-secondary dark:text-white font-bold hover:text-primary transition-colors py-2 px-4 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 uppercase tracking-widest"><RotateCcw className="w-4 h-4" /> Volver a los Sistemas</button>
+                            <button onClick={() => {
+                                setCurrentStep('selection');
+                                setTimeout(() => {
+                                    document.getElementById('systems-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }, 100);
+                            }} className="group flex items-center gap-2 text-secondary dark:text-white font-bold hover:text-primary transition-colors py-2 px-4 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 uppercase tracking-widest"><RotateCcw className="w-4 h-4" /> Cambiar Sistema</button>
                         </div>
                     </motion.div>
                 )
                 }
             </AnimatePresence >
 
-            {showSuccessModal && (
-                <div className="fixed inset-0 bg-secondary/90 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
-                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[3rem] overflow-hidden shadow-2xl p-10 md:p-14 text-center space-y-6 border border-slate-100 dark:border-slate-800">
-                        <div className="w-20 h-20 bg-green-50 dark:bg-green-900/30 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-green-100 dark:border-green-800/50"><CheckCircle2 className="w-10 h-10" /></div>
-                        <h3 className="text-3xl md:text-4xl font-black text-secondary dark:text-white uppercase tracking-tighter leading-none">¡Gracias por <br /> <span className="text-primary">Considerarnos!</span></h3>
-                        <p className="text-slate-500 dark:text-slate-200 font-medium text-base md:text-lg">Tu cotización ha sido registrada con éxito.</p>
-                        <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700"><p className="text-slate-600 dark:text-slate-300 font-bold text-sm">En breve uno de nuestros especialistas te enviará la información detallada al medio de contacto que nos proporcionaste.</p></div>
-                        <button onClick={() => { window.location.href = '/'; }} className="w-full bg-secondary dark:bg-primary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-primary/90 transition-all">Entendido</button>
-                    </motion.div>
-                </div>
-            )}
+            {
+                showSuccessModal && (
+                    <div className="fixed inset-0 bg-secondary/90 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[3rem] overflow-hidden shadow-2xl p-10 md:p-14 text-center space-y-6 border border-slate-100 dark:border-slate-800">
+                            <div className="w-20 h-20 bg-green-50 dark:bg-green-900/30 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-green-100 dark:border-green-800/50"><CheckCircle2 className="w-10 h-10" /></div>
+                            <h3 className="text-3xl md:text-4xl font-black text-secondary dark:text-white uppercase tracking-tighter leading-none">¡Gracias por <br /> <span className="text-primary">Considerarnos!</span></h3>
+                            <p className="text-slate-500 dark:text-slate-200 font-medium text-base md:text-lg">Tu cotización ha sido registrada con éxito.</p>
+                            <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700"><p className="text-slate-600 dark:text-slate-300 font-bold text-sm">En breve uno de nuestros especialistas te enviará la información detallada al medio de contacto que nos proporcionaste.</p></div>
+                            <button onClick={() => { window.location.href = '/'; }} className="w-full bg-secondary dark:bg-primary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-primary/90 transition-all">Entendido</button>
+                        </motion.div>
+                    </div>
+                )
+            }
         </div >
     );
 }
