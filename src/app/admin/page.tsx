@@ -1971,8 +1971,8 @@ export default function AdminDashboard() {
             {/* Quote Preview Modal */}
             {
                 showQuotePreview && selectedLeadForDetail && (
-                    <div className="fixed inset-0 bg-secondary/95 z-[150] overflow-y-auto p-0 md:p-12 flex items-start justify-center backdrop-blur-md">
-                        <div id="printable-quote" className="w-full max-w-4xl bg-white shadow-2xl relative">
+                    <div className="fixed inset-0 bg-secondary/95 z-[150] overflow-y-auto p-0 md:p-12 flex items-start justify-center backdrop-blur-md quote-preview-overlay">
+                        <div id="printable-quote-modal-content" className="w-full max-w-4xl bg-white shadow-2xl relative">
                             {/* Browser Controls */}
                             <div className="sticky top-0 bg-slate-900 text-white p-4 flex items-center justify-between z-10 print:hidden">
                                 <div className="flex items-center gap-4">
@@ -1990,7 +1990,7 @@ export default function AdminDashboard() {
                                         className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
                                         title="Imprimir reporte o exportar a PDF para enviar al cliente"
                                     >
-                                        <Printer className="w-4 h-4" /> Imprimir / PDF
+                                        <Printer className="w-4 h-4" /> GENERAR PDF
                                     </button>
                                     <button
                                         onClick={() => setShowQuotePreview(false)}
@@ -2011,80 +2011,80 @@ export default function AdminDashboard() {
                                 const grandTotal = subtotal + iva;
 
                                 return (
-                                    <div id="printable-quote" className="bg-white p-12 md:p-20 text-slate-800 font-sans print:p-0">
+                                    <div id="printable-quote" className="bg-white p-8 md:p-16 text-slate-800 font-sans print:p-0 print:m-0">
                                         {/* Header Logo */}
-                                        <div className="flex flex-row justify-between items-start mb-16 border-b-4 border-primary pb-8">
+                                        <div className="flex flex-row justify-between items-start mb-10 border-b-4 border-primary pb-6">
                                             <div className="w-2/3">
-                                                <h2 className="text-4xl font-black text-secondary tracking-tighter mb-1">THERMO HOUSE</h2>
+                                                <h2 className="text-3xl font-black text-secondary tracking-tighter mb-0.5">THERMO HOUSE</h2>
                                                 <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Aislamiento Térmico & Acústico</p>
                                             </div>
                                             <div className="w-1/3 text-right">
-                                                <div className="text-xs font-black uppercase tracking-widest text-slate-400">Cotización Automática</div>
+                                                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">Cotización Automática</div>
                                                 <div className="text-sm font-black text-secondary">#{selectedLeadForDetail.id.slice(0, 8).toUpperCase()}</div>
-                                                <div className="text-[10px] font-bold text-slate-400 mt-1 uppercase">Vence en: 7 días hábiles</div>
+                                                <div className="text-[9px] font-bold text-slate-400 mt-0.5 uppercase">Vence en: 7 días hábiles</div>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-12 mb-16" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+                                        <div className="grid grid-cols-2 gap-8 mb-10" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
                                             <div>
-                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-4">Información del Cliente</h4>
-                                                <div className="space-y-2">
-                                                    <p className="text-xl font-black text-secondary uppercase leading-none">{selectedLeadForDetail.contact_info.name}</p>
-                                                    <p className="text-sm font-bold text-slate-600 flex items-center gap-2">
-                                                        <Phone className="w-3.5 h-3.5" /> +52 {selectedLeadForDetail.contact_info.phone}
+                                                <h4 className="text-[9px] font-black uppercase tracking-widest text-primary mb-3">Información del Cliente</h4>
+                                                <div className="space-y-1.5">
+                                                    <p className="text-lg font-black text-secondary uppercase leading-none">{selectedLeadForDetail.contact_info.name}</p>
+                                                    <p className="text-xs font-bold text-slate-600 flex items-center gap-2">
+                                                        <Phone className="w-3 h-3" /> +52 {selectedLeadForDetail.contact_info.phone}
                                                     </p>
-                                                    <p className="text-[11px] font-medium text-slate-400 flex items-center gap-2 mt-2">
-                                                        <MapPin className="w-3.5 h-3.5 text-primary" />
+                                                    <p className="text-[10px] font-medium text-slate-400 flex items-center gap-2 mt-1.5">
+                                                        <MapPin className="w-3 h-3 text-primary" />
                                                         {selectedLeadForDetail.address}, {selectedLeadForDetail.ciudad}, {selectedLeadForDetail.estado}
                                                     </p>
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-4">Detalles del Presupuesto</h4>
+                                                <h4 className="text-[9px] font-black uppercase tracking-widest text-primary mb-3">Detalles del Presupuesto</h4>
                                                 <div className="space-y-1">
-                                                    <p className="text-sm font-bold text-slate-600">Fecha: {new Date(selectedLeadForDetail.created_at).toLocaleString('es-MX')}</p>
-                                                    <p className="text-sm font-bold text-slate-600">Vigente hasta: {new Date(new Date(selectedLeadForDetail.created_at).getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
-                                                    <p className="text-sm font-black text-secondary mt-4 uppercase">Área Verificada: {selectedLeadForDetail.area} m²</p>
+                                                    <p className="text-xs font-bold text-slate-600">Fecha: {new Date(selectedLeadForDetail.created_at).toLocaleString('es-MX')}</p>
+                                                    <p className="text-xs font-bold text-slate-600">Vigente hasta: {new Date(new Date(selectedLeadForDetail.created_at).getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
+                                                    <p className="text-xs font-black text-secondary mt-3 uppercase tracking-tight">Área Verificada: {selectedLeadForDetail.area} m²</p>
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Product Section */}
-                                        <div className="mb-16">
-                                            <div className="bg-slate-900 text-white p-6 rounded-t-2xl">
-                                                <div className="grid grid-cols-4 text-[10px] font-black uppercase tracking-widest opacity-60">
+                                        <div className="mb-10">
+                                            <div className="bg-slate-900 text-white p-5 rounded-t-xl">
+                                                <div className="grid grid-cols-4 text-[9px] font-black uppercase tracking-widest opacity-60">
                                                     <div className="col-span-2">Concepto / Sistema Aplicado</div>
                                                     <div className="text-center">Área</div>
                                                     <div className="text-right">Cantidades</div>
                                                 </div>
                                             </div>
-                                            <div className="border-x border-b border-slate-100 p-8 space-y-8">
+                                            <div className="border-x border-b border-slate-100 p-6 space-y-6">
                                                 <div className="grid grid-cols-4 items-start">
                                                     <div className="col-span-2">
-                                                        <h5 className="text-lg font-black text-secondary uppercase mb-2">
+                                                        <h5 className="text-base font-black text-secondary uppercase mb-1.5">
                                                             {products.find(p => p.id === selectedLeadForDetail.solution_id)?.title || 'Sistema Thermo House'}
-                                                            <span className="ml-2 text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full border border-slate-200 align-middle">
+                                                            <span className="ml-2 text-[8px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full border border-slate-200 align-middle">
                                                                 P. {selectedLeadForDetail.pricing_type === 'lista' ? 'LISTA' : 'CONTADO'}
                                                             </span>
                                                         </h5>
-                                                        <p className="text-xs text-slate-500 font-medium leading-relaxed pr-8">
+                                                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed pr-8">
                                                             Sistema de aislamiento térmico de alta densidad. Incluye preparación de superficie, sellado de grietas, aplicación de base reflectante y capa protectora final.
                                                         </p>
                                                     </div>
-                                                    <div className="text-center text-sm font-black text-slate-600">{selectedLeadForDetail.area} m²</div>
-                                                    <div className="text-right text-lg font-black text-secondary">
+                                                    <div className="text-center text-xs font-black text-slate-600">{selectedLeadForDetail.area} m²</div>
+                                                    <div className="text-right text-base font-black text-secondary">
                                                         ${basePrice.toLocaleString()}
                                                     </div>
                                                 </div>
 
                                                 {logistics > 0 && (
-                                                    <div className="grid grid-cols-4 items-center bg-orange-50/50 p-4 rounded-xl border border-orange-100">
+                                                    <div className="grid grid-cols-4 items-center bg-orange-50/50 p-3 rounded-lg border border-orange-100">
                                                         <div className="col-span-2">
-                                                            <h6 className="text-[10px] font-black text-orange-800 uppercase tracking-widest">Cargos por Logística Foránea</h6>
-                                                            <p className="text-[9px] font-bold text-orange-600/70">Traslado de equipo y personal a zona {selectedLeadForDetail.ciudad}</p>
+                                                            <h6 className="text-[9px] font-black text-orange-800 uppercase tracking-widest">Cargos por Logística Foránea</h6>
+                                                            <p className="text-[8px] font-bold text-orange-600/70">Traslado de equipo y personal a zona {selectedLeadForDetail.ciudad}</p>
                                                         </div>
-                                                        <div className="text-center">--</div>
-                                                        <div className="text-right text-sm font-black text-orange-800">
+                                                        <div className="text-center text-xs">--</div>
+                                                        <div className="text-right text-xs font-black text-orange-800">
                                                             + ${logistics.toLocaleString()}
                                                         </div>
                                                     </div>
@@ -2092,70 +2092,68 @@ export default function AdminDashboard() {
                                             </div>
 
                                             {/* Totals Bar */}
-                                            <div className="bg-slate-50 p-8 flex justify-end">
-                                                <div className="space-y-4 w-full max-w-xs">
-                                                    <div className="flex justify-between items-center text-slate-400 font-bold text-xs uppercase tracking-widest">
+                                            <div className="bg-slate-50 p-6 flex justify-end">
+                                                <div className="space-y-3 w-full max-w-xs">
+                                                    <div className="flex justify-between items-center text-slate-400 font-bold text-[10px] uppercase tracking-widest">
                                                         <span>Subtotal</span>
                                                         <span>${subtotal.toLocaleString()}</span>
                                                     </div>
                                                     {selectedLeadForDetail.factura && (
-                                                        <div className="flex justify-between items-center font-bold text-xs uppercase tracking-widest text-blue-500">
+                                                        <div className="flex justify-between items-center font-bold text-[10px] uppercase tracking-widest text-blue-500">
                                                             <span>IVA (16%)</span>
                                                             <span>${iva.toLocaleString()}</span>
                                                         </div>
                                                     )}
                                                     <div className="h-px bg-slate-200" />
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-sm font-black text-secondary uppercase tracking-widest">Total Final</span>
-                                                        <span className="text-3xl font-black text-primary">${grandTotal.toLocaleString()}</span>
+                                                        <span className="text-xs font-black text-secondary uppercase tracking-widest">Total Final</span>
+                                                        <span className="text-2xl font-black text-primary">${grandTotal.toLocaleString()}</span>
                                                     </div>
                                                     {selectedLeadForDetail.pricing_type === 'lista' && (
-                                                        <p className="text-[8px] font-bold text-slate-400 text-right uppercase">Sujeto a financiamiento de 12 Meses Sin Intereses con tarjetas participantes.</p>
+                                                        <p className="text-[7.5px] font-extrabold text-slate-400 text-right uppercase leading-tight">* Sujeto a 12 Meses Sin Intereses con tarjetas participantes.</p>
                                                     )}
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Terms */}
-                                        <div className="grid grid-cols-2 gap-20">
-                                            <div className="space-y-4">
-                                                <h6 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Condiciones de Venta</h6>
-                                                <div className="space-y-2">
-                                                    <p className="text-[9px] font-bold text-slate-400 flex items-center gap-2 leading-tight">
-                                                        <CheckCircle2 className="w-3 h-3 text-primary flex-shrink-0" />
-                                                        Precios en Pesos Mexicanos. Sujetos a cambios después de la vigencia.
+                                        <div className="grid grid-cols-2 gap-10">
+                                            <div className="space-y-3">
+                                                <h6 className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Condiciones de Venta</h6>
+                                                <div className="space-y-1.5">
+                                                    <p className="text-[8px] font-bold text-slate-400 flex items-center gap-2 leading-tight">
+                                                        <CheckCircle2 className="w-2.5 h-2.5 text-primary flex-shrink-0" />
+                                                        Precios en Pesos Mexicanos. Válidos solo durante la vigencia indicada.
+                                                    </p>
+                                                    <p className="text-[8px] font-bold text-slate-400 flex items-center gap-2 leading-tight">
+                                                        <CheckCircle2 className="w-2.5 h-2.5 text-primary flex-shrink-0" />
+                                                        Garantía por escrito de 10 años en impermeabilización y aislamiento.
                                                     </p>
                                                 </div>
                                             </div>
-                                            <div className="text-center pt-8">
-                                                <div className="h-px bg-slate-200 mb-4" />
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-secondary">Thermo House México</p>
+                                            <div className="text-center pt-4">
+                                                <div className="h-px bg-slate-200 mb-3" />
+                                                <p className="text-[9px] font-black uppercase tracking-widest text-secondary">Thermo House México</p>
                                                 {(() => {
                                                     const advisor = selectedLeadForDetail.advisor || session;
                                                     const advisorName = advisor?.name || 'Asesor';
                                                     const advisorLastName = advisor?.apellido || '';
-                                                    const advisorPhone = advisor?.telefono || '999 448 6445'; // Sede Central Fallback
+                                                    const advisorPhone = advisor?.telefono || '999 448 6445';
                                                     const advisorEmail = advisor?.contacto_email || advisor?.email || 'ventas@thermohouse.mx';
 
                                                     return (
-                                                        <div className="mt-2 flex flex-col items-end text-right">
-                                                            <div className="bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 flex flex-col items-end">
-                                                                <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-0.5">Atendido por:</p>
-                                                                <p className="text-sm font-black text-secondary uppercase tracking-tight">
+                                                        <div className="mt-1.5 flex flex-col items-end text-right">
+                                                            <div className="bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100 flex flex-col items-end">
+                                                                <p className="text-[8px] font-black text-primary uppercase tracking-widest mb-0.5">Atendido por:</p>
+                                                                <p className="text-xs font-black text-secondary uppercase tracking-tight">
                                                                     {advisorName} {advisorLastName}
                                                                 </p>
                                                             </div>
-                                                            <div className="mt-2 flex gap-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                                            <div className="mt-1.5 flex gap-3 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
                                                                 {advisorPhone && (
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <Phone className="w-3 h-3 text-primary" />
+                                                                    <div className="flex items-center gap-1">
+                                                                        <Phone className="w-2.5 h-2.5 text-primary" />
                                                                         <span>{advisorPhone}</span>
-                                                                    </div>
-                                                                )}
-                                                                {advisorEmail && (
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <Mail className="w-3 h-3 text-primary" />
-                                                                        <span className="lowercase">{advisorEmail}</span>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -2477,56 +2475,75 @@ export default function AdminDashboard() {
                 @media print {
                     @page {
                         size: letter portrait;
-                        margin: 1cm;
+                        margin: 0;
                     }
 
-                    /* Force US Letter width on any device when printing */
-                    html, body {
-                        width: 215.9mm !important;
-                        height: 279.4mm !important;
+                    /* General Print Clean Up */
+                    body {
                         background: white !important;
-                        overflow: visible !important;
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
                     }
 
                     .admin-dashboard-layout, 
                     .admin-sidebar,
-                    .print\:hidden {
+                    .print\:hidden,
+                    .lead-modal-overlay {
                         display: none !important;
                     }
 
-                    .lead-modal-overlay {
+                    /* Essential: Make the quote preview overlay visible and full screen in print */
+                    .quote-preview-overlay {
+                        display: block !important;
                         position: absolute !important;
                         top: 0 !important;
                         left: 0 !important;
-                        width: 100% !important;
+                        width: 215.9mm !important;
+                        height: 279.4mm !important;
                         background: white !important;
-                        display: block !important;
-                        z-index: 9999 !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        z-index: 99999 !important;
+                        overflow: visible !important;
                     }
 
-                    .lead-modal-overlay > div {
-                        width: 100% !important;
+                    #printable-quote-modal-content {
+                        position: relative !important;
+                        width: 215.9mm !important;
+                        height: 279.4mm !important;
                         max-width: none !important;
                         margin: 0 !important;
                         padding: 0 !important;
-                        border: none !important;
                         box-shadow: none !important;
-                        border-radius: 0 !important;
-                    }
-
-                    /* Hide UI elements */
-                    .lead-modal-overlay > div > div:first-child,
-                    .lead-modal-overlay form > div:last-child {
-                        display: none !important;
+                        display: block !important;
+                        border: none !important;
                     }
 
                     #printable-quote {
-                        display: block !important;
-                        width: 100% !important;
-                        padding: 0 !important;
+                        width: 215.9mm !important;
+                        height: 279.4mm !important;
+                        padding: 1.5cm !important;
+                        margin: 0 !important;
+                        box-sizing: border-box !important;
+                        background: white !important;
+                        display: flex !important;
+                        flex-direction: column !important;
                     }
+
+                    /* Scale fonts for single page security */
+                    #printable-quote * {
+                        font-size: 0.98em !important;
+                        color: black !important;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                    
+                    #printable-quote h2 { font-size: 26pt !important; }
+                    #printable-quote h5 { font-size: 14pt !important; }
+                    #printable-quote .text-2xl { font-size: 20pt !important; }
+                    
+                    /* Force background colors to show in PDF */
+                    .bg-primary { background-color: #ff5722 !important; -webkit-print-color-adjust: exact; }
+                    .bg-slate-900 { background-color: #0f172a !important; -webkit-print-color-adjust: exact; }
+                    .bg-slate-50 { background-color: #f8fafc !important; -webkit-print-color-adjust: exact; }
                 }
             `}</style>
         </div >
