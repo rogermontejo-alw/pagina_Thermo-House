@@ -76,3 +76,35 @@ export async function updateQuote(id: string, updates: any) {
         return { success: false, message: 'Error al actualizar el registro.' };
     }
 }
+export async function purgeQuotes(password: string) {
+    try {
+        const session = await getAdminSession();
+        if (!session || session.role !== 'admin') {
+            return { success: false, message: 'No tienes permisos de administrador para purgar la base de datos.' };
+        }
+
+        // Verify purge password
+        const { data: config, error: configError } = await supabaseAdmin
+            .from('app_config')
+            .select('value')
+            .eq('key', 'PURGE_PASSWORD')
+            .single();
+
+        const validPassword = configError ? 'TH-ADMIN-PURGE' : config.value;
+
+        if (password !== validPassword) {
+            return { success: false, message: 'Contraseña de depuración incorrecta.' };
+        }
+
+        const { error } = await supabaseAdmin
+            .from('cotizaciones')
+            .delete()
+            .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+        if (error) throw error;
+        return { success: true, message: 'Base de datos de leads limpiada correctamente.' };
+    } catch (err: any) {
+        console.error('Error purging quotes:', err);
+        return { success: false, message: err.message || 'Error al limpiar la base de datos.' };
+    }
+}

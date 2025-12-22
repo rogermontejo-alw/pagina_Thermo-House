@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { getQuotes, updateQuote } from '@/app/actions/get-quotes';
+import { getQuotes, updateQuote, purgeQuotes } from '@/app/actions/get-quotes';
 import { logoutAdmin, getAdminSession } from '@/app/actions/admin-auth';
 import { getAdminUsers, createAdminUser, updateAdminUser, deleteAdminUser, resetAdminPassword } from '@/app/actions/admin-users';
 import { getProducts, updateProduct, cloneProductToCity, deleteProduct, createProduct, getMasterProducts, createMasterProduct, updateMasterProduct, deleteMasterProduct } from '@/app/actions/admin-products';
@@ -12,7 +12,7 @@ import {
     Shield, Mail, UserCircle, Package, Edit3, Plus, Globe, Save, X, Key, Building2,
     Download, CheckSquare, Square, FileText, Cake, Receipt, FileSignature,
     LayoutGrid, ListOrdered, Navigation, Map, AlertTriangle, Printer, FileCheck, PencilRuler,
-    PieChart, BarChart3
+    PieChart, BarChart3, ShieldAlert
 } from 'lucide-react';
 import { getLocations, createLocation, deleteLocation } from '@/app/actions/admin-locations';
 import { getAppConfig, updateAppConfig } from '@/app/actions/get-config';
@@ -36,6 +36,11 @@ export default function AdminDashboard() {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [rangeType, setRangeType] = useState<'all' | 'today' | 'week' | 'month'>('all');
+    const [isPurging, setIsPurging] = useState(false);
+    const [purgePassword, setPurgePassword] = useState('');
+    const [purgePasswordInput, setPurgePasswordInput] = useState('');
+    const [showPurgeModal, setShowPurgeModal] = useState(false);
+    const [isSavingPurgePassword, setIsSavingPurgePassword] = useState(false);
 
     const dashboardQuotes = useMemo(() => {
         let filtered = [...quotes];
@@ -402,7 +407,6 @@ export default function AdminDashboard() {
                     precio_contado_m2: Number(newData.precio_contado_m2),
                     precio_msi_m2: Number(newData.precio_msi_m2),
                     ciudad: newData.ciudad,
-                    internal_id: newData.internal_id,
                     orden: Number(newData.orden || 0),
                     title: newData.title,
                     category: newData.category
@@ -427,7 +431,6 @@ export default function AdminDashboard() {
         });
     };
 
-
     const handleUpdateMapsKey = async () => {
         setIsSavingKey(true);
         const res = await updateAppConfig('GOOGLE_MAPS_KEY', mapsKey);
@@ -449,6 +452,41 @@ export default function AdminDashboard() {
         if (newSelection.has(id)) newSelection.delete(id);
         else newSelection.add(id);
         setSelectedLeads(newSelection);
+    };
+
+    const handlePurgeLeads = async () => {
+        if (!purgePasswordInput) {
+            alert('Por favor ingrese la contraseña de depuración.');
+            return;
+        }
+
+        if (!confirm('¿ESTÁ SEGURO? Esta acción ELIMINARÁ PERMANENTEMENTE todos los leads y cotizaciones del sistema. Esta acción no se puede deshacer.')) {
+            return;
+        }
+
+        setIsPurging(true);
+        const res = await purgeQuotes(purgePasswordInput);
+        if (res.success) {
+            alert(res.message);
+            setShowPurgeModal(false);
+            setPurgePasswordInput('');
+            await fetchData(session);
+        } else {
+            alert(res.message);
+        }
+        setIsPurging(false);
+    };
+
+    const handleUpdatePurgePassword = async () => {
+        if (!purgePassword) return;
+        setIsSavingPurgePassword(true);
+        const res = await updateAppConfig('PURGE_PASSWORD', purgePassword);
+        if (res.success) {
+            alert('Contraseña de depuración actualizada.');
+        } else {
+            alert('Error: ' + res.message);
+        }
+        setIsSavingPurgePassword(false);
     };
 
     const handleSelectAll = (filteredLeads: any[]) => {
@@ -1024,12 +1062,17 @@ export default function AdminDashboard() {
                                                 <td className="px-8 py-5 text-right">
                                                     <div className="flex justify-end items-center gap-1.5 p-1 bg-slate-50/50 rounded-2xl border border-transparent group-hover:border-slate-100 transition-all">
                                                         {/* Status de Cotización */}
-                                                        <div
-                                                            className={`p-2 rounded-xl border transition-all ${q.status !== 'Nuevo' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-slate-100 text-slate-300 border-slate-200 opacity-40'}`}
-                                                            title={q.status !== 'Nuevo' ? "Cotización Formal Emitida / Revisada" : "Cotización Pendiente de Generar"}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSelectedLeadForDetail(q);
+                                                                setShowQuotePreview(true);
+                                                            }}
+                                                            className={`p-2 rounded-xl border transition-all hover:scale-110 active:scale-95 ${q.status !== 'Nuevo' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-slate-100 text-slate-300 border-slate-200'}`}
+                                                            title={q.status !== 'Nuevo' ? "Ver Cotización Generada" : "Ver Previsualización de Cotización"}
                                                         >
                                                             <FileSignature className="w-4 h-4" />
-                                                        </div>
+                                                        </button>
 
                                                         {/* Acciones principales */}
                                                         <button
@@ -1576,11 +1619,44 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
 
-                                <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 flex flex-col items-center justify-center text-center space-y-4">
-                                    <AlertCircle className="w-8 h-8 text-slate-200" />
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
-                                        Más configuraciones globales se añadirán próximamente
-                                    </p>
+                                <div className="bg-red-50 p-8 rounded-[2rem] border border-red-100 space-y-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                                            <ShieldAlert className="w-5 h-5 text-red-600" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-black uppercase tracking-tight text-red-900">Seguridad y Limpieza</h3>
+                                            <p className="text-[9px] font-bold text-red-400 uppercase tracking-widest">Control de purga de base de datos</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-black text-red-300 uppercase tracking-widest ml-1">Contraseña Máster de Depuración</label>
+                                            <input
+                                                type="password"
+                                                className="w-full bg-white border border-red-100 rounded-xl px-4 py-3 text-sm font-mono focus:ring-2 focus:ring-red-100 outline-none transition-all"
+                                                placeholder="Asigna una contraseña..."
+                                                value={purgePassword}
+                                                onChange={e => setPurgePassword(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={handleUpdatePurgePassword}
+                                                disabled={isSavingPurgePassword}
+                                                className="flex-[2] bg-secondary text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all disabled:opacity-50"
+                                            >
+                                                {isSavingPurgePassword ? 'Guardando...' : 'Guardar Nueva Clave'}
+                                            </button>
+                                            <button
+                                                onClick={() => setShowPurgeModal(true)}
+                                                className="flex-1 bg-red-600 text-white px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-100"
+                                            >
+                                                Purgar Datos
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2486,7 +2562,7 @@ export default function AdminDashboard() {
                         background: white !important;
                     }
 
-                    .admin-dashboard-layout, 
+                    .admin-dashboard-layout,
                     .admin-sidebar,
                     .print\:hidden,
                     .lead-modal-overlay {
@@ -2538,18 +2614,61 @@ export default function AdminDashboard() {
                         -webkit-print-color-adjust: exact;
                         print-color-adjust: exact;
                     }
-                    
+
                     #printable-quote h2 { font-size: 22pt !important; }
                     #printable-quote h5 { font-size: 12pt !important; }
                     #printable-quote .text-2xl { font-size: 18pt !important; }
                     #printable-quote .text-lg { font-size: 13pt !important; }
-                    
+
                     /* Force background colors to show in PDF */
                     .bg-primary { background-color: #ff5722 !important; -webkit-print-color-adjust: exact; }
                     .bg-slate-900 { background-color: #0f172a !important; -webkit-print-color-adjust: exact; }
                     .bg-slate-50 { background-color: #f8fafc !important; -webkit-print-color-adjust: exact; }
                 }
             `}</style>
+            {/* Purge Modal */}
+            {showPurgeModal && (
+                <div className="fixed inset-0 bg-secondary/95 backdrop-blur-md z-[300] flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="bg-red-600 p-8 text-white text-center space-y-2">
+                            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                                <AlertTriangle className="w-8 h-8 text-white" />
+                            </div>
+                            <h3 className="text-2xl font-black uppercase tracking-tighter">Zona de Peligro</h3>
+                            <p className="text-[10px] font-bold uppercase opacity-80 tracking-widest">Esta acción es irreversible</p>
+                        </div>
+                        <div className="p-8 space-y-6">
+                            <p className="text-sm text-slate-600 font-medium text-center">
+                                Se eliminarán <strong>TODOS</strong> los leads y cotizaciones registrados hasta el momento. Ingrese la contraseña de depuración para continuar.
+                            </p>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contraseña de Depuración</label>
+                                <input
+                                    type="password"
+                                    className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-center font-black tracking-[0.5em] focus:ring-4 focus:ring-red-100 outline-none transition-all"
+                                    placeholder="••••••••"
+                                    value={purgePasswordInput}
+                                    onChange={e => setPurgePasswordInput(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => { setShowPurgeModal(false); setPurgePasswordInput(''); }}
+                                    className="flex-1 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handlePurgeLeads}
+                                    disabled={isPurging || !purgePasswordInput}
+                                    className="flex-1 bg-red-600 text-white px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-xl shadow-red-100 disabled:opacity-50"
+                                >
+                                    {isPurging ? 'Borrando...' : 'Confirmar Borrado'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
-}

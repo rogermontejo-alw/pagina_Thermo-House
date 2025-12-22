@@ -154,11 +154,21 @@ export async function updateMasterProduct(id: string, updates: any) {
 
         if (error) throw error;
 
-        // If pausing/activating master, cascade to regional prices
-        if (updates.activo !== undefined) {
+        // Cascade changes to regional prices
+        const cascadeUpdates: any = {};
+        if (updates.title !== undefined) cascadeUpdates.title = updates.title;
+        if (updates.category !== undefined) cascadeUpdates.category = updates.category;
+        if (updates.grosor !== undefined) cascadeUpdates.grosor = updates.grosor;
+        if (updates.beneficio_principal !== undefined) cascadeUpdates.beneficio_principal = updates.beneficio_principal;
+        if (updates.detalle_costo_beneficio !== undefined) cascadeUpdates.detalle_costo_beneficio = updates.detalle_costo_beneficio;
+        if (updates.orden !== undefined) cascadeUpdates.orden = updates.orden;
+        if (updates.activo !== undefined) cascadeUpdates.activo = updates.activo;
+        if (updates.internal_id !== undefined) cascadeUpdates.internal_id = updates.internal_id;
+
+        if (Object.keys(cascadeUpdates).length > 0) {
             await supabaseAdmin
                 .from('soluciones_precios')
-                .update({ activo: updates.activo })
+                .update(cascadeUpdates)
                 .eq('producto_id', id);
         }
 
