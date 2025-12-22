@@ -14,7 +14,7 @@ import {
     Shield, Mail, UserCircle, Package, Edit3, Plus, Globe, Save, X, Key, Building2,
     Download, CheckSquare, Square, FileText, Cake, Receipt, FileSignature,
     LayoutGrid, ListOrdered, Navigation, Map, AlertTriangle, Printer, FileCheck, PencilRuler,
-    PieChart, BarChart3, ShieldAlert, Sun, Moon
+    PieChart, BarChart3, ShieldAlert, Sun, Moon, Loader2
 } from 'lucide-react';
 import { getLocations, createLocation, deleteLocation, updateLocation } from '@/app/actions/admin-locations';
 import { getAppConfig, updateAppConfig } from '@/app/actions/get-config';
