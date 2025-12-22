@@ -28,10 +28,11 @@ export default function Navbar() {
     }, []);
 
     const menuItems = [
+        { name: 'Inicio', href: '#inicio' },
         { name: 'Sistemas', href: '#sistemas' },
         { name: 'Garantía', href: '#garantia' },
+        { name: 'Cotizar', href: '#cotizador' },
         { name: 'Sucursales', href: '#sucursales' },
-        { name: 'Contacto', href: '#cotizador' },
     ];
 
     useEffect(() => {
@@ -146,13 +147,15 @@ export default function Navbar() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
                             className="fixed inset-0 h-screen w-screen bg-secondary/98 dark:bg-slate-950/98 backdrop-blur-3xl z-[55] md:hidden flex flex-col"
                         >
                             {/* Header: Logo en cápsula de cristal */}
                             <div className="pt-12 pb-8 flex flex-col items-center">
                                 <motion.div
-                                    initial={{ y: -20, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.2 }}
                                     className="bg-white/5 backdrop-blur-md border border-white/10 px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-3"
                                 >
                                     <img src="/logo.png" alt="Thermo House" className="h-9 w-auto filter brightness-110" />
@@ -168,9 +171,9 @@ export default function Navbar() {
                                 <nav className="space-y-6">
                                     {menuItems.map((item, idx) => (
                                         <motion.a
-                                            initial={{ opacity: 0, x: -20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: 0.1 * idx + 0.2 }}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ duration: 0.15, delay: 0.03 * idx }}
                                             key={item.name}
                                             href={item.href}
                                             onClick={(e) => scrollToSection(e, item.href)}
@@ -188,9 +191,9 @@ export default function Navbar() {
                             {/* Footer: Acción y Sedes */}
                             <div className="p-8 w-full mt-auto space-y-6">
                                 <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.5 }}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.2 }}
                                     className="space-y-6 flex flex-col items-center"
                                 >
                                     <button

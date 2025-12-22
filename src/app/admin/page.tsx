@@ -1048,24 +1048,24 @@ export default function AdminDashboard() {
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* 4. Sales by City */}
-                            <div className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+                            <div className="bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
                                 <div>
-                                    <h3 className="text-xl font-black text-secondary uppercase tracking-tight flex items-center gap-2">
+                                    <h3 className="text-xl font-black text-secondary dark:text-white uppercase tracking-tight flex items-center gap-2">
                                         <MapPin className="w-5 h-5 text-primary" />
                                         Distribución por Ciudad
                                     </h3>
-                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Presencia regional activa</p>
+                                    <p className="text-slate-400 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest mt-1">Presencia regional activa</p>
                                 </div>
-                                <div className="overflow-hidden rounded-2xl border border-slate-50">
+                                <div className="overflow-hidden rounded-2xl border border-slate-50 dark:border-slate-800">
                                     <table className="w-full text-left">
-                                        <thead className="bg-slate-50 dark:bg-slate-900/50 text-[9px] font-black uppercase text-slate-400 dark:text-slate-300 tracking-widest">
+                                        <thead className="bg-slate-50 dark:bg-slate-800/50 text-[9px] font-black uppercase text-slate-400 dark:text-slate-300 tracking-widest">
                                             <tr>
                                                 <th className="px-6 py-4">Ciudad</th>
                                                 <th className="px-6 py-4">Leads</th>
                                                 <th className="px-6 py-4 text-right">Potencial</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-50">
+                                        <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                                             {Array.from(new Set(dashboardQuotes.map(q => q.ciudad)))
                                                 .map(city => ({
                                                     name: city,
@@ -1075,11 +1075,11 @@ export default function AdminDashboard() {
                                                 .sort((a, b) => b.count - a.count)
                                                 .slice(0, 5)
                                                 .map((city, i) => (
-                                                    <tr key={i} className="hover:bg-slate-50 transition-all group">
-                                                        <td className="px-6 py-4 font-bold text-secondary text-xs">{city.name}</td>
-                                                        <td className="px-6 py-4 text-xs font-black text-slate-400">{city.count}</td>
+                                                    <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group">
+                                                        <td className="px-6 py-4 font-bold text-secondary dark:text-slate-200 text-xs">{city.name}</td>
+                                                        <td className="px-6 py-4 text-xs font-black text-slate-400 dark:text-slate-400">{city.count}</td>
                                                         <td className="px-6 py-4 text-right">
-                                                            <span className="text-[10px] font-black text-primary px-3 py-1 bg-primary/5 rounded-lg group-hover:bg-primary group-hover:text-white transition-all">
+                                                            <span className="text-[10px] font-black text-primary px-3 py-1 bg-primary/5 dark:bg-primary/10 rounded-lg group-hover:bg-primary group-hover:text-white transition-all">
                                                                 ${Math.round(city.total / 1000)}k
                                                             </span>
                                                         </td>
@@ -1091,47 +1091,47 @@ export default function AdminDashboard() {
                             </div>
 
                             {/* 5. Unattended Clients (Alert List) */}
-                            <div className="bg-orange-50/50 p-10 rounded-[2.5rem] border border-orange-100 space-y-6">
+                            <div className="bg-orange-50/50 dark:bg-orange-950/20 p-10 rounded-[2.5rem] border border-orange-100 dark:border-orange-900/30 space-y-6">
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <h3 className="text-xl font-black text-secondary uppercase tracking-tight flex items-center gap-2">
+                                        <h3 className="text-xl font-black text-secondary dark:text-white uppercase tracking-tight flex items-center gap-2">
                                             <AlertTriangle className="w-5 h-5 text-orange-500" />
                                             Atención Prioritaria
                                         </h3>
-                                        <p className="text-orange-900/40 text-[10px] font-bold uppercase tracking-widest mt-1">Nuevos prospectos sin contacto</p>
+                                        <p className="text-orange-900/40 dark:text-orange-300 text-[10px] font-bold uppercase tracking-widest mt-1">Nuevos prospectos sin contacto</p>
                                     </div>
-                                    <button onClick={() => { setActiveTab('quotes'); setStatusFilter('Nuevo'); }} className="text-[9px] font-black py-2 px-4 bg-white border border-orange-100 text-orange-600 rounded-xl hover:bg-orange-600 hover:text-white transition-all uppercase tracking-widest shadow-sm">Ver Todos</button>
+                                    <button onClick={() => { setActiveTab('quotes'); setStatusFilter('Nuevo'); }} className="text-[9px] font-black py-2 px-4 bg-white dark:bg-slate-800 border border-orange-100 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 rounded-xl hover:bg-orange-600 hover:text-white transition-all uppercase tracking-widest shadow-sm">Ver Todos</button>
                                 </div>
                                 <div className="space-y-3">
                                     {dashboardQuotes.filter(q => q.status === 'Nuevo').slice(0, 4).map((q, i) => (
-                                        <div key={i} className="bg-white p-4 rounded-2xl border border-orange-100 flex items-center justify-between shadow-sm hover:shadow-md transition-all">
+                                        <div key={i} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-orange-100 dark:border-orange-900/30 flex items-center justify-between shadow-sm hover:shadow-md transition-all">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center font-black">{q.contact_info?.name?.[0] || '?'}</div>
+                                                <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/30 text-orange-500 rounded-xl flex items-center justify-center font-black">{q.contact_info?.name?.[0] || '?'}</div>
                                                 <div>
-                                                    <div className="text-xs font-black text-secondary">{q.contact_info?.name || 'Cliente'}</div>
-                                                    <div className="text-[9px] text-slate-400 font-bold uppercase">{q.ciudad} • {formatShortDateCDMX(q.created_at)}</div>
+                                                    <div className="text-xs font-black text-secondary dark:text-slate-200">{q.contact_info?.name || 'Cliente'}</div>
+                                                    <div className="text-[9px] text-slate-400 dark:text-slate-400 font-bold uppercase">{q.ciudad} • {formatShortDateCDMX(q.created_at)}</div>
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-[9px] font-black text-primary px-2 py-0.5 bg-primary/5 rounded-full uppercase">{q.area}m²</div>
+                                                <div className="text-[9px] font-black text-primary px-2 py-0.5 bg-primary/5 dark:bg-primary/10 rounded-full uppercase">{q.area}m²</div>
                                             </div>
                                         </div>
                                     ))}
                                     {dashboardQuotes.filter(q => q.status === 'Nuevo').length === 0 && (
-                                        <div className="p-8 text-center text-slate-400 font-bold italic border-2 border-dashed border-orange-100 rounded-[2rem]">¡Todo al día! Sin pendientes.</div>
+                                        <div className="p-8 text-center text-slate-400 dark:text-slate-500 font-bold italic border-2 border-dashed border-orange-100 dark:border-orange-900/20 rounded-[2rem]">¡Todo al día! Sin pendientes.</div>
                                     )}
                                 </div>
                             </div>
                         </div>
 
                         {/* 6. Advisor Performance */}
-                        <div className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
+                        <div className="bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-8">
                             <div>
-                                <h3 className="text-xl font-black text-secondary uppercase tracking-tight flex items-center gap-2">
+                                <h3 className="text-xl font-black text-secondary dark:text-white uppercase tracking-tight flex items-center gap-2">
                                     <UserCircle className="w-5 h-5 text-primary" />
                                     Rendimiento por Asesor
                                 </h3>
-                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Productividad y cierre de ventas</p>
+                                <p className="text-slate-400 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest mt-1">Productividad y cierre de ventas</p>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1143,29 +1143,26 @@ export default function AdminDashboard() {
                                         const totalVol = advisorQuotes.reduce((sum, q) => sum + (q.precio_total_contado || 0), 0);
 
                                         return (
-                                            <div key={advisorName} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 space-y-4 hover:border-primary/20 transition-all group">
+                                            <div key={advisorName} className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-700/50 space-y-4 hover:border-primary/20 transition-all group">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-primary border border-slate-100 font-black shadow-sm group-hover:bg-primary group-hover:text-white transition-all">
+                                                    <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center text-primary border border-slate-100 dark:border-slate-700 font-black shadow-sm group-hover:bg-primary group-hover:text-white transition-all text-lg">
                                                         {advisorName[0]}
                                                     </div>
                                                     <div>
-                                                        <div className="text-sm font-black text-secondary">{advisorName}</div>
-                                                        <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{advisorQuotes.length} Leads gestionados</div>
+                                                        <div className="text-sm font-black text-secondary dark:text-white leading-tight">{advisorName}</div>
+                                                        <div className="text-[9px] text-slate-400 dark:text-slate-400 font-black uppercase tracking-widest">Asesor Comercial</div>
                                                     </div>
                                                 </div>
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <div className="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-slate-700">
-                                                        <div className="text-[8px] font-black text-slate-400 dark:text-slate-300 uppercase mb-1">Cierres</div>
-                                                        <div className="text-sm font-black text-green-500">{closedSales}</div>
+
+                                                <div className="grid grid-cols-2 gap-3 pt-2">
+                                                    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                                        <div className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase mb-1">Cierres</div>
+                                                        <div className="text-sm font-black text-secondary dark:text-white">{closedSales} <span className="text-[10px] text-primary opacity-60">({convRate}%)</span></div>
                                                     </div>
-                                                    <div className="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-slate-700">
-                                                        <div className="text-[8px] font-black text-slate-400 dark:text-slate-300 uppercase mb-1">Conversión</div>
-                                                        <div className="text-sm font-black text-primary">{convRate}%</div>
+                                                    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                                        <div className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase mb-1">Volumen</div>
+                                                        <div className="text-sm font-black text-secondary dark:text-white">${Math.round(totalVol / 1000)}k</div>
                                                     </div>
-                                                </div>
-                                                <div className="pt-2">
-                                                    <div className="text-[8px] font-black text-slate-400 dark:text-slate-300 uppercase mb-1">Volumen Total</div>
-                                                    <div className="text-base font-black text-secondary">${Math.round(totalVol / 1000)}k</div>
                                                 </div>
                                             </div>
                                         );
@@ -1475,15 +1472,15 @@ export default function AdminDashboard() {
                                                 <button
                                                     disabled={session.role === 'editor'}
                                                     onClick={() => toggleProductActive(p.id, p.activo !== false)}
-                                                    className={`p-2 rounded-lg border text-[8px] font-black uppercase tracking-tighter ${p.activo !== false ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-100 dark:border-green-800' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-200 border-slate-200 dark:border-slate-700'} ${session.role === 'editor' ? 'opacity-80' : 'cursor-pointer'}`}
+                                                    className={`p-2 rounded-lg border text-[8px] font-black uppercase tracking-tighter transition-all ${p.activo !== false ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 border-green-100 dark:border-green-800/50' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-400 border-slate-200 dark:border-slate-700'} ${session.role === 'editor' ? 'opacity-80' : 'cursor-pointer hover:scale-105 active:scale-95'}`}
                                                 >
-                                                    {p.activo !== false ? 'Activo' : 'Pausado'}
+                                                    {p.activo !== false ? '● Activo' : '○ Pausado'}
                                                 </button>
                                                 {(session.role === 'admin' || session.role === 'manager') && (
                                                     <>
-                                                        <button onClick={() => setProductModal({ open: true, type: 'edit', data: p })} className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 border border-slate-100 dark:border-slate-700 rounded-lg"><Edit3 className="w-4 h-4" /></button>
-                                                        <button onClick={() => handleClone(p)} className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-400 dark:text-blue-500 border border-blue-100 dark:border-blue-900 rounded-lg"><Plus className="w-4 h-4" /></button>
-                                                        <button onClick={() => handleDeleteProduct(p.id, p.title + ' en ' + p.ciudad)} className="p-2 bg-red-50 dark:bg-red-900/20 text-red-300 dark:text-red-400 border border-red-100 dark:border-red-900 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                                                        <button onClick={() => setProductModal({ open: true, type: 'edit', data: p })} className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 border border-slate-100 dark:border-slate-700 rounded-lg hover:bg-white dark:hover:bg-slate-700 hover:text-secondary dark:hover:text-white transition-all"><Edit3 className="w-4 h-4" /></button>
+                                                        <button onClick={() => handleClone(p)} className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-400 dark:text-blue-400 border border-blue-100 dark:border-blue-800/50 rounded-lg hover:bg-white dark:hover:bg-blue-900/40 transition-all"><Plus className="w-4 h-4" /></button>
+                                                        <button onClick={() => handleDeleteProduct(p.id, p.title + ' en ' + p.ciudad)} className="p-2 bg-red-50 dark:bg-red-900/20 text-red-300 dark:text-red-400 border border-red-100 dark:border-red-900/30 rounded-lg hover:bg-white dark:hover:bg-red-900/40 transition-all"><Trash2 className="w-4 h-4" /></button>
                                                     </>
                                                 )}
                                             </div>
@@ -1538,32 +1535,32 @@ export default function AdminDashboard() {
                                                         <button
                                                             disabled={session.role === 'editor'}
                                                             onClick={() => toggleProductActive(p.id, !(p.activo !== false))}
-                                                            className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${p.activo !== false ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-slate-100 text-slate-400 border border-slate-200'} ${session.role === 'editor' ? 'opacity-80' : 'cursor-pointer hover:scale-105 active:scale-95'}`}
+                                                            className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${p.activo !== false ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 border border-green-100 dark:border-green-800/50' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-400 border border-slate-200 dark:border-slate-700'} ${session.role === 'editor' ? 'opacity-80' : 'cursor-pointer hover:scale-105 active:scale-95'}`}
                                                         >
                                                             {p.activo !== false ? '● Activo' : '○ Pausado'}
                                                         </button>
                                                     </td>
                                                     <td className="px-8 py-5 text-right">
-                                                        <div className="flex justify-end gap-1.5 p-1 bg-slate-50/50 rounded-xl border border-transparent group-hover:border-slate-100 transition-all">
+                                                        <div className="flex justify-end gap-1.5 p-1 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl border border-transparent group-hover:border-slate-100 dark:group-hover:border-slate-700 transition-all">
                                                             {session.role === 'admin' && (
                                                                 <>
                                                                     <button
                                                                         onClick={() => setProductModal({ open: true, type: 'edit', data: p })}
-                                                                        className="p-2 bg-white text-slate-400 border border-slate-200 shadow-sm hover:text-secondary rounded-lg transition-all"
+                                                                        className="p-2 bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-sm hover:text-secondary dark:hover:text-white rounded-lg transition-all"
                                                                         title="Editar tarifa m2 de este sistema"
                                                                     >
                                                                         <Edit3 className="w-3.5 h-3.5" />
                                                                     </button>
                                                                     <button
                                                                         onClick={() => handleClone(p)}
-                                                                        className="p-2 bg-white text-blue-400 border border-slate-200 shadow-sm hover:text-blue-600 rounded-lg transition-all"
+                                                                        className="p-2 bg-white dark:bg-slate-800 text-blue-400 dark:text-blue-400 border border-slate-200 dark:border-slate-700 shadow-sm hover:text-blue-600 dark:hover:text-blue-300 rounded-lg transition-all"
                                                                         title="Clonar esta tarifa para otra ciudad"
                                                                     >
                                                                         <Plus className="w-3.5 h-3.5" />
                                                                     </button>
                                                                     <button
                                                                         onClick={() => handleDeleteProduct(p.id, p.title + ' en ' + p.ciudad)}
-                                                                        className="p-2 bg-white text-red-300 border border-slate-200 shadow-sm hover:text-red-600 rounded-lg transition-all"
+                                                                        className="p-2 bg-white dark:bg-slate-800 text-red-300 dark:text-red-400 border border-slate-200 dark:border-slate-700 shadow-sm hover:text-red-600 dark:hover:text-red-300 rounded-lg transition-all"
                                                                         title="Eliminar tarifa regional"
                                                                     >
                                                                         <Trash2 className="w-3.5 h-3.5" />
@@ -2041,7 +2038,7 @@ export default function AdminDashboard() {
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={() => setProductModal({ open: true, type: 'edit', data: p, isMaster: true })}
-                                                className="flex-1 bg-white border border-slate-200 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all"
+                                                className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-700 transition-all text-secondary dark:text-white shadow-sm"
                                             >
                                                 Editar Ficha
                                             </button>

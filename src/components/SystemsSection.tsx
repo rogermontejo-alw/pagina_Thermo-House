@@ -235,59 +235,6 @@ export default function SystemsSection() {
                         );
                     })}
                 </div>
-
-                {/* Comparison Table */}
-                <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl dark:shadow-none border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-500">
-                    <div className="p-10 bg-secondary dark:bg-slate-950 border-b border-white/5 relative overflow-hidden text-center">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full -mr-32 -mt-32 blur-3xl" />
-                        <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Comparativa Técnica {roofType === 'concrete' ? 'Concreto' : 'Lámina'}</h3>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm whitespace-nowrap">
-                            <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700">
-                                <tr>
-                                    <th className="p-8 font-black text-slate-400 dark:text-slate-300 uppercase text-[10px] tracking-widest">Atributo</th>
-                                    {filteredSolutions.map(sys => (
-                                        <th key={sys.id} className="p-8 font-black text-secondary dark:text-white border-l border-slate-100 dark:border-slate-700 uppercase tracking-tighter text-sm">{sys.title}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                                <tr className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="p-8 font-black text-slate-700 dark:text-slate-200 bg-slate-50/10">ESPESOR FINAL</td>
-                                    {filteredSolutions.map(sys => <td key={sys.id} className="p-8 text-primary font-black border-l border-slate-100">{sys.grosor || '1000 micras'}</td>)}
-                                </tr>
-                                <tr className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="p-8 font-black text-slate-700 dark:text-slate-200 bg-slate-50/10">BENEFICIOS CLAVE</td>
-                                    {filteredSolutions.map(sys => (
-                                        <td key={sys.id} className="p-8 text-slate-600 dark:text-slate-300 border-l border-slate-100 dark:border-slate-800 text-[10px] text-wrap max-w-[220px] leading-relaxed">
-                                            <ul className="space-y-1.5 uppercase font-bold text-slate-500 dark:text-slate-200">
-                                                <li className="text-secondary dark:text-white flex items-center gap-2">
-                                                    <div className="w-1 h-1 rounded-full bg-primary" />
-                                                    {sys.beneficio_principal}
-                                                </li>
-                                                {(sys.detalle_costo_beneficio || '').split(/-|\n/).filter(l => l.trim()).map((line, i) => (
-                                                    <li key={i} className="flex items-center gap-2 opacity-80">
-                                                        <div className="w-1 h-1 rounded-full bg-slate-300" />
-                                                        {line}
-                                                    </li>
-                                                )).slice(0, 2)}
-                                            </ul>
-                                        </td>
-                                    ))}
-                                </tr>
-                                <tr className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="p-8 font-black text-slate-700 dark:text-slate-200 bg-slate-50/10">ESPECIALIDAD</td>
-                                    {filteredSolutions.map(sys => (
-                                        <td key={sys.id} className="p-8 text-slate-600 dark:text-slate-300 border-l border-slate-100 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest">
-                                            {sys.category === 'sheet' ? 'Siderúrgicos' : (sys.category === 'concrete' ? 'Estructural' : 'Híbrido')}
-                                        </td>
-                                    ))}
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
         </section >
     );

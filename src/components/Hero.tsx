@@ -9,10 +9,10 @@ export default function Hero() {
     };
 
     return (
-        <div className="dark-section relative min-h-screen flex flex-col justify-center overflow-hidden border-b border-white/5">
+        <div id="inicio" className="dark-section relative min-h-screen flex flex-col justify-center overflow-hidden border-b border-white/5">
             <div className="absolute inset-0 z-0">
                 {/* Gradiente sutil Dark Navy consistente con Branding */}
-                <div className="absolute inset-0 bg-gradient-to-b from-secondary via-[#1e293b] to-[#0f172a]" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black via-[#020617] to-[#0f172a]" />
 
                 {/* Acentos de luz sutiles para profundidad premium */}
                 <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px]" />
