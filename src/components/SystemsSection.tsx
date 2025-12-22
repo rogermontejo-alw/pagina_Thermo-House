@@ -164,10 +164,12 @@ export default function SystemsSection() {
                                     <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 mb-8 flex-grow">
                                         <ul className="space-y-4">
                                             {(() => {
-                                                const features = [
-                                                    ...(sys.beneficio_principal ? [sys.beneficio_principal] : []),
-                                                    ...(sys.detalle_costo_beneficio ? sys.detalle_costo_beneficio.split('\n').filter(l => l.trim() !== '') : [])
-                                                ];
+                                                const featureText = `${sys.beneficio_principal || ''}\n${sys.detalle_costo_beneficio || ''}`;
+                                                // Split by hyphen or newline, trim whitespace, and filter out empty items
+                                                const features = featureText
+                                                    .split(/-|\n/)
+                                                    .map(f => f.trim())
+                                                    .filter(f => f.length > 0);
 
                                                 return features.map((feature, idx) => {
                                                     const isFirst = idx === 0;
@@ -176,14 +178,14 @@ export default function SystemsSection() {
                                                     if (isLast && features.length > 1) {
                                                         return (
                                                             <li key={idx} className="flex items-start gap-3 text-[12px] text-primary font-black uppercase tracking-tighter">
-                                                                <Zap className="w-4 h-4 shrink-0" /> {feature}
+                                                                <Zap className="w-4 h-4 shrink-0 mt-0.5" /> {feature}
                                                             </li>
                                                         );
                                                     }
 
                                                     if (isFirst) {
                                                         return (
-                                                            <li key={idx} className="flex items-start gap-3 text-[13px] text-secondary font-bold leading-tight">
+                                                            <li key={idx} className="flex items-start gap-3 text-[13px] text-secondary font-black leading-tight uppercase">
                                                                 <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                                                                     <Check className="w-3 h-3 text-green-600 stroke-[4]" />
                                                                 </div>
@@ -193,8 +195,8 @@ export default function SystemsSection() {
                                                     }
 
                                                     return (
-                                                        <li key={idx} className="flex items-start gap-3 text-[12px] text-slate-500 font-medium italic leading-relaxed">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-300 flex-shrink-0 mt-2" />
+                                                        <li key={idx} className="flex items-start gap-3 text-[12px] text-slate-700 font-black leading-tight uppercase">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 flex-shrink-0 mt-1.5" />
                                                             <span>{feature}</span>
                                                         </li>
                                                     );

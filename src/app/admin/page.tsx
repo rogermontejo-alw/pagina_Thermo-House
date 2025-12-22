@@ -2143,10 +2143,23 @@ export default function AdminDashboard() {
                                                                 P. {selectedLeadForDetail.pricing_type === 'lista' ? 'LISTA' : 'CONTADO'}
                                                             </span>
                                                         </h5>
-                                                        <div className="text-[10px] text-slate-500 font-medium leading-relaxed pr-8 space-y-1">
-                                                            {(products.find(p => p.id === selectedLeadForDetail.solution_id)?.detalle_costo_beneficio || 'Sistema de aislamiento térmico de alta densidad. Incluye preparación de superficie, sellado de grietas, aplicación de base reflectante y capa protectora final.').split('\n').map((line: string, i: number) => (
-                                                                <p key={i}>{line}</p>
-                                                            ))}
+                                                        <div className="text-[10px] text-slate-500 font-bold leading-relaxed pr-8 space-y-1 uppercase">
+                                                            {(() => {
+                                                                const product = products.find(p => p.id === selectedLeadForDetail.solution_id);
+                                                                const text = `${product?.beneficio_principal || ''}\n${product?.detalle_costo_beneficio || ''}`;
+                                                                const fallback = 'Sistema de aislamiento térmico de alta densidad. Incluye preparación de superficie, sellado de grietas, aplicación de base reflectante y capa protectora final.';
+
+                                                                const features = (product?.detalle_costo_beneficio || product?.beneficio_principal)
+                                                                    ? text.split(/-|\n/).map(f => f.trim()).filter(Boolean)
+                                                                    : fallback.split('.');
+
+                                                                return features.map((line, i) => (
+                                                                    <p key={i} className="flex items-start gap-2">
+                                                                        <span className="text-primary mt-1">•</span>
+                                                                        <span>{line}</span>
+                                                                    </p>
+                                                                ));
+                                                            })()}
                                                         </div>
                                                     </div>
                                                     <div className="text-center text-xs font-black text-slate-600">{selectedLeadForDetail.area} m²</div>
@@ -2345,12 +2358,12 @@ export default function AdminDashboard() {
                                             </div>
                                             <textarea
                                                 rows={5}
-                                                placeholder="Línea 1: Característica base&#10;Línea 2: Detalle (Itálica)&#10;Última línea: Destacado (Naranja + Rayo)"
+                                                placeholder="Resumen del sistema. Puedes usar guiones (-) o nuevas líneas para separar características.&#10;Ej: Aislamiento Térmico - Impermeable - Garantía 10 años"
                                                 className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all resize-none"
                                                 value={productModal.data.detalle_costo_beneficio || ''}
                                                 onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, detalle_costo_beneficio: e.target.value } })}
                                             />
-                                            <p className="text-[8px] text-slate-400 italic ml-1">* El último elemento de la lista siempre aparecerá en naranja con ícono de rayo.</p>
+                                            <p className="text-[8px] text-slate-400 italic ml-1">* El texto se separará por guiones (-) o saltos de línea. El último elemento aparecerá en naranja.</p>
                                         </div>
                                     </>
                                 ) : (
