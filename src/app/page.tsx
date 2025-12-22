@@ -81,14 +81,14 @@ export default function Home() {
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, margin: "-100px" }}
-          className="py-4 md:py-8 relative px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t border-slate-100 scroll-snap-align-start bg-muted/20"
+          className="py-10 md:py-16 relative px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t border-slate-100 scroll-snap-align-start bg-muted/20"
         >
           <div className="space-y-4 md:space-y-6">
-            <div className="text-center max-w-2xl mx-auto space-y-1 md:space-y-2">
+            <div className="text-center max-w-2xl mx-auto space-y-4 md:space-y-6 mb-8">
               <h2 className="text-2xl sm:text-4xl font-black text-secondary tracking-tight">
                 ¿Listo para su Cotización?
               </h2>
-              <p className="text-xs md:text-base text-muted-foreground leading-relaxed">
+              <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                 Mida su techo satelitalmente y reciba su propuesta en segundos.
               </p>
             </div>
@@ -116,7 +116,7 @@ export default function Home() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="dark-section py-6 md:py-10 text-center rounded-[3rem] mx-4 md:mx-12 mb-8 scroll-snap-align-start"
+          className="dark-section py-12 md:py-20 text-center rounded-[3rem] mx-4 md:mx-12 mb-8 scroll-snap-align-start"
         >
           <div className="max-w-3xl mx-auto px-4">
             <h2 className="text-2xl md:text-4xl font-black text-white mb-4">¿Preparado para la Tranquilidad?</h2>

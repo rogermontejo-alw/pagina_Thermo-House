@@ -2,7 +2,7 @@ import { ShieldCheck, Droplets, Sun, ChevronDown } from 'lucide-react';
 
 export default function WarrantySection() {
     return (
-        <section id="garantia" className="py-4 md:py-6 bg-white">
+        <section id="garantia" className="py-10 md:py-16 bg-white">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
                 {/* Header Section */}

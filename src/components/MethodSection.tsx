@@ -23,13 +23,13 @@ export default function MethodSection() {
     ];
 
     return (
-        <section className="py-4 md:py-6 bg-white">
+        <section className="py-10 md:py-16 bg-white">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-3xl mx-auto mb-6">
-                    <h2 className="text-2xl sm:text-4xl font-bold text-secondary mb-2">
+                    <h2 className="text-2xl sm:text-4xl font-bold text-secondary mb-4 md:mb-5">
                         El Método Thermo House
                     </h2>
-                    <p className="text-base md:text-lg text-muted-foreground">
+                    <p className="text-base md:text-lg text-muted-foreground mb-8 md:mb-10">
                         Explore nuestro proceso probado para una impermeabilización y aislamiento térmico superiores, garantizando calidad y durabilidad en cada paso del camino.
                     </p>
                 </div>

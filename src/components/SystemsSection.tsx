@@ -105,29 +105,29 @@ export default function SystemsSection() {
     );
 
     return (
-        <section id="sistemas" className="py-4 md:py-6 bg-muted/20">
+        <section id="sistemas" className="py-8 md:py-12 bg-muted/20">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
-                <div className="text-center max-w-3xl mx-auto mb-4">
-                    <h2 className="text-2xl sm:text-4xl font-black text-secondary tracking-tight uppercase">
+                <div className="text-center max-w-3xl mx-auto mb-6 md:mb-10">
+                    <h2 className="text-2xl sm:text-4xl font-black text-secondary tracking-tight uppercase mb-3 md:mb-4">
                         SISTEMAS ELITE THERMO HOUSE
                     </h2>
-                    <p className="text-sm md:text-base text-muted-foreground">
+                    <p className="text-sm md:text-base text-muted-foreground mb-8 md:mb-10">
                         Protección avanzada para cada tipo de estructura.
                     </p>
 
                     {/* Selector de Tipo de Techo */}
-                    <div className="flex justify-center mb-6">
+                    <div className="flex justify-center mb-6 md:mb-8">
                         <div className="inline-flex p-1.5 bg-slate-100 rounded-[2rem] shadow-inner border border-slate-200">
                             <button
                                 onClick={() => setRoofType('concrete')}
-                                className={`flex items-center gap-2 px-10 py-4 rounded-[1.5rem] text-sm font-black transition-all duration-500 ${roofType === 'concrete' ? 'bg-secondary text-white shadow-xl scale-105' : 'text-slate-500 hover:text-secondary'}`}
+                                className={`flex items-center gap-2 px-6 md:px-10 py-3 md:py-4 rounded-[1.5rem] text-sm font-black transition-all duration-500 ${roofType === 'concrete' ? 'bg-secondary text-white shadow-xl scale-105' : 'text-slate-500 hover:text-secondary'}`}
                             >
                                 <Building2 className="w-4 h-4" /> Techo de Concreto
                             </button>
                             <button
                                 onClick={() => setRoofType('sheet')}
-                                className={`flex items-center gap-2 px-10 py-4 rounded-[1.5rem] text-sm font-black transition-all duration-500 ${roofType === 'sheet' ? 'bg-secondary text-white shadow-xl scale-105' : 'text-slate-500 hover:text-secondary'}`}
+                                className={`flex items-center gap-2 px-6 md:px-10 py-3 md:py-4 rounded-[1.5rem] text-sm font-black transition-all duration-500 ${roofType === 'sheet' ? 'bg-secondary text-white shadow-xl scale-105' : 'text-slate-500 hover:text-secondary'}`}
                             >
                                 <Factory className="w-4 h-4" /> Techo de Lámina
                             </button>
@@ -136,33 +136,33 @@ export default function SystemsSection() {
                 </div>
 
                 {/* Systems Cards Grid */}
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-8 md:mb-10">
                     {filteredSolutions.map((sys) => {
                         const Icon = getIcon(sys.internal_id);
                         const isPremium = sys.internal_id === 'th-forte' || sys.internal_id === 'th-ingles';
                         const isBestSeller = sys.internal_id === 'th-light';
 
                         return (
-                            <div key={sys.id} className={`group bg-white rounded-[2.5rem] p-8 border-2 transition-all duration-500 relative overflow-hidden flex flex-col ${isPremium ? 'border-primary/20 shadow-xl' : 'border-slate-100 hover:border-slate-200 shadow-sm hover:shadow-2xl'}`}>
+                            <div key={sys.id} className={`group bg-white rounded-[2.5rem] p-6 md:p-7 border-2 transition-all duration-500 relative overflow-hidden flex flex-col ${isPremium ? 'border-primary/20 shadow-xl' : 'border-slate-100 hover:border-slate-200 shadow-sm hover:shadow-2xl'}`}>
                                 {isBestSeller && (
-                                    <div className="absolute top-0 right-0 bg-primary text-white text-[10px] font-black px-6 py-2 rounded-bl-3xl shadow-lg uppercase tracking-widest z-10">Más Vendido</div>
+                                    <div className="absolute top-0 right-0 bg-primary text-white text-[9px] md:text-[10px] font-black px-4 md:px-6 py-1.5 md:py-2 rounded-bl-3xl shadow-lg uppercase tracking-widest z-10">Más Vendido</div>
                                 )}
                                 {isPremium && (
-                                    <div className="absolute top-0 right-0 bg-secondary text-white text-[10px] font-black px-6 py-2 rounded-bl-3xl shadow-lg uppercase tracking-widest z-10">Grado Experto</div>
+                                    <div className="absolute top-0 right-0 bg-secondary text-white text-[9px] md:text-[10px] font-black px-4 md:px-6 py-1.5 md:py-2 rounded-bl-3xl shadow-lg uppercase tracking-widest z-10">Grado Experto</div>
                                 )}
 
                                 <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
 
                                 <div className="relative z-10 flex flex-col h-full">
-                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-8 shadow-lg transition-all duration-500 ${isPremium ? 'bg-secondary text-white rotate-3 scale-110' : 'bg-slate-50 text-primary group-hover:bg-primary group-hover:text-white group-hover:-rotate-3'}`}>
-                                        <Icon className="w-8 h-8" />
+                                    <div className={`w-14 h-14 md:w-11 md:h-11 rounded-2xl flex items-center justify-center mb-6 md:mb-3 shadow-lg transition-all duration-500 ${isPremium ? 'bg-secondary text-white rotate-3 scale-110' : 'bg-slate-50 text-primary group-hover:bg-primary group-hover:text-white group-hover:-rotate-3'}`}>
+                                        <Icon className="w-7 h-7 md:w-5 md:h-5" />
                                     </div>
 
-                                    <h3 className="text-2xl font-black text-secondary mb-1 uppercase tracking-tighter">{sys.title}</h3>
-                                    <p className="text-[10px] font-black text-primary mb-6 uppercase tracking-[0.2em] opacity-80">{sys.grosor || 'Espesor Estándar'}</p>
+                                    <h3 className="text-xl md:text-2xl font-black text-secondary mb-1 uppercase tracking-tighter">{sys.title}</h3>
+                                    <p className="text-[10px] font-black text-primary mb-4 md:mb-3 uppercase tracking-[0.2em] opacity-80">{sys.grosor || 'Espesor Estándar'}</p>
 
-                                    <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 mb-8 flex-grow">
-                                        <ul className="space-y-4">
+                                    <div className="bg-slate-50/50 rounded-2xl p-5 md:p-4 border border-slate-100 mb-6 md:mb-4 flex-grow">
+                                        <ul className="space-y-3 md:space-y-2">
                                             {(() => {
                                                 const featureText = `${sys.beneficio_principal || ''}\n${sys.detalle_costo_beneficio || ''}`;
                                                 // Split by hyphen or newline, trim whitespace, and filter out empty items
@@ -207,7 +207,7 @@ export default function SystemsSection() {
 
                                     <button
                                         onClick={() => document.getElementById('cotizador')?.scrollIntoView({ behavior: 'smooth' })}
-                                        className={`w-full py-5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${isPremium ? 'bg-primary text-white hover:bg-orange-600' : 'bg-secondary text-white hover:bg-slate-800'}`}
+                                        className={`w-full py-4 md:py-3.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${isPremium ? 'bg-primary text-white hover:bg-orange-600' : 'bg-secondary text-white hover:bg-slate-800'}`}
                                     >
                                         Cotizar este Sistema
                                     </button>

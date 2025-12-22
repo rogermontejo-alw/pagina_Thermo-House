@@ -278,7 +278,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                             <button
                                                 key={sol.id}
                                                 onClick={() => handleSolutionSelect(sol.internal_id)}
-                                                className={`relative p-8 rounded-[2.5rem] border-2 text-left transition-all h-full flex flex-col group overflow-hidden ${isSelected ? 'border-primary bg-primary/5 shadow-2xl ring-4 ring-primary/10 scale-[1.02]' : 'border-slate-100 hover:border-slate-200 bg-white hover:shadow-xl'}`}
+                                                className={`relative p-6 md:p-7 rounded-[2.5rem] border-2 text-left transition-all h-full flex flex-col group overflow-hidden ${isSelected ? 'border-primary bg-primary/5 shadow-2xl ring-4 ring-primary/10 scale-[1.02]' : 'border-slate-100 hover:border-slate-200 bg-white hover:shadow-xl'}`}
                                             >
                                                 {isBestSeller && (
                                                     <div className="absolute -top-1 -right-1 bg-primary text-white text-[9px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-widest z-10">Best Seller</div>
@@ -287,19 +287,19 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                                     <div className="absolute -top-1 -right-1 bg-secondary text-white text-[9px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-widest z-10">Experto</div>
                                                 )}
 
-                                                <div className={`mb-6 w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${isSelected ? 'bg-primary text-white' : 'bg-slate-50 text-primary group-hover:bg-primary group-hover:text-white'}`}>
+                                                <div className={`mb-4 md:mb-3 w-12 h-12 md:w-11 md:h-11 rounded-2xl flex items-center justify-center transition-colors ${isSelected ? 'bg-primary text-white' : 'bg-slate-50 text-primary group-hover:bg-primary group-hover:text-white'}`}>
                                                     {getIcon(sol.internal_id)}
                                                 </div>
 
-                                                <div className="space-y-1 mb-6">
-                                                    <h4 className="text-2xl font-black text-secondary leading-none uppercase tracking-tighter">{sol.title}</h4>
+                                                <div className="space-y-1 mb-4 md:mb-3">
+                                                    <h4 className="text-xl md:text-2xl font-black text-secondary leading-none uppercase tracking-tighter">{sol.title}</h4>
                                                     <p className="text-[10px] text-primary font-bold uppercase tracking-widest opacity-70">SISTEMA {isPremium ? 'PROFESIONAL' : 'VITAL'}</p>
                                                 </div>
 
-                                                <ul className="space-y-3 mb-8 flex-grow">
+                                                <ul className="space-y-2 md:space-y-1.5 mb-6 md:mb-4 flex-grow">
                                                     {getSolutionFeatures(sol).slice(0, 3).map((f, i) => (
                                                         <li key={i} className="flex items-start text-xs text-slate-600 gap-2.5 font-medium leading-normal">
-                                                            <div className={`mt-1 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${isSelected ? 'bg-primary/20 text-primary' : 'bg-green-50 text-green-500'}`}>
+                                                            <div className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${isSelected ? 'bg-primary/20 text-primary' : 'bg-green-50 text-green-500'}`}>
                                                                 <Check className="w-2.5 h-2.5 stroke-[4]" />
                                                             </div>
                                                             {f}
@@ -336,7 +336,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                             id="calc-button"
                                             disabled={isPendingCalc || !!calcError}
                                             onClick={() => setCurrentStep('contact')}
-                                            className={`bg-primary hover:bg-orange-600 text-white font-black px-12 py-5 rounded-2xl shadow-xl shadow-primary/20 transition-all flex items-center gap-3 text-lg uppercase tracking-wider group active:scale-95 ${(isPendingCalc || !!calcError) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            className={`bg-primary hover:bg-orange-600 text-white font-black px-10 md:px-12 py-4 md:py-4 rounded-2xl shadow-xl shadow-primary/20 transition-all flex items-center gap-3 text-base md:text-lg uppercase tracking-wider group active:scale-95 ${(isPendingCalc || !!calcError) ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         >
                                             {isPendingCalc ? (
                                                 <><Loader2 className="w-5 h-5 animate-spin" /> Calculando...</>
