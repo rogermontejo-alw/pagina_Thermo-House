@@ -40,6 +40,35 @@ export async function getQuotes(cityFilter?: string) {
     }
 }
 
+export async function getQuote(id: string) {
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('cotizaciones')
+            .select(`
+                *,
+                soluciones_precios (
+                    title,
+                    internal_id
+                ),
+                advisor:admin_users!created_by (
+                    name,
+                    apellido,
+                    telefono,
+                    email,
+                    contacto_email
+                )
+            `)
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
+        return { success: true, data };
+    } catch (err) {
+        console.error('Error fetching single quote:', err);
+        return { success: false };
+    }
+}
+
 export async function updateQuote(id: string, updates: any) {
     try {
         const session = await getAdminSession();

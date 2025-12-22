@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { getQuotes, updateQuote, purgeQuotes } from '@/app/actions/get-quotes';
+import { getQuotes, updateQuote, purgeQuotes, getQuote } from '@/app/actions/get-quotes';
+import { supabase } from '@/lib/supabase';
 import { logoutAdmin, getAdminSession } from '@/app/actions/admin-auth';
 import { getAdminUsers, createAdminUser, updateAdminUser, deleteAdminUser, resetAdminPassword } from '@/app/actions/admin-users';
 import { getProducts, updateProduct, cloneProductToCity, deleteProduct, createProduct, getMasterProducts, createMasterProduct, updateMasterProduct, deleteMasterProduct } from '@/app/actions/admin-products';
@@ -192,6 +193,59 @@ export default function AdminDashboard() {
         };
         init();
     }, []);
+
+    // Real-time Subscription for Quotes
+    useEffect(() => {
+        if (!session) return;
+
+        const channel = supabase
+            .channel('realtime_quotes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'cotizaciones'
+                },
+                async (payload) => {
+                    if (payload.eventType === 'INSERT') {
+                        // Check if it belongs to the current user's city if they are not admin
+                        const newQuoteRaw = payload.new;
+                        if (session.role !== 'admin' && newQuoteRaw.ciudad !== session.ciudad) return;
+
+                        // Fetch the full quote with joins
+                        const res = await getQuote(newQuoteRaw.id);
+                        if (res.success && res.data) {
+                            setQuotes(prev => {
+                                // Prevent duplicates if it was already somehow added
+                                if (prev.some(q => q.id === res.data.id)) return prev;
+                                return [res.data, ...prev];
+                            });
+                        }
+                    } else if (payload.eventType === 'UPDATE') {
+                        const updatedQuoteRaw = payload.new;
+                        if (session.role !== 'admin' && updatedQuoteRaw.ciudad !== session.ciudad) {
+                            // If it was moved out of the city, remove it
+                            setQuotes(prev => prev.filter(q => q.id !== updatedQuoteRaw.id));
+                            return;
+                        }
+
+                        // Fetch full update to get joins (advisor etc)
+                        const res = await getQuote(updatedQuoteRaw.id);
+                        if (res.success && res.data) {
+                            setQuotes(prev => prev.map(q => q.id === res.data.id ? res.data : q));
+                        }
+                    } else if (payload.eventType === 'DELETE') {
+                        setQuotes(prev => prev.filter(q => q.id !== payload.old.id));
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [session]);
 
     const fetchData = async (currSession: any) => {
         setLoading(true);
