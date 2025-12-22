@@ -39,6 +39,7 @@ export default function AdminDashboard() {
     const [isPurging, setIsPurging] = useState(false);
     const [purgePassword, setPurgePassword] = useState('');
     const [purgePasswordInput, setPurgePasswordInput] = useState('');
+    const [confirmPurge, setConfirmPurge] = useState(false); // New state for modal-based confirmation
     const [showPurgeModal, setShowPurgeModal] = useState(false);
     const [isSavingPurgePassword, setIsSavingPurgePassword] = useState(false);
 
@@ -485,25 +486,32 @@ export default function AdminDashboard() {
 
     const handlePurgeLeads = async () => {
         if (!purgePasswordInput) {
-            alert('Por favor ingrese la contraseña de depuración.');
+            alert('Por favor ingrese la contraseña de depuración para continuar.');
             return;
         }
 
-        if (!confirm('¿ESTÁ SEGURO? Esta acción ELIMINARÁ PERMANENTEMENTE todos los leads y cotizaciones del sistema. Esta acción no se puede deshacer.')) {
+        if (!confirmPurge) {
+            alert('Por favor, marca la casilla de confirmación para autorizar el borrado permanente.');
             return;
         }
 
         setIsPurging(true);
-        const res = await purgeQuotes(purgePasswordInput);
-        if (res.success) {
-            alert(res.message);
-            setShowPurgeModal(false);
-            setPurgePasswordInput('');
-            await fetchData(session);
-        } else {
-            alert(res.message);
+        try {
+            const res = await purgeQuotes(purgePasswordInput);
+            if (res.success) {
+                alert(res.message);
+                setShowPurgeModal(false);
+                setPurgePasswordInput('');
+                setConfirmPurge(false);
+                await fetchData(session);
+            } else {
+                alert(res.message);
+            }
+        } catch (err) {
+            alert('Ocurrió un error al intentar purgar los datos.');
+        } finally {
+            setIsPurging(false);
         }
-        setIsPurging(false);
     };
 
     const handleUpdatePurgePassword = async () => {
@@ -983,15 +991,29 @@ export default function AdminDashboard() {
                                                     <div className="text-[10px] font-bold text-slate-400 uppercase">{new Date(q.created_at).toLocaleDateString()}</div>
                                                     <div className="font-black text-secondary text-base">{q.contact_info.name}</div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <div className="text-sm font-black text-primary">${Math.round(q.precio_total_contado).toLocaleString()}</div>
-                                                    <div className="text-[9px] font-bold text-slate-400 capitalize">{q.advisor?.name || 'Sistema'}</div>
+                                                <div className="text-right flex flex-col items-end">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-xs font-black text-secondary">${Math.round(q.precio_total_contado).toLocaleString()}</span>
+                                                        {(!q.pricing_type || q.pricing_type === 'contado') && (
+                                                            <span className="text-[6px] font-black px-1 py-0.5 bg-secondary text-white rounded uppercase tracking-tighter">Elegido</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-[10px] font-bold text-primary">${Math.round(q.precio_total_msi).toLocaleString()} <span className="text-[8px] opacity-60">MSI</span></span>
+                                                        {q.pricing_type === 'lista' && (
+                                                            <span className="text-[6px] font-black px-1 py-0.5 bg-primary text-white rounded uppercase tracking-tighter">Elegido</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-[9px] font-bold text-slate-400 capitalize mt-1">{q.advisor?.name || 'Sistema'}</div>
                                                 </div>
                                             </div>
                                             <div className="flex flex-wrap gap-2 text-[10px] font-bold text-slate-500">
                                                 <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md"><MapPin className="w-3 h-3" />{q.ciudad}</div>
                                                 <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md"><PencilRuler className="w-3 h-3" />{q.area}m²</div>
                                                 <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md"><Phone className="w-3 h-3" />{q.contact_info.phone}</div>
+                                                {q.is_out_of_zone && (
+                                                    <span className="ml-1.5 px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded text-[7px] font-black animate-pulse">FORÁNEO</span>
+                                                )}
                                             </div>
                                             <div className="flex items-center justify-between gap-4 pt-2">
                                                 <select
@@ -1074,10 +1096,26 @@ export default function AdminDashboard() {
                                                     <div className="text-sm font-bold text-slate-700">{q.area}m²</div>
                                                     <div className="text-[10px] text-slate-400 uppercase font-black flex items-center gap-1 mt-1">
                                                         <MapPin className="w-3 h-3" /> {q.ciudad} {q.postal_code ? `| CP ${q.postal_code}` : ''}
+                                                        {q.is_out_of_zone && (
+                                                            <span className="ml-1.5 px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded text-[7px] font-black animate-pulse">FORÁNEO</span>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td className="px-8 py-5">
-                                                    <div className="text-sm font-black text-secondary">${Math.round(q.precio_total_contado).toLocaleString()}</div>
+                                                    <div className="flex flex-col gap-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="text-sm font-black text-secondary">${Math.round(q.precio_total_contado).toLocaleString()}</div>
+                                                            {(!q.pricing_type || q.pricing_type === 'contado') && (
+                                                                <span className="text-[7px] font-black px-1 py-0.5 bg-secondary text-white rounded uppercase tracking-tighter">Elegido</span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="text-[11px] font-bold text-primary">${Math.round(q.precio_total_msi).toLocaleString()} <span className="text-[8px] opacity-70">MSI</span></div>
+                                                            {q.pricing_type === 'lista' && (
+                                                                <span className="text-[7px] font-black px-1 py-0.5 bg-primary text-white rounded uppercase tracking-tighter">Elegido</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                     <div className="text-[9px] text-slate-400 font-bold uppercase flex items-center gap-1 mt-1">
                                                         <UserCircle className="w-3 h-3" /> {q.advisor?.name || 'Sistema'}
                                                     </div>
@@ -2709,19 +2747,42 @@ export default function AdminDashboard() {
                                     onChange={e => setPurgePasswordInput(e.target.value)}
                                 />
                             </div>
-                            <div className="flex gap-3">
+                            <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex items-start gap-3">
+                                <div className="mt-0.5">
+                                    <input
+                                        type="checkbox"
+                                        id="confirmPurge"
+                                        className="w-4 h-4 rounded border-red-300 text-red-600 focus:ring-red-500 cursor-pointer"
+                                        checked={confirmPurge}
+                                        onChange={e => setConfirmPurge(e.target.checked)}
+                                    />
+                                </div>
+                                <label htmlFor="confirmPurge" className="text-[10px] font-bold text-red-700 leading-tight cursor-pointer uppercase">
+                                    Confirmo que deseo ELIMINAR permanentemente todos los datos de esta sección.
+                                </label>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
                                 <button
-                                    onClick={() => { setShowPurgeModal(false); setPurgePasswordInput(''); }}
+                                    onClick={() => { setShowPurgeModal(false); setPurgePasswordInput(''); setConfirmPurge(false); }}
                                     className="flex-1 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     onClick={handlePurgeLeads}
-                                    disabled={isPurging || !purgePasswordInput}
-                                    className="flex-1 bg-red-600 text-white px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-xl shadow-red-100 disabled:opacity-50"
+                                    disabled={isPurging}
+                                    className={`flex-1 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 ${!purgePasswordInput || !confirmPurge
+                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                        : 'bg-red-600 text-white hover:bg-red-700 shadow-red-100'
+                                        }`}
                                 >
-                                    {isPurging ? 'Borrando...' : 'Confirmar Borrado'}
+                                    {isPurging ? (
+                                        <>
+                                            <Clock className="w-4 h-4 animate-spin" />
+                                            Borrando...
+                                        </>
+                                    ) : 'Borrar Todo'}
                                 </button>
                             </div>
                         </div>

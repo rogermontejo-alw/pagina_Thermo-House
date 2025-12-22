@@ -51,7 +51,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
     useEffect(() => {
         const fetchSols = async () => {
             try {
-                const res = await getAllSolutions();
+                const res = await getAllSolutions(city);
                 if (res.success && res.data?.length > 0) {
                     setAllDbSolutions(res.data);
                 }
@@ -62,7 +62,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
             }
         };
         fetchSols();
-    }, []);
+    }, [city]);
 
     const activeSolutions = allDbSolutions.length > 0 ? allDbSolutions : fallbackSolutions;
 
@@ -86,6 +86,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
         formData.append('state', stateName || '');
         formData.append('maps_link', mapsLink || '');
         formData.append('postalCode', postalCode || '');
+        formData.append('pricing_type', paymentOption === 'Contado' ? 'contado' : 'lista');
 
         const finalSolutionId = (paymentOption === 'Upgrade' && upsellQuote) ? upsellQuote.internal_id : selectedSolutionId;
         formData.append('solutionId', finalSolutionId || '');

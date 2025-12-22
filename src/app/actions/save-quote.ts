@@ -19,6 +19,7 @@ export async function saveQuote(prevState: any, formData: FormData) {
             totalMsi: Number(formData.get('totalMsi')),
             isOutOfZone: formData.get('isOutOfZone') === 'true',
             postalCode: formData.get('postalCode') as string,
+            pricing_type: formData.get('pricing_type') as string || 'contado',
         };
 
         // Basic Validation
@@ -128,7 +129,8 @@ export async function saveQuote(prevState: any, formData: FormData) {
             notas: rawData.isOutOfZone ? '⚠️ ZONA FORÁNEA: El cliente cotizó fuera de Mérida. Revisar costos de logística.' : '',
             is_out_of_zone: rawData.isOutOfZone,
             created_by: createdBy,
-            postal_code: rawData.postalCode || ''
+            postal_code: rawData.postalCode || '',
+            pricing_type: rawData.pricing_type
         });
 
         if (insertError) {
