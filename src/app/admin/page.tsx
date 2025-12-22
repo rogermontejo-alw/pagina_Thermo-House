@@ -18,6 +18,35 @@ import { getLocations, createLocation, deleteLocation } from '@/app/actions/admi
 import { getAppConfig, updateAppConfig } from '@/app/actions/get-config';
 import { MEXICAN_CITIES_BY_STATE } from '@/lib/mexico-data';
 
+// Helper to format dates in Mexico City timezone
+const formatDateCDMX = (dateStr: string | Date, options: Intl.DateTimeFormatOptions = {}) => {
+    if (!dateStr) return '';
+    try {
+        const date = new Date(dateStr);
+        return date.toLocaleString('es-MX', {
+            timeZone: 'America/Mexico_City',
+            ...options
+        });
+    } catch (e) {
+        return String(dateStr);
+    }
+};
+
+const formatShortDateCDMX = (dateStr: string | Date) => {
+    if (!dateStr) return '';
+    try {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('es-MX', {
+            timeZone: 'America/Mexico_City',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+    } catch (e) {
+        return String(dateStr);
+    }
+};
+
 export default function AdminDashboard() {
     const [session, setSession] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'dashboard' | 'quotes' | 'users' | 'prices' | 'locations' | 'products' | 'config'>('dashboard');
@@ -45,17 +74,29 @@ export default function AdminDashboard() {
 
     const dashboardQuotes = useMemo(() => {
         let filtered = [...quotes];
-        const now = new Date();
+
+        // Get "Now" in CDMX
+        const cdmxNowStr = new Date().toLocaleString('en-US', { timeZone: 'America/Mexico_City' });
+        const now = new Date(cdmxNowStr);
 
         if (rangeType === 'today') {
             const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-            filtered = filtered.filter(q => new Date(q.created_at).getTime() >= todayStart);
+            filtered = filtered.filter(q => {
+                const qDate = new Date(new Date(q.created_at).toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
+                return qDate.getTime() >= todayStart;
+            });
         } else if (rangeType === 'week') {
             const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).getTime();
-            filtered = filtered.filter(q => new Date(q.created_at).getTime() >= weekStart);
+            filtered = filtered.filter(q => {
+                const qDate = new Date(new Date(q.created_at).toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
+                return qDate.getTime() >= weekStart;
+            });
         } else if (rangeType === 'month') {
             const monthStart = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()).getTime();
-            filtered = filtered.filter(q => new Date(q.created_at).getTime() >= monthStart);
+            filtered = filtered.filter(q => {
+                const qDate = new Date(new Date(q.created_at).toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
+                return qDate.getTime() >= monthStart;
+            });
         }
 
         return filtered;
@@ -543,7 +584,7 @@ export default function AdminDashboard() {
 
         const headers = ['Fecha', 'Cliente', 'WhatsApp', 'Email', 'Ciudad', 'Area (m2)', 'Sistema', 'Precio Contado', 'Estado', 'Cumpleaños', 'Factura', 'Notas'];
         const rows = leadsToExport.map(q => [
-            new Date(q.created_at).toLocaleDateString(),
+            formatShortDateCDMX(q.created_at),
             q.contact_info.name,
             q.contact_info.phone,
             q.contact_info.email || 'N/A',
@@ -615,8 +656,11 @@ export default function AdminDashboard() {
         const matchesSearch = q.contact_info.name.toLowerCase().includes(searchTerm.toLowerCase()) || q.ciudad.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'All' || q.status === statusFilter;
 
-        const qDate = new Date(q.created_at);
-        const matchesStartDate = !startDate || qDate >= new Date(startDate);
+        // Normalize date comparison for CDMX
+        const qDateCDMXStr = new Date(q.created_at).toLocaleString('en-US', { timeZone: 'America/Mexico_City' });
+        const qDate = new Date(qDateCDMXStr);
+
+        const matchesStartDate = !startDate || qDate >= new Date(startDate + 'T00:00:00');
         const matchesEndDate = !endDate || qDate <= new Date(endDate + 'T23:59:59');
 
         return matchesSearch && matchesStatus && matchesStartDate && matchesEndDate;
@@ -765,8 +809,8 @@ export default function AdminDashboard() {
                                     </div>
                                     <div className="grid grid-cols-1 gap-4">
                                         {[
-                                            { label: 'Pago Contado', val: dashboardQuotes.filter(q => q.payment_preference === 'cash').length, color: 'bg-primary' },
-                                            { label: '12 MSI', val: dashboardQuotes.filter(q => q.payment_preference === 'msi').length, color: 'bg-blue-400' }
+                                            { label: 'Pago Contado', val: dashboardQuotes.filter(q => q.pricing_type === 'contado' || !q.pricing_type).length, color: 'bg-primary' },
+                                            { label: '12 MSI', val: dashboardQuotes.filter(q => q.pricing_type === 'lista').length, color: 'bg-blue-400' }
                                         ].map((pay, i) => (
                                             <div key={i} className="bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-sm">
                                                 <div className="flex justify-between items-center mb-2">
@@ -849,7 +893,7 @@ export default function AdminDashboard() {
                                                 <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center font-black">{q.contact_info?.name?.[0] || '?'}</div>
                                                 <div>
                                                     <div className="text-xs font-black text-secondary">{q.contact_info?.name || 'Cliente'}</div>
-                                                    <div className="text-[9px] text-slate-400 font-bold uppercase">{q.ciudad} • {new Date(q.created_at).toLocaleDateString()}</div>
+                                                    <div className="text-[9px] text-slate-400 font-bold uppercase">{q.ciudad} • {formatShortDateCDMX(q.created_at)}</div>
                                                 </div>
                                             </div>
                                             <div className="text-right">
@@ -988,7 +1032,7 @@ export default function AdminDashboard() {
                                         <div key={q.id} className="p-4 space-y-4">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <div className="text-[10px] font-bold text-slate-400 uppercase">{new Date(q.created_at).toLocaleDateString()}</div>
+                                                    <div className="text-[10px] font-bold text-slate-400 uppercase">{formatShortDateCDMX(q.created_at)}</div>
                                                     <div className="font-black text-secondary text-base">{q.contact_info.name}</div>
                                                 </div>
                                                 <div className="text-right flex flex-col items-end">
@@ -1080,7 +1124,7 @@ export default function AdminDashboard() {
                                                     </button>
                                                 </td>
                                                 <td className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase leading-tight">
-                                                    {new Date(q.created_at).toLocaleString('es-MX', {
+                                                    {formatDateCDMX(q.created_at, {
                                                         year: 'numeric',
                                                         month: '2-digit',
                                                         day: '2-digit',
@@ -2194,8 +2238,8 @@ export default function AdminDashboard() {
                                             <div className="text-right">
                                                 <h4 className="text-[8px] font-black uppercase tracking-widest text-primary mb-2">Detalles del Presupuesto</h4>
                                                 <div className="space-y-1">
-                                                    <p className="text-[10px] font-bold text-slate-600">Fecha: {new Date(selectedLeadForDetail.created_at).toLocaleString('es-MX')}</p>
-                                                    <p className="text-[10px] font-bold text-slate-600">Vigente hasta: {new Date(new Date(selectedLeadForDetail.created_at).getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
+                                                    <p className="text-[10px] font-bold text-slate-600">Fecha: {formatDateCDMX(selectedLeadForDetail.created_at, { hour12: false })}</p>
+                                                    <p className="text-[10px] font-bold text-slate-600">Vigente hasta: {formatShortDateCDMX(new Date(new Date(selectedLeadForDetail.created_at).getTime() + 7 * 24 * 60 * 60 * 1000))}</p>
                                                     <p className="text-[10px] font-black text-secondary mt-2 uppercase tracking-tight">Área Verificada: {selectedLeadForDetail.area} m²</p>
                                                 </div>
                                             </div>

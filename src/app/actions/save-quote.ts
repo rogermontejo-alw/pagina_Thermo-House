@@ -93,17 +93,8 @@ export async function saveQuote(prevState: any, formData: FormData) {
             totalCash: finalTotalCash
         });
 
-        // Generate timestamp for Mexico City
-        const cdmxDate = new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'America/Mexico_City',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-        }).format(new Date()).replace(/,/g, '').replace(' ', 'T');
+        // Generate standard UTC timestamp
+        const utcDate = new Date().toISOString();
 
         // Detect creator (if logged in)
         const session = await getAdminSession();
@@ -125,7 +116,7 @@ export async function saveQuote(prevState: any, formData: FormData) {
                 email: rawData.email
             },
             status: 'Nuevo',
-            created_at: cdmxDate,
+            created_at: utcDate,
             notas: rawData.isOutOfZone ? '⚠️ ZONA FORÁNEA: El cliente cotizó fuera de Mérida. Revisar costos de logística.' : '',
             is_out_of_zone: rawData.isOutOfZone,
             created_by: createdBy,
