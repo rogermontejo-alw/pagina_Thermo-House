@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAdminSession } from './admin-auth';
+import { Location } from '@/types';
 
 export async function getLocations() {
     try {
@@ -22,16 +23,20 @@ export async function getLocations() {
     }
 }
 
-export async function createLocation(locationData: { ciudad: string, estado: string }) {
+export async function createLocation(locationData: Partial<Location>) {
     try {
         const session = await getAdminSession();
         if (!session || session.role !== 'admin') {
             return { success: false, message: 'No tienes permisos para modificar ubicaciones.' };
         }
 
+        if (!locationData.ciudad || !locationData.estado) {
+            return { success: false, message: 'Ciudad y Estado son obligatorios.' };
+        }
+
         const normCity = locationData.ciudad.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         if (normCity === 'merida') {
-            return { success: false, message: 'Mérida ya es una ciudad base y no necesita ser agregada como zona de operación.' };
+            return { success: false, message: 'Mérida ya es una ciudad base.' };
         }
 
         const { error } = await supabaseAdmin
@@ -42,6 +47,25 @@ export async function createLocation(locationData: { ciudad: string, estado: str
         return { success: true };
     } catch (err: any) {
         return { success: false, message: err.message || 'Error al crear ubicación.' };
+    }
+}
+
+export async function updateLocation(id: string, locationData: Partial<Location>) {
+    try {
+        const session = await getAdminSession();
+        if (!session || session.role !== 'admin') {
+            return { success: false, message: 'No tienes permisos para modificar ubicaciones.' };
+        }
+
+        const { error } = await supabaseAdmin
+            .from('ubicaciones')
+            .update(locationData)
+            .eq('id', id);
+
+        if (error) throw error;
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, message: err.message || 'Error al actualizar ubicación.' };
     }
 }
 

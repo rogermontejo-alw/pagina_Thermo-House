@@ -211,55 +211,68 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                         {(() => {
                             const isLocationMissing = initialArea > 0 && (!address || !city || !stateName);
                             const canProceed = initialArea > 0 && !isLocationMissing;
+
                             return (
-                                <div className={`p-6 md:p-8 rounded-2xl border border-border shadow-sm bg-white transition-all duration-300 ${canProceed ? 'opacity-100' : 'opacity-50 pointer-events-none grayscale blur-[1px]'}`}>
-                                    <h3 className="text-lg font-bold text-secondary mb-6 flex items-center gap-2">
-                                        <div className="w-2 h-6 bg-primary rounded-full" />
-                                        PRÓXIMO PASO: TIPO DE TECHO
-                                    </h3>
-                                    <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-6">
-                                        <button onClick={() => {
-                                            setRoofType('concrete');
-                                            if (window.innerWidth < 768) {
-                                                setTimeout(() => {
-                                                    document.getElementById('systems-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                                }, 100);
-                                            }
-                                        }} className={`relative p-4 md:p-8 rounded-2xl md:rounded-[2rem] border-2 transition-all flex flex-col items-center gap-3 md:gap-5 group overflow-hidden ${roofType === 'concrete' ? 'border-primary bg-primary/5 shadow-2xl scale-[1.02]' : 'border-slate-100 hover:border-slate-300 bg-white hover:shadow-xl'}`}>
-                                            {roofType === 'concrete' && <div className="absolute top-0 right-0 w-16 h-16 md:w-24 md:h-24 bg-primary/10 rounded-bl-full -mr-6 -mt-6 md:-mr-10 md:-mt-10" />}
-                                            <div className={`w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl flex items-center justify-center shadow-lg transition-all duration-500 ${roofType === 'concrete' ? 'bg-primary text-white rotate-3' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:rotate-3'}`}>
-                                                <Building2 className="w-6 h-6 md:w-10 md:h-10" />
+                                <AnimatePresence>
+                                    {canProceed && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 20, height: 0 }}
+                                            animate={{ opacity: 1, y: 0, height: 'auto' }}
+                                            exit={{ opacity: 0, y: -20, height: 0 }}
+                                            transition={{ duration: 0.4, ease: "circOut" }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="p-6 md:p-8 rounded-2xl border border-border shadow-sm bg-white mb-8">
+                                                <h3 className="text-lg font-bold text-secondary mb-6 flex items-center gap-2">
+                                                    <div className="w-2 h-6 bg-primary rounded-full" />
+                                                    PRÓXIMO PASO: TIPO DE TECHO
+                                                </h3>
+                                                <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-6">
+                                                    <button onClick={() => {
+                                                        setRoofType('concrete');
+                                                        if (window.innerWidth < 768) {
+                                                            setTimeout(() => {
+                                                                document.getElementById('systems-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                            }, 100);
+                                                        }
+                                                    }} className={`relative p-4 md:p-8 rounded-2xl md:rounded-[2rem] border-2 transition-all flex flex-col items-center gap-3 md:gap-5 group overflow-hidden ${roofType === 'concrete' ? 'border-primary bg-primary/5 shadow-2xl scale-[1.02]' : 'border-slate-100 hover:border-slate-300 bg-white hover:shadow-xl'}`}>
+                                                        {roofType === 'concrete' && <div className="absolute top-0 right-0 w-16 h-16 md:w-24 md:h-24 bg-primary/10 rounded-bl-full -mr-6 -mt-6 md:-mr-10 md:-mt-10" />}
+                                                        <div className={`w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl flex items-center justify-center shadow-lg transition-all duration-500 ${roofType === 'concrete' ? 'bg-primary text-white rotate-3' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:rotate-3'}`}>
+                                                            <Building2 className="w-6 h-6 md:w-10 md:h-10" />
+                                                        </div>
+                                                        <div className="text-center space-y-1">
+                                                            <span className="block font-black text-secondary text-xs md:text-xl tracking-tighter">LOSA CONCRETO</span>
+                                                            <p className="hidden md:block text-[11px] text-slate-500 font-medium px-4">Ideal para casas habitacionales, departamentos y comercios urbanos.</p>
+                                                        </div>
+                                                        <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center transition-all ${roofType === 'concrete' ? 'border-primary bg-primary text-white scale-110' : 'border-slate-200'}`}>
+                                                            {roofType === 'concrete' && <Check className="w-3 h-3 md:w-4 md:h-4" />}
+                                                        </div>
+                                                    </button>
+                                                    <button onClick={() => {
+                                                        setRoofType('sheet');
+                                                        if (window.innerWidth < 768) {
+                                                            setTimeout(() => {
+                                                                document.getElementById('systems-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                            }, 100);
+                                                        }
+                                                    }} className={`relative p-4 md:p-8 rounded-2xl md:rounded-[2rem] border-2 transition-all flex flex-col items-center gap-3 md:gap-5 group overflow-hidden ${roofType === 'sheet' ? 'border-primary bg-primary/5 shadow-2xl scale-[1.02]' : 'border-slate-100 hover:border-slate-300 bg-white hover:shadow-xl'}`}>
+                                                        {roofType === 'sheet' && <div className="absolute top-0 right-0 w-16 h-16 md:w-24 md:h-24 bg-primary/10 rounded-bl-full -mr-6 -mt-6 md:-mr-10 md:-mt-10" />}
+                                                        <div className={`w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl flex items-center justify-center shadow-lg transition-all duration-500 ${roofType === 'sheet' ? 'bg-primary text-white -rotate-3' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:-rotate-3'}`}>
+                                                            <Factory className="w-6 h-6 md:w-10 md:h-10" />
+                                                        </div>
+                                                        <div className="text-center space-y-1">
+                                                            <span className="block font-black text-secondary text-xs md:text-xl tracking-tighter">TECHO LÁMINA</span>
+                                                            <p className="hidden md:block text-[11px] text-slate-500 font-medium px-4">Bodegas industriales, anexos metálicos y proyectos de gran escala.</p>
+                                                        </div>
+                                                        <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center transition-all ${roofType === 'sheet' ? 'border-primary bg-primary text-white scale-110' : 'border-slate-200'}`}>
+                                                            {roofType === 'sheet' && <Check className="w-3 h-3 md:w-4 md:h-4" />}
+                                                        </div>
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="text-center space-y-1">
-                                                <span className="block font-black text-secondary text-xs md:text-xl tracking-tighter">LOSA CONCRETO</span>
-                                                <p className="hidden md:block text-[11px] text-slate-500 font-medium px-4">Ideal para casas habitacionales, departamentos y comercios urbanos.</p>
-                                            </div>
-                                            <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center transition-all ${roofType === 'concrete' ? 'border-primary bg-primary text-white scale-110' : 'border-slate-200'}`}>
-                                                {roofType === 'concrete' && <Check className="w-3 h-3 md:w-4 md:h-4" />}
-                                            </div>
-                                        </button>
-                                        <button onClick={() => {
-                                            setRoofType('sheet');
-                                            if (window.innerWidth < 768) {
-                                                setTimeout(() => {
-                                                    document.getElementById('systems-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                                }, 100);
-                                            }
-                                        }} className={`relative p-4 md:p-8 rounded-2xl md:rounded-[2rem] border-2 transition-all flex flex-col items-center gap-3 md:gap-5 group overflow-hidden ${roofType === 'sheet' ? 'border-primary bg-primary/5 shadow-2xl scale-[1.02]' : 'border-slate-100 hover:border-slate-300 bg-white hover:shadow-xl'}`}>
-                                            {roofType === 'sheet' && <div className="absolute top-0 right-0 w-16 h-16 md:w-24 md:h-24 bg-primary/10 rounded-bl-full -mr-6 -mt-6 md:-mr-10 md:-mt-10" />}
-                                            <div className={`w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl flex items-center justify-center shadow-lg transition-all duration-500 ${roofType === 'sheet' ? 'bg-primary text-white -rotate-3' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:-rotate-3'}`}>
-                                                <Factory className="w-6 h-6 md:w-10 md:h-10" />
-                                            </div>
-                                            <div className="text-center space-y-1">
-                                                <span className="block font-black text-secondary text-xs md:text-xl tracking-tighter">TECHO LÁMINA</span>
-                                                <p className="hidden md:block text-[11px] text-slate-500 font-medium px-4">Bodegas industriales, anexos metálicos y proyectos de gran escala.</p>
-                                            </div>
-                                            <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center transition-all ${roofType === 'sheet' ? 'border-primary bg-primary text-white scale-110' : 'border-slate-200'}`}>
-                                                {roofType === 'sheet' && <Check className="w-3 h-3 md:w-4 md:h-4" />}
-                                            </div>
-                                        </button>
-                                    </div>
-                                </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             );
                         })()}
 

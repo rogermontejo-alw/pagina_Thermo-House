@@ -2,17 +2,34 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ArrowRight, MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getLocations } from '@/app/actions/admin-locations';
+import { Location } from '@/types';
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const [isVisible, setIsVisible] = useState(true);
+    const [branches, setBranches] = useState<string[]>([]);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        const fetchBranches = async () => {
+            const res = await getLocations();
+            if (res.success && res.data) {
+                const names = res.data
+                    .filter((l: Location) => l.is_branch)
+                    .map((l: Location) => l.ciudad);
+                setBranches(names);
+            }
+        };
+        fetchBranches();
+    }, []);
 
     const menuItems = [
         { name: 'Sistemas', href: '#sistemas' },
         { name: 'Garantía', href: '#garantia' },
+        { name: 'Sucursales', href: '#sucursales' },
         { name: 'Contacto', href: '#cotizador' },
     ];
 
@@ -76,7 +93,7 @@ export default function Navbar() {
             >
                 <div className="mx-auto px-4 sm:px-6">
                     <div className="flex items-center justify-between h-14 md:h-14">
-                        <div className="flex-shrink-0 flex items-center justify-center h-full">
+                        <div className={`flex-shrink-0 flex items-center justify-center h-full transition-opacity duration-300 ${isOpen ? 'opacity-0 md:opacity-100' : 'opacity-100'}`}>
                             <Link href="/" className="flex items-center gap-2 group h-full">
                                 <img src="/logo.png" alt="Thermo House Logo" className="h-5 md:h-6 w-auto object-contain filter brightness-110 drop-shadow-sm self-center" />
                                 <span className="text-[12px] md:text-sm font-black text-secondary tracking-tight uppercase self-center leading-none">
@@ -109,10 +126,10 @@ export default function Navbar() {
                             </button>
                         </div>
 
-                        <div className="-mr-2 flex md:hidden">
+                        <div className="-mr-2 flex md:hidden z-[60]">
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
-                                className="inline-flex items-center justify-center p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-slate-100 focus:outline-none transition-colors"
+                                className={`inline-flex items-center justify-center p-2 rounded-full transition-all duration-300 ${isOpen ? 'bg-primary text-white scale-110' : 'text-muted-foreground hover:text-primary hover:bg-slate-100'}`}
                             >
                                 {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-5 w-5" />}
                             </button>
@@ -126,42 +143,73 @@ export default function Navbar() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-secondary/60 backdrop-blur-xl z-[40] md:hidden"
-                            onClick={() => setIsOpen(false)}
-                        />
-                    )}
-                </AnimatePresence>
-
-                <AnimatePresence>
-                    {isOpen && (
-                        <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="md:hidden bg-background border-t border-border overflow-hidden relative z-[50]"
+                            className="fixed inset-0 h-screen w-screen bg-secondary/98 backdrop-blur-3xl z-[55] md:hidden flex flex-col"
                         >
-                            <div className="px-2 pt-6 pb-6 space-y-1 sm:px-3 text-center">
-                                <div className="flex justify-center mb-6">
-                                    <img src="/logo.png" alt="Thermo House" className="h-10 w-auto filter brightness-110" />
-                                </div>
-                                {menuItems.map((item) => (
-                                    <a
-                                        key={item.name}
-                                        href={item.href}
-                                        onClick={(e) => scrollToSection(e, item.href)}
-                                        className="text-secondary hover:text-primary block px-3 py-5 rounded-md text-lg font-black uppercase tracking-tighter"
-                                    >
-                                        {item.name}
-                                    </a>
-                                ))}
-                                <div className="pt-4 px-3">
+                            {/* Header: Logo en cápsula de cristal */}
+                            <div className="pt-12 pb-8 flex flex-col items-center">
+                                <motion.div
+                                    initial={{ y: -20, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    className="bg-white/5 backdrop-blur-md border border-white/10 px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-3"
+                                >
+                                    <img src="/logo.png" alt="Thermo House" className="h-9 w-auto filter brightness-110" />
+                                    <div className="flex flex-col leading-none">
+                                        <span className="text-white font-black text-lg tracking-tighter uppercase">Thermo<span className="text-primary">House</span></span>
+                                        <span className="text-white/30 text-[7px] font-bold uppercase tracking-[0.3em]">Sistemas Elite</span>
+                                    </div>
+                                </motion.div>
+                            </div>
+
+                            {/* Enlaces: Diseño Editorial */}
+                            <div className="flex-grow flex flex-col justify-center px-10">
+                                <nav className="space-y-6">
+                                    {menuItems.map((item, idx) => (
+                                        <motion.a
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: 0.1 * idx + 0.2 }}
+                                            key={item.name}
+                                            href={item.href}
+                                            onClick={(e) => scrollToSection(e, item.href)}
+                                            className="group flex items-end gap-3 text-white hover:text-primary transition-all"
+                                        >
+                                            <span className="text-primary/40 font-black text-xs mb-1.5 font-mono">0{idx + 1}</span>
+                                            <span className="text-3xl font-black uppercase tracking-tighter transition-all leading-none">
+                                                {item.name}
+                                            </span>
+                                        </motion.a>
+                                    ))}
+                                </nav>
+                            </div>
+
+                            {/* Footer: Acción y Sedes */}
+                            <div className="p-8 w-full mt-auto space-y-6">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.5 }}
+                                    className="space-y-6 flex flex-col items-center"
+                                >
                                     <button
                                         onClick={(e) => scrollToSection(e, '#cotizador')}
-                                        className="w-full bg-primary text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl"
+                                        className="w-full max-w-[240px] bg-primary text-white p-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 text-sm flex items-center justify-center gap-3 active:scale-95 transition-transform"
                                     >
-                                        Solicitar Cotización
+                                        Cotizar Proyecto
+                                        <ArrowRight className="w-4 h-4" />
                                     </button>
-                                </div>
+
+                                    <div className="w-full flex flex-col gap-2 pt-6 border-t border-white/5">
+                                        <div className="flex justify-between items-center text-[9px] text-white/40 font-bold uppercase tracking-[0.2em]">
+                                            <span>Cobertura Peninsular</span>
+                                            <span>© 2025</span>
+                                        </div>
+                                        <p className="text-[10px] text-white/20 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                                            {branches.length > 0
+                                                ? branches.join(' • ')
+                                                : 'Mérida • Playa del Carmen • Cancún • Tulum'}
+                                        </p>
+                                    </div>
+                                </motion.div>
                             </div>
                         </motion.div>
                     )}

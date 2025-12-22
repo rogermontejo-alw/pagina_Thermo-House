@@ -15,7 +15,7 @@ import {
     LayoutGrid, ListOrdered, Navigation, Map, AlertTriangle, Printer, FileCheck, PencilRuler,
     PieChart, BarChart3, ShieldAlert
 } from 'lucide-react';
-import { getLocations, createLocation, deleteLocation } from '@/app/actions/admin-locations';
+import { getLocations, createLocation, deleteLocation, updateLocation } from '@/app/actions/admin-locations';
 import { getAppConfig, updateAppConfig } from '@/app/actions/get-config';
 import { MEXICAN_CITIES_BY_STATE } from '@/lib/mexico-data';
 
@@ -172,6 +172,10 @@ export default function AdminDashboard() {
     // Location Management State
     const [isSavingLocation, setIsSavingLocation] = useState(false);
     const [newLocation, setNewLocation] = useState({ ciudad: '', estado: '' });
+    const [locationModal, setLocationModal] = useState<{ open: boolean, data: any }>({
+        open: false,
+        data: null
+    });
 
     const MEXICAN_STATES = [
         'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche', 'Chiapas', 'Chihuahua', 'Coahuila', 'Colima', 'Ciudad de México', 'Durango', 'Guanajuato', 'Guerrero', 'Hidalgo', 'Jalisco', 'México', 'Michoacán', 'Morelos', 'Nayarit', 'Nuevo León', 'Oaxaca', 'Puebla', 'Querétaro', 'Quintana Roo', 'San Luis Potosí', 'Sinaloa', 'Sonora', 'Tabasco', 'Tamaulipas', 'Tlaxcala', 'Veracruz', 'Yucatán', 'Zacatecas'
@@ -484,6 +488,25 @@ export default function AdminDashboard() {
             setNewLocation({ ciudad: '', estado: '' });
             alert(`¡Ciudad Habilitada! 📍\n\nRecuerda que para que los clientes en ${cityCreated} puedan cotizar localmente (sin advertencia de zona foránea), debes agregar al menos un precio específico para esta ciudad en la pestaña de 'Tarifas'.`);
         } else alert(res.message);
+        setIsSavingLocation(false);
+    };
+
+    const handleUpdateLocation = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!locationModal.data) return;
+        setIsSavingLocation(true);
+        const { id, ...data } = locationModal.data;
+
+        // Remove internal fields that shouldn't be updated directly or might cause issues
+        const { created_at, ...updateData } = data;
+
+        const res = await updateLocation(id, updateData);
+        if (res.success) {
+            await fetchData(session);
+            setLocationModal({ open: false, data: null });
+        } else {
+            alert(res.message);
+        }
         setIsSavingLocation(false);
     };
 
@@ -1808,8 +1831,19 @@ export default function AdminDashboard() {
                                                 <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{l.estado}</p>
                                             </div>
                                         </div>
-                                        <div className="hidden md:block">
-                                            <span className="px-5 py-2 bg-white border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-sm">Configurada como Base</span>
+                                        <div className="flex items-center gap-3">
+                                            <div className="hidden md:block">
+                                                <span className="px-5 py-2 bg-white border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-sm">Sede Base</span>
+                                            </div>
+                                            {session.role === 'admin' && (
+                                                <button
+                                                    onClick={() => setLocationModal({ open: true, data: { ...l, redes_sociales: l.redes_sociales || { facebook: '', instagram: '', whatsapp: '' } } })}
+                                                    className="p-3 bg-white border border-slate-200 text-slate-400 hover:text-primary rounded-xl shadow-sm transition-all active:scale-95"
+                                                    title="Editar Ficha de Sucursal Principal"
+                                                >
+                                                    <Edit3 className="w-5 h-5" />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -1837,12 +1871,22 @@ export default function AdminDashboard() {
                                                         </div>
                                                     </div>
                                                     {session.role === 'admin' && (
-                                                        <button
-                                                            onClick={() => handleDeleteLocation(l.id, l.ciudad)}
-                                                            className="p-3 bg-red-50 text-red-300 hover:text-red-600 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => setLocationModal({ open: true, data: { ...l, redes_sociales: l.redes_sociales || { facebook: '', instagram: '', whatsapp: '' } } })}
+                                                                className="p-3 bg-slate-50 text-slate-400 hover:text-primary border border-slate-100 rounded-xl transition-all"
+                                                                title="Editar Detalles de Sucursal"
+                                                            >
+                                                                <Edit3 className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteLocation(l.id, l.ciudad)}
+                                                                className="p-3 bg-red-50 text-red-300 hover:text-red-600 rounded-xl transition-all"
+                                                                title="Eliminar Zona de Operación"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
                                                     )}
                                                 </div>
                                             );
@@ -2540,6 +2584,162 @@ export default function AdminDashboard() {
                                     </div>
                                 );
                             })()}
+                        </div>
+                    </div>
+                )
+            }
+            {/* Location Detail Modal */}
+            {
+                locationModal.open && locationModal.data && (
+                    <div className="fixed inset-0 bg-secondary/80 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+                        <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                            <div className="bg-slate-50 p-8 border-b border-slate-100 flex justify-between items-center">
+                                <div>
+                                    <h3 className="text-2xl font-black text-secondary uppercase tracking-tight flex items-center gap-3">
+                                        <MapPin className="w-7 h-7 text-primary" />
+                                        Ficha de {locationModal.data.ciudad}
+                                    </h3>
+                                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Configuración de Sucursal / Operación</p>
+                                </div>
+                                <button onClick={() => setLocationModal({ open: false, data: null })} className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all text-slate-400">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleUpdateLocation} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Dirección Completa</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                            value={locationModal.data.direccion || ''}
+                                            onChange={e => setLocationModal({ ...locationModal, data: { ...locationModal.data, direccion: e.target.value } })}
+                                            placeholder="Calle, Número, Col., CP"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Teléfono de Contacto</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                            value={locationModal.data.telefono || ''}
+                                            onChange={e => setLocationModal({ ...locationModal, data: { ...locationModal.data, telefono: e.target.value } })}
+                                            placeholder="999 000 0000"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Correo Electrónico</label>
+                                        <input
+                                            type="email"
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                            value={locationModal.data.correo || ''}
+                                            onChange={e => setLocationModal({ ...locationModal, data: { ...locationModal.data, correo: e.target.value } })}
+                                            placeholder="sucursal@thermohouse.mx"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Google Maps (URL)</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                            value={locationModal.data.google_maps_link || ''}
+                                            onChange={e => setLocationModal({ ...locationModal, data: { ...locationModal.data, google_maps_link: e.target.value } })}
+                                            placeholder="https://goo.gl/maps/..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="p-6 bg-primary/5 rounded-[2rem] border border-primary/10 space-y-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <TrendingUp className="w-5 h-5 text-primary" />
+                                        <h4 className="font-black text-secondary uppercase text-sm">Redes Sociales de la Sucursal</h4>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">WhatsApp</label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-4 py-3 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                                value={locationModal.data.redes_sociales?.whatsapp || ''}
+                                                onChange={e => setLocationModal({
+                                                    ...locationModal,
+                                                    data: {
+                                                        ...locationModal.data,
+                                                        redes_sociales: { ...locationModal.data.redes_sociales, whatsapp: e.target.value }
+                                                    }
+                                                })}
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Facebook</label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-4 py-3 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                                value={locationModal.data.redes_sociales?.facebook || ''}
+                                                onChange={e => setLocationModal({
+                                                    ...locationModal,
+                                                    data: {
+                                                        ...locationModal.data,
+                                                        redes_sociales: { ...locationModal.data.redes_sociales, facebook: e.target.value }
+                                                    }
+                                                })}
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Instagram</label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-4 py-3 bg-white border border-slate-100 rounded-xl text-xs font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                                                value={locationModal.data.redes_sociales?.instagram || ''}
+                                                onChange={e => setLocationModal({
+                                                    ...locationModal,
+                                                    data: {
+                                                        ...locationModal.data,
+                                                        redes_sociales: { ...locationModal.data.redes_sociales, instagram: e.target.value }
+                                                    }
+                                                })}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem] border border-slate-100 shadow-inner">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${locationModal.data.is_branch ? 'bg-primary text-white' : 'bg-slate-200 text-slate-400'}`}>
+                                            <Building2 className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-black text-secondary uppercase tracking-tight">Habilitar como Sucursal Física</p>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aparecerá en la sección "Sucursales" del sitio</p>
+                                        </div>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only peer"
+                                            checked={locationModal.data.is_branch || false}
+                                            onChange={e => setLocationModal({ ...locationModal, data: { ...locationModal.data, is_branch: e.target.checked } })}
+                                        />
+                                        <div className="w-14 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-6 after:transition-all peer-checked:bg-primary"></div>
+                                    </label>
+                                </div>
+
+                                <div className="pt-4 flex gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setLocationModal({ open: false, data: null })}
+                                        className="flex-1 bg-slate-100 text-slate-400 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                                    > Cancelar </button>
+                                    <button
+                                        disabled={isSavingLocation}
+                                        className="flex-[2] bg-primary text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-3"
+                                    >
+                                        {isSavingLocation ? <Clock className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                        Guardar Cambios en Ficha
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 )

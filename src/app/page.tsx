@@ -9,6 +9,8 @@ import TechComparisonSection from '@/components/TechComparisonSection';
 import WarrantySection from '@/components/WarrantySection';
 import MapCalculator from '@/components/MapCalculator';
 import QuoteGenerator from '@/components/QuoteGenerator';
+import BranchesSection from '@/components/BranchesSection';
+import Footer from '@/components/Footer';
 
 export default function Home() {
   const [measurement, setMeasurement] = useState({
@@ -111,6 +113,16 @@ export default function Home() {
           </div>
         </motion.section>
 
+        <motion.section
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8 }}
+          className="scroll-snap-align-start"
+        >
+          <BranchesSection />
+        </motion.section>
+
         {/* Final Call to Action */}
         <motion.section
           initial={{ opacity: 0 }}
@@ -130,11 +142,7 @@ export default function Home() {
           </div>
         </motion.section>
 
-        <footer className="bg-slate-950 py-12 border-t border-white/5 font-sans rounded-t-[3rem] scroll-snap-align-end">
-          <div className="max-w-5xl mx-auto px-4 text-center text-slate-500 text-xs tracking-widest uppercase">
-            <p>© 2025 Thermo House. Protección Térmica Avanzada.</p>
-          </div>
-        </footer>
+        <Footer />
       </div>
     </main>
   );

@@ -34,3 +34,20 @@ export interface Quote {
   status: 'Nuevo' | 'Contactado' | 'Visita Técnica' | 'Cerrado';
   createdAt: string;
 }
+
+export interface Location {
+  id: string;
+  ciudad: string;
+  estado: string;
+  direccion?: string;
+  telefono?: string;
+  correo?: string;
+  google_maps_link?: string;
+  redes_sociales?: {
+    facebook?: string;
+    instagram?: string;
+    whatsapp?: string;
+  };
+  is_branch?: boolean;
+  created_at?: string;
+}
