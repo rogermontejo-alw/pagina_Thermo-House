@@ -51,6 +51,8 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
     const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
     const [activePolygon, setActivePolygon] = useState<google.maps.Polygon | null>(null);
     const [showInstructions, setShowInstructions] = useState(true);
+    const [showAddressPrompt, setShowAddressPrompt] = useState(false);
+    const [searchText, setSearchText] = useState('');
 
     // Manual Location State
     const [manualLocation, setManualLocation] = useState({
@@ -209,9 +211,12 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                     // Re-enable drawing mode after search
                     if (dm) dm.setDrawingMode(window.google.maps.drawing.OverlayType.POLYGON);
 
+                    // AUTO-SCROLL TO MAP
                     setTimeout(() => {
                         map.setZoom(20);
-                    }, 200);
+                        const mapContainer = document.getElementById('map-viewport-container');
+                        mapContainer?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 300);
                 });
             }
 
@@ -575,22 +580,44 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
 
             {/* Map Mode */}
             <div className={`${mode === 'map' ? 'block' : 'hidden'} space-y-4 animate-in fade-in slide-in-from-top-4 duration-300 max-w-5xl mx-auto w-full`}>
-                {/* Search Bar */}
-                <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search className="h-5 w-5 text-muted-foreground" />
+                {/* Search Bar & Prompt Container */}
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full">
+                    <div className="relative flex-grow">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <Search className={`h-5 w-5 ${(!manualLocation.address && showAddressPrompt) ? 'text-primary animate-pulse' : 'text-muted-foreground'}`} />
+                        </div>
+                        <input
+                            ref={searchInputRef}
+                            id="map-search-input"
+                            type="text"
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                            placeholder={mapLoaded ? "Busque su dirección para centrar el mapa..." : "Cargando mapa..."}
+                            className={`w-full bg-muted dark:bg-slate-800 border-2 text-secondary dark:text-white text-sm md:text-base font-bold rounded-xl block pl-12 p-3.5 focus:ring-4 focus:ring-primary/20 focus:border-primary placeholder-muted-foreground transition-all shadow-sm ${(!manualLocation.address && showAddressPrompt && searchText.length < 3) ? 'border-primary/50 ring-2 ring-primary/10' : 'border-border dark:border-slate-700'}`}
+                            disabled={!mapLoaded}
+                        />
                     </div>
-                    <input
-                        ref={searchInputRef}
-                        type="text"
-                        placeholder={mapLoaded ? "Busque su dirección para centrar el mapa..." : "Cargando mapa..."}
-                        className="w-full bg-muted dark:bg-slate-800 border border-border dark:border-slate-700 text-secondary dark:text-white text-sm rounded-lg block pl-10 p-3 focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder-muted-foreground transition-all"
-                        disabled={!mapLoaded}
-                    />
+
+                    {/* Side Prompt - Hidden when active searching (3+ chars) or address found */}
+                    <AnimatePresence>
+                        {(!manualLocation.address && showAddressPrompt && searchText.length < 3 && mapLoaded) && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="flex items-center justify-center gap-3 bg-primary text-white px-6 py-3.5 rounded-xl shadow-lg border border-white/10 shrink-0"
+                            >
+                                <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                                <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.1em] leading-none">
+                                    ESCRIBE TU DIRECCIÓN AQUÍ
+                                </span>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
                 {/* Map Container */}
-                <div className="relative w-full h-[450px] sm:h-[550px] rounded-2xl overflow-hidden shadow-2xl border border-border dark:border-slate-800 bg-slate-100 dark:bg-slate-900">
+                <div id="map-viewport-container" className="relative w-full h-[450px] sm:h-[550px] rounded-2xl overflow-hidden shadow-2xl border border-border dark:border-slate-800 bg-slate-100 dark:bg-slate-900">
 
                     {/* CENTER CROSSHAIR (Helpful for initial click) */}
                     <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none transition-opacity duration-300 ${(area > 0 || !showInstructions) ? 'opacity-20' : 'opacity-100'}`}>
@@ -613,13 +640,26 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                             >
                                 <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-2xl max-w-sm border border-slate-100 dark:border-slate-800 animate-in zoom-in-95 duration-300">
                                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <PencilRuler className="w-8 h-8 text-primary" />
+                                        <MapIcon className="w-8 h-8 text-primary" />
                                     </div>
-                                    <h4 className="text-xl font-bold text-secondary dark:text-white mb-2">¡Mide tu techo!</h4>
+                                    <h4 className="text-xl font-bold text-secondary dark:text-white mb-2">¡Ubica tu Techo!</h4>
                                     <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
-                                        Ubica tu casa y <span className="text-primary font-bold">haz clic en cada esquina</span> de tu techo. <br />Para calcular m², haz clic en la primera esquina al terminar.
+                                        Para una cotización precisa, <span className="text-primary font-bold">primero escribe tu dirección</span> en el buscador de arriba. <br /><br />Luego, haz clic en las esquinas de tu techo para medir los m².
                                     </p>
-                                    <button className="bg-secondary dark:bg-primary text-white px-6 py-2.5 rounded-xl font-bold text-sm w-full">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowInstructions(false);
+                                            setShowAddressPrompt(true);
+                                            // Scroll to search input if not fully visible
+                                            setTimeout(() => {
+                                                const searchInput = document.getElementById('map-search-input');
+                                                searchInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                setTimeout(() => searchInputRef.current?.focus(), 600);
+                                            }, 100);
+                                        }}
+                                        className="bg-secondary dark:bg-primary text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-sm w-full shadow-lg hover:scale-105 transition-all"
+                                    >
                                         EMPEZAR AHORA
                                     </button>
                                 </div>

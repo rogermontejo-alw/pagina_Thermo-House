@@ -163,10 +163,10 @@ export default function SystemsSection() {
                         return (
                             <div key={sys.id} className={`group bg-white dark:bg-slate-800 rounded-[2.5rem] p-6 md:p-7 border-2 transition-all duration-500 relative overflow-hidden flex flex-col ${isPremium ? 'border-primary/20 dark:border-primary/20 shadow-xl' : 'border-slate-100 dark:border-slate-700/50 hover:border-slate-200 dark:hover:border-slate-600 shadow-sm hover:shadow-2xl'}`}>
                                 {isBestSeller && (
-                                    <div className="absolute top-0 right-0 bg-primary text-white text-[9px] md:text-[10px] font-black px-4 md:px-6 py-1.5 md:py-2 rounded-bl-3xl shadow-lg uppercase tracking-widest z-10">Más Vendido</div>
+                                    <div className="absolute top-0 right-0 bg-primary dark:bg-orange-600 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-tight z-10">MAS VENDIDO</div>
                                 )}
                                 {isPremium && (
-                                    <div className="absolute top-0 right-0 bg-secondary dark:bg-slate-700 text-white text-[9px] md:text-[10px] font-black px-4 md:px-6 py-1.5 md:py-2 rounded-bl-3xl shadow-lg uppercase tracking-widest z-10">Grado Experto</div>
+                                    <div className="absolute top-0 right-0 bg-secondary dark:bg-blue-600 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-tight z-10">MEJORALO ¡¡¡</div>
                                 )}
 
                                 <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />

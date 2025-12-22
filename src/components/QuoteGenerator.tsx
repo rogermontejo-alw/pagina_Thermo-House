@@ -299,10 +299,10 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                                 className={`relative p-6 md:p-7 rounded-[2.5rem] border-2 text-left transition-all h-full flex flex-col group overflow-hidden ${isSelected ? 'border-primary bg-primary/5 dark:bg-primary/10 shadow-2xl ring-4 ring-primary/10 scale-[1.02]' : 'border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 bg-white dark:bg-slate-800 hover:shadow-xl'}`}
                                             >
                                                 {isBestSeller && (
-                                                    <div className="absolute -top-1 -right-1 bg-primary text-white text-[9px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-widest z-10">Best Seller</div>
+                                                    <div className="absolute top-0 right-0 bg-primary dark:bg-orange-600 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-tight z-10">MAS VENDIDO</div>
                                                 )}
                                                 {isPremium && (
-                                                    <div className="absolute -top-1 -right-1 bg-secondary text-white text-[9px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-widest z-10">Experto</div>
+                                                    <div className="absolute top-0 right-0 bg-secondary dark:bg-blue-600 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-tight z-10">MEJORALO ¡¡¡</div>
                                                 )}
 
                                                 <div className={`mb-4 md:mb-3 w-12 h-12 md:w-11 md:h-11 rounded-2xl flex items-center justify-center transition-colors ${isSelected ? 'bg-primary text-white' : 'bg-slate-50 dark:bg-slate-900 text-primary group-hover:bg-primary group-hover:text-white'}`}>

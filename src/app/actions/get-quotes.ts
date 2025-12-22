@@ -39,7 +39,10 @@ export async function getQuotes(cityFilter?: string) {
             return { success: false, message: 'Rol no admitido' };
         }
 
-        if (cityFilter && cityFilter !== 'Todas') {
+        // Apply city filter if provided (Admins/Managers only, or specific search)
+        // For editors, we skip this strict filter here because their .or() condition 
+        // already manages their city-based access + assigned leads across cities.
+        if (cityFilter && cityFilter !== 'Todas' && session.role !== 'editor') {
             query = query.eq('ciudad', cityFilter);
         }
 

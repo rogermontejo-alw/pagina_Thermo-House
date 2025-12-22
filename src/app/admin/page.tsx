@@ -697,6 +697,7 @@ export default function AdminDashboard() {
                 factura: manualLeadData.factura,
                 is_manual: true,
                 is_out_of_zone: !products.some(p => p.ciudad === manualLeadData.ciudad),
+                assigned_to: session?.role === 'editor' ? session.id : null,
                 notas: `Registro manual por ${session?.name || 'Administrador'}.`
             };
 
