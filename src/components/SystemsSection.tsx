@@ -163,21 +163,43 @@ export default function SystemsSection() {
 
                                     <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 mb-8 flex-grow">
                                         <ul className="space-y-4">
-                                            <li className="flex items-start gap-3 text-[13px] text-slate-600 font-bold leading-tight">
-                                                <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                                    <Check className="w-3 h-3 text-green-600 stroke-[4]" />
-                                                </div>
-                                                <span>{sys.beneficio_principal}</span>
-                                            </li>
-                                            <li className="flex items-start gap-3 text-[12px] text-slate-500 font-medium italic leading-relaxed">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-slate-300 flex-shrink-0 mt-2" />
-                                                <span>{sys.detalle_costo_beneficio?.split('.')[0]}</span>
-                                            </li>
-                                            {sys.internal_id !== 'th-fix' && (
-                                                <li className="flex items-start gap-3 text-[12px] text-primary font-black uppercase tracking-tighter">
-                                                    <Zap className="w-4 h-4" /> Ahorro Eléctrico Máximo
-                                                </li>
-                                            )}
+                                            {(() => {
+                                                const features = [
+                                                    ...(sys.beneficio_principal ? [sys.beneficio_principal] : []),
+                                                    ...(sys.detalle_costo_beneficio ? sys.detalle_costo_beneficio.split('\n').filter(l => l.trim() !== '') : [])
+                                                ];
+
+                                                return features.map((feature, idx) => {
+                                                    const isFirst = idx === 0;
+                                                    const isLast = idx === features.length - 1;
+
+                                                    if (isLast && features.length > 1) {
+                                                        return (
+                                                            <li key={idx} className="flex items-start gap-3 text-[12px] text-primary font-black uppercase tracking-tighter">
+                                                                <Zap className="w-4 h-4 shrink-0" /> {feature}
+                                                            </li>
+                                                        );
+                                                    }
+
+                                                    if (isFirst) {
+                                                        return (
+                                                            <li key={idx} className="flex items-start gap-3 text-[13px] text-secondary font-bold leading-tight">
+                                                                <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                                    <Check className="w-3 h-3 text-green-600 stroke-[4]" />
+                                                                </div>
+                                                                <span>{feature}</span>
+                                                            </li>
+                                                        );
+                                                    }
+
+                                                    return (
+                                                        <li key={idx} className="flex items-start gap-3 text-[12px] text-slate-500 font-medium italic leading-relaxed">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-300 flex-shrink-0 mt-2" />
+                                                            <span>{feature}</span>
+                                                        </li>
+                                                    );
+                                                });
+                                            })()}
                                         </ul>
                                     </div>
 
@@ -216,14 +238,21 @@ export default function SystemsSection() {
                                     {filteredSolutions.map(sys => <td key={sys.id} className="p-8 text-primary font-black border-l border-slate-100">{sys.grosor || '1000 micras'}</td>)}
                                 </tr>
                                 <tr className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="p-8 font-black text-slate-700 bg-slate-50/10">VALOR AGREGADO</td>
-                                    {filteredSolutions.map(sys => <td key={sys.id} className="p-8 text-slate-600 border-l border-slate-100 text-xs text-wrap max-w-[180px] font-medium leading-relaxed uppercase">{sys.beneficio_principal || 'N/A'}</td>)}
-                                </tr>
-                                <tr className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="p-8 font-black text-slate-700 bg-slate-50/10">OBJETIVO CLAVE</td>
+                                    <td className="p-8 font-black text-slate-700 bg-slate-50/10">BENEFICIOS CLAVE</td>
                                     {filteredSolutions.map(sys => (
-                                        <td key={sys.id} className="p-8 text-slate-600 border-l border-slate-100 text-xs text-wrap max-w-[200px] leading-relaxed">
-                                            {sys.detalle_costo_beneficio?.split('.')[1] || 'Protección de alta durabilidad contra intemperie extrema.'}
+                                        <td key={sys.id} className="p-8 text-slate-600 border-l border-slate-100 text-[10px] text-wrap max-w-[220px] leading-relaxed">
+                                            <ul className="space-y-1.5 uppercase font-bold text-slate-500">
+                                                <li className="text-secondary flex items-center gap-2">
+                                                    <div className="w-1 h-1 rounded-full bg-primary" />
+                                                    {sys.beneficio_principal}
+                                                </li>
+                                                {(sys.detalle_costo_beneficio || '').split('\n').filter(l => l.trim()).map((line, i) => (
+                                                    <li key={i} className="flex items-center gap-2 opacity-80">
+                                                        <div className="w-1 h-1 rounded-full bg-slate-300" />
+                                                        {line}
+                                                    </li>
+                                                )).slice(0, 2)}
+                                            </ul>
                                         </td>
                                     ))}
                                 </tr>

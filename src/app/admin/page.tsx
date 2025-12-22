@@ -2143,9 +2143,11 @@ export default function AdminDashboard() {
                                                                 P. {selectedLeadForDetail.pricing_type === 'lista' ? 'LISTA' : 'CONTADO'}
                                                             </span>
                                                         </h5>
-                                                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed pr-8">
-                                                            Sistema de aislamiento térmico de alta densidad. Incluye preparación de superficie, sellado de grietas, aplicación de base reflectante y capa protectora final.
-                                                        </p>
+                                                        <div className="text-[10px] text-slate-500 font-medium leading-relaxed pr-8 space-y-1">
+                                                            {(products.find(p => p.id === selectedLeadForDetail.solution_id)?.detalle_costo_beneficio || 'Sistema de aislamiento térmico de alta densidad. Incluye preparación de superficie, sellado de grietas, aplicación de base reflectante y capa protectora final.').split('\n').map((line: string, i: number) => (
+                                                                <p key={i}>{line}</p>
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                     <div className="text-center text-xs font-black text-slate-600">{selectedLeadForDetail.area} m²</div>
                                                     <div className="text-right text-base font-black text-secondary">
@@ -2337,14 +2339,18 @@ export default function AdminDashboard() {
                                         </div>
 
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Detalle Extendido de Sistema</label>
+                                            <div className="flex justify-between items-center ml-1">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lista de Características (Ficha)</label>
+                                                <span className="text-[8px] font-bold text-primary uppercase">Un elemento por renglón</span>
+                                            </div>
                                             <textarea
-                                                rows={3}
-                                                placeholder="Descripción detallada para el reporte..."
+                                                rows={5}
+                                                placeholder="Línea 1: Característica base&#10;Línea 2: Detalle (Itálica)&#10;Última línea: Destacado (Naranja + Rayo)"
                                                 className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all resize-none"
                                                 value={productModal.data.detalle_costo_beneficio || ''}
                                                 onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, detalle_costo_beneficio: e.target.value } })}
                                             />
+                                            <p className="text-[8px] text-slate-400 italic ml-1">* El último elemento de la lista siempre aparecerá en naranja con ícono de rayo.</p>
                                         </div>
                                     </>
                                 ) : (
