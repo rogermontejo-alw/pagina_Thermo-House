@@ -294,7 +294,10 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
 
                                                 <div className="space-y-1 mb-4 md:mb-3">
                                                     <h4 className="text-xl md:text-2xl font-black text-secondary leading-none uppercase tracking-tighter">{sol.title}</h4>
-                                                    <p className="text-[10px] text-primary font-bold uppercase tracking-widest opacity-70">SISTEMA {isPremium ? 'PROFESIONAL' : 'VITAL'}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-[10px] text-primary font-bold uppercase tracking-widest opacity-70">SISTEMA {isPremium ? 'PROFESIONAL' : 'VITAL'}</p>
+                                                        <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-black">${sol.precio_contado_m2} /m²</span>
+                                                    </div>
                                                 </div>
 
                                                 <ul className="space-y-2 md:space-y-1.5 mb-6 md:mb-4 flex-grow">
@@ -457,6 +460,10 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                             <h3 className="text-2xl md:text-5xl font-black text-secondary tracking-tighter">¡Todo Listo, {leadName.split(' ')[0] || 'Cliente'}!</h3>
                             <p className="text-slate-500 text-xs md:text-xl mt-2">Tu proyecto de <strong>{initialArea}m²</strong> en <strong>{city || address || 'tu ubicación'}</strong></p>
 
+                            <div className="mt-8 mb-4">
+                                <p className="text-secondary font-bold text-sm md:text-base px-6">Haz clic en la opción que prefieras para finalizar:</p>
+                            </div>
+
                             {isOutOfZone && (
                                 <div className="mt-8 p-4 md:p-6 bg-orange-50 border border-orange-100 rounded-2xl md:rounded-[2rem] text-orange-800 text-xs md:text-base font-bold flex items-center justify-center gap-4 animate-in fade-in zoom-in duration-500">
                                     <AlertTriangle className="w-6 h-6 md:w-8 md:h-8 text-orange-500 flex-shrink-0" />
@@ -476,88 +483,109 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                         </div>
 
                         <div className="grid md:grid-cols-3 gap-6 items-stretch">
-                            <div className="bg-white rounded-3xl shadow-2xl flex flex-col transition-all border border-slate-100 overflow-hidden min-h-[440px]">
-                                <div className="p-4 md:p-5 pb-0">
-                                    <div className="text-primary font-bold text-[9px] uppercase tracking-widest mb-1 flex items-center gap-1"><Check className="w-3 h-3" /> Pago Contado</div>
-                                    <h4 className="text-lg md:text-xl lg:text-2xl font-black text-secondary">{selectedSolution?.title}</h4>
+                            <button
+                                disabled={isPendingSave}
+                                onClick={() => handleSaveAndAction('Contado')}
+                                className="bg-white rounded-3xl shadow-xl flex flex-col transition-all border border-slate-100 overflow-hidden min-h-[380px] text-left hover:scale-[1.02] hover:border-primary/50 group"
+                            >
+                                <div className="bg-secondary px-6 py-4 w-full">
+                                    <div className="text-white font-black text-[10px] md:text-xs uppercase tracking-[0.2em] flex items-center gap-2">
+                                        <Check className="w-4 h-4 text-primary" /> Precio de Promoción
+                                    </div>
                                 </div>
-                                <div className="space-y-3 p-4 md:p-6 flex flex-col flex-grow">
-                                    <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-100 flex-grow">
-                                        <ul className="space-y-1.5">
-                                            {getSolutionFeatures(selectedSolution).map((f, i) => (
+                                <div className="p-6 space-y-4 flex flex-col flex-grow w-full">
+                                    <h4 className="text-2xl md:text-3xl font-black text-secondary leading-tight">{selectedSolution?.title}</h4>
+                                    <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-100">
+                                        <ul className="space-y-1">
+                                            {getSolutionFeatures(selectedSolution).slice(0, 3).map((f, i) => (
                                                 <li key={i} className="flex items-start text-slate-600 text-[10px] md:text-xs gap-2 font-medium leading-tight">
                                                     <div className="w-1 rounded-full bg-primary flex-shrink-0 mt-1.5 h-1" />{f}
                                                 </li>
                                             ))}
                                         </ul>
                                     </div>
-                                    <div className="text-center mt-auto pt-6 px-4 pb-4">
+                                    <div className="text-center mt-auto pt-4">
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Inversión Final:</span>
                                         <div className="text-3xl md:text-4xl font-black text-secondary tracking-tight">${quote?.totalCash.toLocaleString()}</div>
-                                        <span className="text-[10px] font-bold text-green-600 bg-green-50 px-3 py-1 rounded-md mt-2 inline-block">Ahorro del 14% aplicado</span>
+                                        <span className="text-[9px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded mt-2 inline-block">Ahorro del 14% aplicado</span>
                                     </div>
                                 </div>
-                                <button disabled={isPendingSave} onClick={() => handleSaveAndAction('Contado')} className="mt-auto w-full bg-slate-100 hover:bg-slate-200 text-secondary font-black py-4 rounded-b-3xl transition-all flex items-center justify-center gap-2 text-xs md:text-sm uppercase tracking-wider">
-                                    {isPendingSave ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Phone className="w-4 h-4" /> ELEGIR CONTADO</>}
-                                </button>
-                            </div>
+                            </button>
 
-                            <div className="bg-white rounded-3xl shadow-2xl border-2 border-primary/20 flex flex-col relative overflow-hidden min-h-[440px]">
-                                <div className="p-4 md:p-5 pb-0">
-                                    <div className="text-primary font-bold text-[9px] uppercase tracking-widest mb-1 flex items-center gap-1"><Zap className="w-3 h-3 fill-primary" /> Pago a 12 MSI</div>
-                                    <h4 className="text-lg md:text-xl lg:text-2xl font-black text-secondary">{selectedSolution?.title}</h4>
+                            <button
+                                disabled={isPendingSave}
+                                onClick={() => handleSaveAndAction('12 MSI')}
+                                className="bg-white rounded-3xl shadow-xl border-2 border-primary/20 flex flex-col relative overflow-hidden min-h-[380px] text-left hover:scale-[1.02] hover:border-primary transition-all group"
+                            >
+                                <div className="bg-primary px-6 py-4 w-full">
+                                    <div className="text-white font-black text-[10px] md:text-xs uppercase tracking-[0.2em] flex items-center gap-2">
+                                        <Zap className="w-4 h-4 fill-white" /> 12 Meses sin Intereses*
+                                    </div>
                                 </div>
-                                <div className="space-y-3 p-4 md:p-6 flex flex-col flex-grow">
-                                    <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-100 flex-grow">
+                                <div className="p-6 space-y-4 flex flex-col flex-grow w-full">
+                                    <h4 className="text-2xl md:text-3xl font-black text-secondary leading-tight">{selectedSolution?.title}</h4>
+                                    <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-100">
                                         <ul className="space-y-1 text-slate-600 font-medium text-[10px] md:text-xs">
+                                            <li className="flex items-center gap-2 font-black text-primary"><Check className="w-4 h-4 text-primary" /> ¡Protege hoy, paga mañana!</li>
                                             <li className="flex items-center gap-2 font-black text-secondary"><Check className="w-4 h-4 text-green-500" /> Sin Intereses</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-500" /> Todas las Tarjetas*</li>
                                             <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-500" /> Saldo diferido</li>
                                         </ul>
                                     </div>
-                                    <div className="text-center mt-auto pt-6 px-4 pb-4">
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">12 Pagos Fijos de:</span>
+                                    <div className="text-center mt-auto pt-4">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">12 pagos fijos de:</span>
                                         <div className="text-3xl md:text-4xl font-black text-primary tracking-tight">${Math.round((quote?.totalMsi || 0) / 12).toLocaleString()}</div>
                                         <div className="text-[9px] text-slate-400 mt-2 uppercase font-black tracking-widest leading-none">Inversión anual: ${quote?.totalMsi.toLocaleString()}</div>
                                     </div>
                                 </div>
-                                <button disabled={isPendingSave} onClick={() => handleSaveAndAction('12 MSI')} className="mt-auto w-full bg-primary hover:bg-orange-600 text-white font-black py-4 md:py-6 rounded-b-3xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 text-xs md:text-sm uppercase tracking-wider">
-                                    {isPendingSave ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Phone className="w-4 h-4" /> ELEGIR 12 MSI</>}
-                                </button>
-                            </div>
+                            </button>
 
-                            {upsellQuote ? (
-                                <div className="bg-secondary rounded-3xl shadow-2xl relative flex flex-col overflow-hidden min-h-[440px]">
-                                    <div className="p-4 pb-0">
-                                        <div className="text-primary font-bold text-[9px] uppercase tracking-widest mb-1 flex items-center gap-1"><Shield className="w-3 h-3" /> Nivel Superior</div>
-                                        <h4 className="text-lg md:text-xl font-black text-white">{upsellQuote.title}</h4>
-                                    </div>
-                                    <div className="space-y-3 p-4 flex flex-col flex-grow">
-                                        <div className="bg-white/5 rounded-xl p-3 border border-white/5 text-[10px] md:text-xs text-slate-200 italic leading-relaxed font-medium flex-grow">
-                                            "Si ya vas a impermeabilizar, este nivel garantiza <span className="text-primary font-black">doble aislamiento térmico</span> por solo un pequeño ajuste mensual."
+                            {upsellQuote && (
+                                <button
+                                    disabled={isPendingSave}
+                                    onClick={() => handleSaveAndAction('Upgrade')}
+                                    className="bg-secondary rounded-3xl shadow-xl relative flex flex-col overflow-hidden min-h-[380px] text-left hover:scale-[1.02] transition-all group border-2 border-transparent hover:border-primary/50"
+                                >
+                                    <div className="bg-primary/20 backdrop-blur-sm px-6 py-4 w-full">
+                                        <div className="text-white font-black text-[10px] md:text-xs uppercase tracking-[0.2em] flex items-center gap-2">
+                                            <Shield className="w-4 h-4 text-primary fill-primary" /> Nivel Superior Elite
                                         </div>
-                                        <div className="text-center mt-auto pt-4 px-4 pb-4">
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block text-white/60">12 Pagos Fijos de:</span>
+                                    </div>
+                                    <div className="p-6 space-y-4 flex flex-col flex-grow w-full">
+                                        <h4 className="text-2xl md:text-3xl font-black text-white leading-tight">{upsellQuote.title}</h4>
+                                        <p className="text-[10px] md:text-xs text-primary font-bold leading-tight">
+                                            Inversión inteligente: por solo una pequeña diferencia, obtén protección de por vida y máximo ahorro energético.
+                                        </p>
+                                        <div className="bg-white/5 rounded-2xl p-3 border border-white/10 w-full">
+                                            <ul className="space-y-1.5">
+                                                {(() => {
+                                                    const upsellSol = currentSolutions.find(s => s.internal_id === upsellQuote.internal_id);
+                                                    return getSolutionFeatures(upsellSol).slice(0, 2).map((f, i) => (
+                                                        <li key={i} className="flex items-start text-slate-200 text-[10px] md:text-xs gap-2 font-medium leading-tight">
+                                                            <Check className="w-3 h-3 text-primary flex-shrink-0 mt-0.5" />
+                                                            {f}
+                                                        </li>
+                                                    ));
+                                                })()}
+                                            </ul>
+                                        </div>
+                                        <div className="text-center mt-auto pt-4">
+                                            <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1 block">12 pagos fijos de:</span>
                                             <div className="text-3xl md:text-4xl font-black text-white tracking-tight">${Math.round((upsellQuote?.totalMsi || 0) / 12).toLocaleString()}</div>
-                                            <div className="text-[10px] text-slate-300 mt-3 font-black uppercase tracking-widest opacity-90 leading-none">
-                                                Solo <span className="text-primary font-black">+${Math.round((upsellQuote.totalMsi - (quote?.totalMsi || 0)) / 12).toLocaleString()}</span> mensuales*
+                                            <div className="text-[10px] text-slate-300 mt-2 font-bold uppercase tracking-widest opacity-90 leading-none">
+                                                Solo <span className="text-primary font-black">+$ {Math.round((upsellQuote.totalMsi - (quote?.totalMsi || 0)) / 12).toLocaleString()}</span> mensuales*
                                             </div>
                                         </div>
                                     </div>
-                                    <button disabled={isPendingSave} onClick={() => handleSaveAndAction('Upgrade')} className="mt-auto w-full bg-white text-secondary hover:bg-slate-100 font-black py-4 rounded-b-3xl transition-all flex items-center justify-center gap-2 text-xs md:text-sm uppercase tracking-wider shadow-2xl">
-                                        {isPendingSave ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Zap className="w-4 h-4 fill-primary text-primary" /> QUIERO EL UPGRADE</>}
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="bg-slate-50 rounded-3xl p-6 border border-dashed border-slate-200 flex flex-col items-center justify-center text-center opacity-60">
-                                    <Shield className="w-8 h-8 text-slate-300 mb-3" /><p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Máximo Nivel Alcanzado</p>
-                                </div>
+                                </button>
                             )}
                         </div>
 
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-10 border-t border-slate-100">
-                            <div className="flex items-center gap-4 text-slate-400 text-sm"><Loader2 className="w-5 h-5" /><span>Precios sujetos a visita técnica de validación. Válido por 7 días.</span></div>
-                            <button onClick={() => setCurrentStep('selection')} className="group flex items-center gap-2 text-secondary font-bold hover:text-primary transition-colors py-2 px-4 rounded-full hover:bg-slate-50"><RotateCcw className="w-4 h-4" /> Volver a los Sistemas</button>
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-10 border-t border-slate-100 text-[10px] md:text-xs font-bold text-slate-400">
+                            <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-4 uppercase tracking-widest"><Loader2 className="w-4 h-4" /><span>Precios sujetos a visita técnica de validación. Válido por 7 días.</span></div>
+                                <div className="flex items-center gap-4 text-primary opacity-80 italic"><span>*12 MSI disponible con tarjetas de crédito Visa y Mastercard de bancos mexicanos. No aplica para American Express.</span></div>
+                            </div>
+                            <button onClick={() => setCurrentStep('selection')} className="group flex items-center gap-2 text-secondary font-bold hover:text-primary transition-colors py-2 px-4 rounded-full hover:bg-slate-50 uppercase tracking-widest"><RotateCcw className="w-4 h-4" /> Volver a los Sistemas</button>
                         </div>
                     </motion.div>
                 )
