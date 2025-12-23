@@ -1452,14 +1452,17 @@ export default function AdminDashboard() {
                                                     {/* Column 3: Precios y Asignación */}
                                                     <div className="flex flex-col justify-center space-y-4">
                                                         <div className="space-y-1">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-sm font-black text-secondary dark:text-white">${Math.round(q.precio_total_contado).toLocaleString()}</span>
-                                                                {(!q.pricing_type || q.pricing_type === 'contado') && <span className="text-[7px] font-black px-1.5 py-0.5 bg-secondary dark:bg-primary text-white rounded-md uppercase tracking-tighter">Liquidado</span>}
-                                                            </div>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-[11px] font-bold text-primary">${Math.round(q.precio_total_msi).toLocaleString()} <span className="text-[8px] opacity-70">MSI</span></span>
-                                                                {q.pricing_type === 'lista' && <span className="text-[7px] font-black px-1.5 py-0.5 bg-primary text-white rounded-md uppercase tracking-tighter">Lista</span>}
-                                                            </div>
+                                                            {(!q.pricing_type || q.pricing_type === 'contado') ? (
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-sm font-black text-secondary dark:text-white">${Math.round(q.precio_total_contado).toLocaleString()}</span>
+                                                                    <span className="text-[7px] font-black px-1.5 py-0.5 bg-secondary dark:bg-primary text-white rounded-md uppercase tracking-tighter">Efectivo</span>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-sm font-black text-primary">${Math.round(q.precio_total_msi).toLocaleString()}</span>
+                                                                    <span className="text-[7px] font-black px-1.5 py-0.5 bg-primary text-white rounded-md uppercase tracking-tighter">Lista (MSI)</span>
+                                                                </div>
+                                                            )}
                                                         </div>
 
                                                         <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
@@ -2348,7 +2351,7 @@ export default function AdminDashboard() {
                                                     disabled={!canEditQuote(selectedLeadForDetail)}
                                                     onClick={() => updateLeadWithRecalculation({ pricing_type: 'contado' })}
                                                     className={`flex-1 py-2 text-[10px] font-black uppercase rounded-lg transition-all ${(!selectedLeadForDetail.pricing_type || selectedLeadForDetail.pricing_type === 'contado') ? 'bg-secondary dark:bg-primary text-white shadow-md' : 'text-slate-400 dark:text-slate-300'}`}
-                                                >Contado</button>
+                                                >Efectivo</button>
                                                 <button
                                                     type="button"
                                                     disabled={!canEditQuote(selectedLeadForDetail)}
@@ -2448,7 +2451,7 @@ export default function AdminDashboard() {
                                                         {Math.round((Number(selectedLeadForDetail.pricing_type === 'lista' ? selectedLeadForDetail.precio_total_msi : selectedLeadForDetail.precio_total_contado) + Number(selectedLeadForDetail.costo_logistico || 0)) * (selectedLeadForDetail.factura ? 1.16 : 1)).toLocaleString()}
                                                     </span>
                                                 </div>
-                                                <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold italic text-center">* Este resumen incluye base {selectedLeadForDetail.pricing_type === 'lista' ? 'lista' : 'contado'} + logística + impuestos aplicables.</p>
+                                                <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold italic text-center">* Este resumen incluye base {selectedLeadForDetail.pricing_type === 'lista' ? 'lista' : 'efectivo'} + logística + impuestos aplicables.</p>
                                             </div>
                                         </div>
                                     </div>
@@ -2599,7 +2602,7 @@ export default function AdminDashboard() {
                                                         <h5 className="text-sm font-black text-slate-900 uppercase mb-1">
                                                             {products.find(p => p.id === selectedLeadForDetail.solution_id)?.title || 'Sistema Thermo House'}
                                                             <span className="ml-2 text-[7px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full border border-slate-200 align-middle font-bold">
-                                                                P. {selectedLeadForDetail.pricing_type === 'lista' ? 'LISTA' : 'CONTADO'}
+                                                                P. {selectedLeadForDetail.pricing_type === 'lista' ? 'LISTA' : 'EFECTIVO'}
                                                             </span>
                                                         </h5>
                                                         <div className="text-[10px] text-slate-500 font-medium leading-relaxed pr-8 space-y-1">
