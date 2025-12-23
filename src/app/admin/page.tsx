@@ -2416,10 +2416,9 @@ export default function AdminDashboard() {
                                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-300 font-bold">$</span>
                                                 <input
                                                     type="number"
-                                                    className={`w-full pl-8 pr-4 py-3 bg-white dark:bg-slate-800 border border-orange-200 dark:border-orange-900/50 rounded-xl text-sm font-bold text-orange-600 dark:text-orange-400 outline-none focus:ring-4 focus:ring-orange-100 dark:focus:ring-orange-950/30 ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 dark:bg-slate-900 opacity-60' : ''}`}
+                                                    className="w-full pl-8 pr-4 py-3 bg-white dark:bg-slate-800 border border-orange-200 dark:border-orange-900/50 rounded-xl text-sm font-bold text-orange-600 dark:text-orange-400 outline-none focus:ring-4 focus:ring-orange-100 dark:focus:ring-orange-950/30"
                                                     value={selectedLeadForDetail.costo_logistico === 0 ? '' : (selectedLeadForDetail.costo_logistico || '')}
                                                     placeholder="0"
-                                                    readOnly={!canEditQuote(selectedLeadForDetail)}
                                                     onChange={e => updateLeadWithRecalculation({ costo_logistico: e.target.value === '' ? 0 : Number(e.target.value) })}
                                                 />
                                             </div>
@@ -2477,7 +2476,7 @@ export default function AdminDashboard() {
                                         <FileText className="w-4 h-4" />
                                         Vista Previa Cotización
                                     </button>
-                                    {canEditQuote(selectedLeadForDetail) && (
+                                    {(canEditQuote(selectedLeadForDetail) || session?.role === 'editor') && (
                                         <button
                                             disabled={isSavingDetail}
                                             className="bg-secondary dark:bg-primary text-white py-3.5 rounded-xl font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-primary/90 transition-all shadow-lg shadow-secondary/20 dark:shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] text-[10px]"
