@@ -2503,7 +2503,7 @@ export default function AdminDashboard() {
             {/* Quote Preview Modal */}
             {
                 showQuotePreview && selectedLeadForDetail && (
-                    <div className="fixed inset-0 bg-secondary/95 dark:bg-slate-950/98 z-[150] overflow-y-auto p-0 md:p-12 flex items-start justify-center backdrop-blur-md quote-preview-overlay">
+                    <div className="fixed inset-0 bg-secondary/95 dark:bg-slate-950/98 z-[150] overflow-y-auto p-0 md:px-12 md:pb-12 md:pt-0 flex items-start justify-center backdrop-blur-md quote-preview-overlay">
                         <div id="printable-quote-modal-content" className="w-full max-w-4xl bg-white shadow-2xl relative border border-slate-200 dark:border-slate-800">
                             {/* Browser Controls */}
                             <div className="sticky top-0 bg-slate-900 p-4 flex items-center justify-between z-10 print:hidden border-b border-white/10">
@@ -2543,29 +2543,29 @@ export default function AdminDashboard() {
                                 const grandTotal = subtotal + iva;
 
                                 return (
-                                    <div id="printable-quote" className="bg-white p-8 md:p-16 text-slate-800 font-sans print:p-0 print:m-0">
-                                        {/* Header Logo */}
-                                        <div className="flex flex-row justify-between items-start mb-10 border-b-4 border-primary pb-6">
+                                    <div id="printable-quote" className="bg-white p-6 md:px-16 md:pb-12 md:pt-0 text-slate-800 font-sans print:p-0 print:m-0 print:text-black">
+                                        {/* Header Banner - Compounded for single page */}
+                                        <div className="flex flex-row justify-between items-center mb-6 border-b-4 border-primary py-6 px-8 bg-slate-50/50 rounded-b-2xl print:bg-transparent print:py-4">
                                             <div className="flex items-center gap-3">
                                                 <img src="/logo.png" alt="Thermo House" className="h-10 w-auto" />
                                                 <div>
-                                                    <h2 className="text-xl font-black text-secondary tracking-tighter leading-tight">THERMO HOUSE</h2>
+                                                    <h2 className="text-xl font-black text-slate-900 tracking-tighter leading-tight">THERMO HOUSE</h2>
                                                     <p className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">Aislamiento Térmico & Acústico</p>
                                                 </div>
                                             </div>
-                                            <div className="w-1/3 text-right">
+                                            <div className="text-right">
                                                 <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">Cotización Automática</div>
-                                                <div className="text-xs font-black text-secondary">Folio: {getFolio(selectedLeadForDetail)}</div>
+                                                <div className="text-sm font-black text-slate-900">Folio: {getFolio(selectedLeadForDetail)}</div>
                                                 <div className="text-[9px] font-bold text-slate-400 mt-0.5 uppercase">Vence en: 7 días hábiles</div>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-8 mb-10" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+                                        <div className="grid grid-cols-2 gap-8 mb-6" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
                                             <div>
                                                 <h4 className="text-[8px] font-black uppercase tracking-widest text-primary mb-2">Información del Cliente</h4>
                                                 <div className="space-y-1">
-                                                    <p className="text-base font-black text-secondary uppercase leading-none">{selectedLeadForDetail.contact_info.name}</p>
-                                                    <p className="text-[10px] font-bold text-slate-600 flex items-center gap-2">
+                                                    <p className="text-base font-black text-slate-900 uppercase leading-none">{selectedLeadForDetail.contact_info.name}</p>
+                                                    <p className="text-sm font-bold text-slate-600 flex items-center gap-2">
                                                         <Phone className="w-2.5 h-2.5" /> +52 {selectedLeadForDetail.contact_info.phone}
                                                     </p>
                                                     <p className="text-[10px] font-medium text-slate-400 flex items-center gap-2 mt-1.5">
@@ -2579,13 +2579,13 @@ export default function AdminDashboard() {
                                                 <div className="space-y-1">
                                                     <p className="text-[10px] font-bold text-slate-600">Fecha: {formatDateCDMX(selectedLeadForDetail.created_at, { hour12: false })}</p>
                                                     <p className="text-[10px] font-bold text-slate-600">Vigente hasta: {formatShortDateCDMX(new Date(new Date(selectedLeadForDetail.created_at).getTime() + 7 * 24 * 60 * 60 * 1000))}</p>
-                                                    <p className="text-[10px] font-black text-secondary mt-2 uppercase tracking-tight">Área: {selectedLeadForDetail.area} m²</p>
+                                                    <p className="text-sm font-black text-slate-900 mt-2 uppercase tracking-tight">Área: {selectedLeadForDetail.area} m²</p>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Product Section */}
-                                        <div className="mb-10">
+                                        {/* Product Section - Reduced padding */}
+                                        <div className="mb-6">
                                             <div className="bg-slate-900 text-white p-4 rounded-t-lg">
                                                 <div className="grid grid-cols-4 text-[8px] font-black uppercase tracking-[0.2em]">
                                                     <div className="col-span-2">Concepto / Sistema Aplicado</div>
@@ -2593,10 +2593,10 @@ export default function AdminDashboard() {
                                                     <div className="text-right">Cantidades</div>
                                                 </div>
                                             </div>
-                                            <div className="border-x border-b border-slate-100 p-6 space-y-6">
+                                            <div className="border-x border-b border-slate-100 p-4 space-y-4">
                                                 <div className="grid grid-cols-4 items-start">
                                                     <div className="col-span-2">
-                                                        <h5 className="text-sm font-black text-secondary uppercase mb-1">
+                                                        <h5 className="text-sm font-black text-slate-900 uppercase mb-1">
                                                             {products.find(p => p.id === selectedLeadForDetail.solution_id)?.title || 'Sistema Thermo House'}
                                                             <span className="ml-2 text-[7px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full border border-slate-200 align-middle font-bold">
                                                                 P. {selectedLeadForDetail.pricing_type === 'lista' ? 'LISTA' : 'CONTADO'}
@@ -2621,8 +2621,8 @@ export default function AdminDashboard() {
                                                             })()}
                                                         </div>
                                                     </div>
-                                                    <div className="text-center text-xs font-black text-slate-600">{selectedLeadForDetail.area} m²</div>
-                                                    <div className="text-right text-base font-black text-secondary">
+                                                    <div className="text-center text-sm font-black text-slate-600">{selectedLeadForDetail.area} m²</div>
+                                                    <div className="text-right text-sm font-black text-slate-900">
                                                         ${basePrice.toLocaleString()}
                                                     </div>
                                                 </div>
@@ -2630,11 +2630,11 @@ export default function AdminDashboard() {
                                                 {logistics > 0 && (
                                                     <div className="grid grid-cols-4 items-center bg-orange-50/50 p-3 rounded-lg border border-orange-100">
                                                         <div className="col-span-2">
-                                                            <h6 className="text-[8px] font-black text-orange-800 uppercase tracking-widest">Cargos por Logística Foránea</h6>
-                                                            <p className="text-[7.5px] font-bold text-orange-600/70">Traslado de equipo y personal a zona {selectedLeadForDetail.ciudad}</p>
+                                                            <h6 className="text-[10px] font-black text-orange-800 uppercase tracking-widest">Cargo por Logística Foránea</h6>
+                                                            <p className="text-[9px] font-bold text-orange-600/70">Traslado de equipo y personal a zona {selectedLeadForDetail.ciudad}</p>
                                                         </div>
-                                                        <div className="text-center text-[10px]">--</div>
-                                                        <div className="text-right text-[10px] font-black text-orange-800">
+                                                        <div className="text-center text-sm font-black text-orange-300">--</div>
+                                                        <div className="text-right text-sm font-black text-orange-800">
                                                             + ${logistics.toLocaleString()}
                                                         </div>
                                                     </div>
@@ -2646,26 +2646,26 @@ export default function AdminDashboard() {
                                                 <div className="grid grid-cols-4 items-start w-full">
                                                     <div className="col-span-2" />
                                                     <div className="col-span-2 space-y-3">
-                                                        <div className="flex justify-between items-center text-slate-400 font-bold text-[10px] uppercase tracking-widest pl-12">
+                                                        <div className="flex justify-between items-center text-slate-400 font-bold text-sm uppercase tracking-widest pl-12">
                                                             <span>Subtotal</span>
-                                                            <span className="font-black text-secondary">${basePrice.toLocaleString()}</span>
+                                                            <span className="font-black text-slate-900">${basePrice.toLocaleString()}</span>
                                                         </div>
                                                         {logistics > 0 && (
-                                                            <div className="flex justify-between items-center text-orange-600 font-bold text-[10px] uppercase tracking-widest pl-12">
+                                                            <div className="flex justify-between items-center text-orange-600 font-bold text-sm uppercase tracking-widest pl-12">
                                                                 <span>Logística</span>
                                                                 <span className="font-black">${logistics.toLocaleString()}</span>
                                                             </div>
                                                         )}
                                                         {selectedLeadForDetail.factura && (
-                                                            <div className="flex justify-between items-center font-bold text-[10px] uppercase tracking-widest text-blue-500 pl-12">
+                                                            <div className="flex justify-between items-center font-bold text-sm uppercase tracking-widest text-blue-500 pl-12">
                                                                 <span>IVA (16%)</span>
                                                                 <span className="font-black">${iva.toLocaleString()}</span>
                                                             </div>
                                                         )}
                                                         <div className="h-px bg-slate-200 ml-12" />
                                                         <div className="flex justify-between items-center pl-12">
-                                                            <span className="text-[10px] font-black text-secondary uppercase tracking-widest">Total Final</span>
-                                                            <span className="text-xl font-black text-primary">${grandTotal.toLocaleString()}</span>
+                                                            <span className="text-sm font-black text-slate-900 uppercase tracking-widest">Total Final</span>
+                                                            <span className="text-lg font-black text-primary">${grandTotal.toLocaleString()}</span>
                                                         </div>
                                                         {selectedLeadForDetail.pricing_type === 'lista' && (
                                                             <p className="text-[7.5px] font-extrabold text-slate-400 text-right uppercase leading-tight">* Sujeto a 12 Meses Sin Intereses con tarjetas participantes.</p>
@@ -2690,32 +2690,25 @@ export default function AdminDashboard() {
                                                     </p>
                                                 </div>
                                             </div>
-                                            <div className="text-right pt-4">
-                                                <div className="h-px bg-slate-200 mb-3" />
-                                                <p className="text-[9px] font-black uppercase tracking-widest text-secondary">Thermo House México</p>
+                                            <div className="text-right flex flex-col justify-end">
                                                 {(() => {
                                                     const advisor = selectedLeadForDetail.advisor || session;
                                                     const advisorName = advisor?.name || 'Asesor';
                                                     const advisorLastName = advisor?.apellido || '';
                                                     const advisorPhone = advisor?.telefono || '999 448 6445';
-                                                    const advisorEmail = advisor?.contacto_email || advisor?.email || 'ventas@thermohouse.mx';
 
                                                     return (
-                                                        <div className="mt-1.5 flex flex-col items-end text-right">
-                                                            <div className="bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100 flex flex-col items-end">
-                                                                <p className="text-[8px] font-black text-primary uppercase tracking-widest mb-0.5">Atendido por:</p>
-                                                                <p className="text-xs font-black text-secondary uppercase tracking-tight">
-                                                                    {advisorName} {advisorLastName}
-                                                                </p>
+                                                        <div className="flex flex-col items-end text-right">
+                                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Atendido por:</p>
+                                                            <p className="text-sm font-black text-slate-900 uppercase tracking-tight leading-none mb-1">
+                                                                {advisorName} {advisorLastName}
+                                                            </p>
+                                                            <div className="flex items-center gap-1.5 text-sm font-bold text-slate-600">
+                                                                <Phone className="w-2.5 h-2.5 text-primary" />
+                                                                <span>{advisorPhone}</span>
                                                             </div>
-                                                            <div className="mt-1.5 flex gap-3 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-                                                                {advisorPhone && (
-                                                                    <div className="flex items-center gap-1">
-                                                                        <Phone className="w-2.5 h-2.5 text-primary" />
-                                                                        <span>{advisorPhone}</span>
-                                                                    </div>
-                                                                )}
-                                                            </div>
+                                                            <div className="h-0.5 w-32 bg-primary mt-3 opacity-30" />
+                                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-800 mt-2">Thermo House México</p>
                                                         </div>
                                                     );
                                                 })()}
@@ -3421,11 +3414,39 @@ export default function AdminDashboard() {
 
             {/* Print Styles */}
             <style jsx global>{`
-                @media print {
-                    @page {
-                        size: letter portrait;
-                        margin: 0;
-                    }
+            @media print {
+                @page {
+                    size: letter portrait;
+                    margin: 0.5cm;
+                }
+
+                body {
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                    background: white !important;
+                }
+
+                #printable-quote {
+                    width: 100% !important;
+                    height: auto !important;
+                    overflow: visible !important;
+                    page-break-after: avoid !important;
+                    page-break-inside: avoid !important;
+                }
+
+                /* Force black text for contrast in print */
+                .text-slate-900, .text-secondary {
+                    color: #000000 !important;
+                }
+                
+                .text-slate-600, .text-slate-400 {
+                    color: #333333 !important;
+                }
+
+                html, body {
+                    height: auto !important;
+                    overflow: visible !important;
+                }
 
                     /* General Print Clean Up */
                     body {
