@@ -134,8 +134,14 @@ export async function updateQuote(id: string, updates: any) {
                 return { success: false, message: 'No se pudo verificar el estado de la cotización.' };
             }
 
-            if (currentQuote.status === 'Cerrado' && !updates.assigned_to) {
-                return { success: false, message: 'Esta cotización está cerrada y no puede ser modificada por un asesor. Contacte a administración.' };
+            if (currentQuote.status === 'Cerrado') {
+                // Allow specific safe fields even if closed (Logistics adjustment, Internal Notes, Assignments)
+                const allowedKeys = ['costo_logistico', 'notas', 'assigned_to', 'assigned_user'];
+                const attemptToEditRestricted = Object.keys(updates).some(key => !allowedKeys.includes(key) && (updates as any)[key] !== (currentQuote as any)[key]);
+
+                if (attemptToEditRestricted && !updates.assigned_to) {
+                    return { success: false, message: 'Esta cotización está cerrada para cambios comerciales mayores. Contacte a administración.' };
+                }
             }
         } else if (session.role !== 'admin' && session.role !== 'manager') {
             return { success: false, message: 'No tienes permisos para realizar esta acción.' };

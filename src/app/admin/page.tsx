@@ -1259,7 +1259,7 @@ export default function AdminDashboard() {
                                             <div key={advisorName} className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-700/50 space-y-4 hover:border-primary/20 transition-all group">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center text-primary border border-slate-100 dark:border-slate-700 font-black shadow-sm group-hover:bg-primary group-hover:text-white transition-all text-lg">
-                                                        {advisorName[0]}
+                                                        {advisorName?.[0] || '?'}
                                                     </div>
                                                     <div className="flex-1">
                                                         <div className="flex justify-between items-start">
@@ -2458,11 +2458,10 @@ export default function AdminDashboard() {
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Notas y Comentarios Internos</label>
                                     <textarea
-                                        className={`w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-secondary dark:text-white min-h-[100px] outline-none focus:ring-4 focus:ring-primary/10 transition-all ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 dark:bg-slate-900' : ''}`}
+                                        className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-secondary dark:text-white min-h-[100px] outline-none focus:ring-4 focus:ring-primary/10 transition-all"
                                         placeholder="Escribe notas sobre el cliente o el proceso de venta..."
-                                        value={selectedLeadForDetail.notes || ''}
-                                        readOnly={!canEditQuote(selectedLeadForDetail)}
-                                        onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, notes: e.target.value })}
+                                        value={selectedLeadForDetail.notas || ''}
+                                        onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, notas: e.target.value })}
                                     />
                                 </div>
 
