@@ -50,6 +50,25 @@ const formatShortDateCDMX = (dateStr: string | Date) => {
     }
 };
 
+const getFolio = (quote: any) => {
+    if (!quote) return '';
+    try {
+        const city = quote.ciudad || 'MX';
+        const initials = city.slice(0, 3).toUpperCase();
+        const date = new Date(quote.created_at || new Date());
+        // Use full year and include seconds for better uniqueness
+        const datePart = date.getFullYear().toString() +
+            (date.getMonth() + 1).toString().padStart(2, '0') +
+            date.getDate().toString().padStart(2, '0');
+        const timePart = date.getHours().toString().padStart(2, '0') +
+            date.getMinutes().toString().padStart(2, '0') +
+            date.getSeconds().toString().padStart(2, '0');
+        return `${initials}-${datePart}-${timePart}`;
+    } catch (e) {
+        return quote.id?.slice(0, 8).toUpperCase() || 'N/A';
+    }
+};
+
 export default function AdminDashboard() {
     const [session, setSession] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'dashboard' | 'quotes' | 'users' | 'prices' | 'locations' | 'products' | 'config'>('dashboard');
@@ -336,11 +355,11 @@ export default function AdminDashboard() {
         const up_msi = newLead.manual_unit_price ?? baseUP_Msi;
 
         const area = Number(newLead.area) || 0;
-        const logistics = Number(newLead.costo_logistico || 0);
         const MIN_PRICE = 5900;
 
-        newLead.precio_total_contado = Math.max(Math.round(area * up_contado), MIN_PRICE) + logistics;
-        newLead.precio_total_msi = Math.max(Math.round(area * up_msi), MIN_PRICE) + logistics;
+        // Subtotal should NOT include logistics anymore to avoid duplication
+        newLead.precio_total_contado = Math.max(Math.round(area * up_contado), MIN_PRICE);
+        newLead.precio_total_msi = Math.max(Math.round(area * up_msi), MIN_PRICE);
 
         setSelectedLeadForDetail(newLead);
     };
@@ -674,8 +693,8 @@ export default function AdminDashboard() {
 
             const area = Number(manualLeadData.area);
             const logisticCost = Number(manualLeadData.costo_logistico || 0);
-            const totalContado = (area * (selectedProduct.precio_contado_m2 || 0)) + logisticCost;
-            const totalMsi = (area * (selectedProduct.precio_msi_m2 || 0)) + logisticCost;
+            const totalContado = (area * (selectedProduct.precio_contado_m2 || 0));
+            const totalMsi = (area * (selectedProduct.precio_msi_m2 || 0));
 
             const payload = {
                 address: manualLeadData.address || 'Captura Manual',
@@ -871,11 +890,14 @@ export default function AdminDashboard() {
 
         return matchesSearch && matchesStatus && matchesStartDate && matchesEndDate;
     }).sort((a, b) => {
-        // Priority 1: Status 'Nuevo' first
-        if (a.status === 'Nuevo' && b.status !== 'Nuevo') return -1;
-        if (a.status !== 'Nuevo' && b.status === 'Nuevo') return 1;
+        // Multi-level sort: 1. City (ASC), 2. Time (ASC - Most recent at the end)
+        const cityA = (a.ciudad || '').toLowerCase();
+        const cityB = (b.ciudad || '').toLowerCase();
 
-        // Priority 2: Oldest first (ASC)
+        if (cityA < cityB) return -1;
+        if (cityA > cityB) return 1;
+
+        // Within same city, sort by date/time ascending (newest at the bottom)
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
     });
 
@@ -2069,7 +2091,7 @@ export default function AdminDashboard() {
                                         <UserCircle className="w-7 h-7 text-primary" />
                                         Ficha del Cliente
                                     </h3>
-                                    <p className="text-slate-400 dark:text-slate-300 text-sm font-medium">Folio: #{selectedLeadForDetail.id.slice(0, 8).toUpperCase()}</p>
+                                    <p className="text-slate-400 dark:text-slate-300 text-sm font-medium">Folio: {getFolio(selectedLeadForDetail)}</p>
                                 </div>
                                 <button onClick={() => setSelectedLeadForDetail(null)} className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all text-slate-400 dark:text-slate-300">
                                     <X className="w-5 h-5" />
@@ -2297,29 +2319,39 @@ export default function AdminDashboard() {
                                                 <input
                                                     type="number"
                                                     className={`w-full pl-8 pr-4 py-3 bg-white dark:bg-slate-800 border border-orange-200 dark:border-orange-900/50 rounded-xl text-sm font-bold text-orange-600 dark:text-orange-400 outline-none focus:ring-4 focus:ring-orange-100 dark:focus:ring-orange-950/30 ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 dark:bg-slate-900 opacity-60' : ''}`}
-                                                    value={selectedLeadForDetail.costo_logistico || 0}
+                                                    value={selectedLeadForDetail.costo_logistico === 0 ? '' : (selectedLeadForDetail.costo_logistico || '')}
+                                                    placeholder="0"
                                                     readOnly={!canEditQuote(selectedLeadForDetail)}
-                                                    onChange={e => updateLeadWithRecalculation({ costo_logistico: Number(e.target.value) })}
+                                                    onChange={e => updateLeadWithRecalculation({ costo_logistico: e.target.value === '' ? 0 : Number(e.target.value) })}
                                                 />
                                             </div>
                                         </div>
-                                        <div className="space-y-1 md:col-span-2">
-                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">COSTO TOTAL DEL SISTEMA ($)</label>
-                                            <div className="relative">
-                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-200 font-bold">$</span>
-                                                <input
-                                                    type="number"
-                                                    className="w-full pl-8 pr-4 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-lg font-black text-slate-400 dark:text-slate-200 outline-none cursor-not-allowed shadow-inner"
-                                                    value={Math.round(selectedLeadForDetail.pricing_type === 'lista' ? selectedLeadForDetail.precio_total_msi : selectedLeadForDetail.precio_total_contado)}
-                                                    readOnly
-                                                />
-                                            </div>
-                                            <div className="mt-2 flex items-center justify-between px-2">
-                                                <p className="text-[9px] text-slate-400 dark:text-slate-300 font-bold italic">* Precio base sin logística ni impuestos.</p>
-                                                <div className="text-[11px] font-black text-secondary dark:text-white uppercase bg-slate-100 dark:bg-slate-800/80 px-3 py-1 rounded-lg flex gap-4 border border-slate-200 dark:border-slate-700">
-                                                    <span>Subtotal: <span className="text-primary">${Number(selectedLeadForDetail.pricing_type === 'lista' ? selectedLeadForDetail.precio_total_msi : selectedLeadForDetail.precio_total_contado).toLocaleString()}</span></span>
-                                                    {selectedLeadForDetail.factura && <span className="text-blue-600 dark:text-blue-400">+ IVA (16%): ${(Number(selectedLeadForDetail.pricing_type === 'lista' ? selectedLeadForDetail.precio_total_msi : selectedLeadForDetail.precio_total_contado) * 0.16).toLocaleString()}</span>}
+                                        <div className="space-y-4">
+                                            {/* Price Breakdown */}
+                                            <div className="grid grid-cols-1 gap-3 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                                                <div className="flex justify-between items-center px-1">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Subtotal (Sistema)</span>
+                                                    <span className="text-sm font-black text-secondary dark:text-white">${Number(selectedLeadForDetail.pricing_type === 'lista' ? selectedLeadForDetail.precio_total_msi : selectedLeadForDetail.precio_total_contado).toLocaleString()}</span>
                                                 </div>
+                                                <div className="flex justify-between items-center px-1">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Costo Logístico</span>
+                                                    <span className="text-sm font-black text-orange-600 dark:text-orange-400">+ ${Number(selectedLeadForDetail.costo_logistico || 0).toLocaleString()}</span>
+                                                </div>
+                                                {selectedLeadForDetail.factura && (
+                                                    <div className="flex justify-between items-center px-1">
+                                                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">IVA (16%)</span>
+                                                        <span className="text-sm font-black text-blue-600 dark:text-blue-400">+ ${((Number(selectedLeadForDetail.pricing_type === 'lista' ? selectedLeadForDetail.precio_total_msi : selectedLeadForDetail.precio_total_contado) + Number(selectedLeadForDetail.costo_logistico || 0)) * 0.16).toLocaleString()}</span>
+                                                    </div>
+                                                )}
+                                                <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
+                                                <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">TOTAL FINAL ESTIMADO</label>
+                                                <div className="flex items-center gap-3 px-4 py-3 bg-primary/5 dark:bg-primary/10 rounded-xl border border-primary/20">
+                                                    <span className="text-primary font-black text-xl">$</span>
+                                                    <span className="text-2xl font-black text-primary tracking-tight">
+                                                        {Math.round((Number(selectedLeadForDetail.pricing_type === 'lista' ? selectedLeadForDetail.precio_total_msi : selectedLeadForDetail.precio_total_contado) + Number(selectedLeadForDetail.costo_logistico || 0)) * (selectedLeadForDetail.factura ? 1.16 : 1)).toLocaleString()}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold italic text-center">* Este resumen incluye base {selectedLeadForDetail.pricing_type === 'lista' ? 'lista' : 'contado'} + logística + impuestos aplicables.</p>
                                             </div>
                                         </div>
                                     </div>
@@ -2410,7 +2442,7 @@ export default function AdminDashboard() {
                             {(() => {
                                 const basePrice = Number(selectedLeadForDetail.pricing_type === 'lista' ? selectedLeadForDetail.precio_total_msi : selectedLeadForDetail.precio_total_contado);
                                 const logistics = Number(selectedLeadForDetail.costo_logistico || 0);
-                                const subtotal = basePrice + logistics;
+                                const subtotal = basePrice + logistics; // This subtotal is base + logistics
                                 const iva = selectedLeadForDetail.factura ? subtotal * 0.16 : 0;
                                 const grandTotal = subtotal + iva;
 
@@ -2427,7 +2459,7 @@ export default function AdminDashboard() {
                                             </div>
                                             <div className="w-1/3 text-right">
                                                 <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">Cotización Automática</div>
-                                                <div className="text-xs font-black text-secondary">#{selectedLeadForDetail.id.slice(0, 8).toUpperCase()}</div>
+                                                <div className="text-xs font-black text-secondary">Folio: {getFolio(selectedLeadForDetail)}</div>
                                                 <div className="text-[9px] font-bold text-slate-400 mt-0.5 uppercase">Vence en: 7 días hábiles</div>
                                             </div>
                                         </div>
@@ -2451,7 +2483,7 @@ export default function AdminDashboard() {
                                                 <div className="space-y-1">
                                                     <p className="text-[10px] font-bold text-slate-600">Fecha: {formatDateCDMX(selectedLeadForDetail.created_at, { hour12: false })}</p>
                                                     <p className="text-[10px] font-bold text-slate-600">Vigente hasta: {formatShortDateCDMX(new Date(new Date(selectedLeadForDetail.created_at).getTime() + 7 * 24 * 60 * 60 * 1000))}</p>
-                                                    <p className="text-[10px] font-black text-secondary mt-2 uppercase tracking-tight">Área Verificada: {selectedLeadForDetail.area} m²</p>
+                                                    <p className="text-[10px] font-black text-secondary mt-2 uppercase tracking-tight">Área: {selectedLeadForDetail.area} m²</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -2520,8 +2552,14 @@ export default function AdminDashboard() {
                                                     <div className="col-span-2 space-y-3">
                                                         <div className="flex justify-between items-center text-slate-400 font-bold text-[10px] uppercase tracking-widest pl-12">
                                                             <span>Subtotal</span>
-                                                            <span className="font-black text-secondary">${subtotal.toLocaleString()}</span>
+                                                            <span className="font-black text-secondary">${basePrice.toLocaleString()}</span>
                                                         </div>
+                                                        {logistics > 0 && (
+                                                            <div className="flex justify-between items-center text-orange-600 font-bold text-[10px] uppercase tracking-widest pl-12">
+                                                                <span>Logística</span>
+                                                                <span className="font-black">${logistics.toLocaleString()}</span>
+                                                            </div>
+                                                        )}
                                                         {selectedLeadForDetail.factura && (
                                                             <div className="flex justify-between items-center font-bold text-[10px] uppercase tracking-widest text-blue-500 pl-12">
                                                                 <span>IVA (16%)</span>
@@ -2552,7 +2590,7 @@ export default function AdminDashboard() {
                                                     </p>
                                                     <p className="text-[8px] font-bold text-slate-400 flex items-center gap-2 leading-tight">
                                                         <CheckCircle2 className="w-2.5 h-2.5 text-primary flex-shrink-0" />
-                                                        Garantía por escrito de 10 años en impermeabilización y aislamiento.
+                                                        La garantía de por vida depende de los mantenimientos programados y oportunos.
                                                     </p>
                                                 </div>
                                             </div>

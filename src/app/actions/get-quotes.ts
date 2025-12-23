@@ -46,7 +46,9 @@ export async function getQuotes(cityFilter?: string) {
             query = query.eq('ciudad', cityFilter);
         }
 
-        const { data, error } = await query.order('created_at', { ascending: false });
+        const { data, error } = await query
+            .order('ciudad', { ascending: true })
+            .order('created_at', { ascending: true });
 
         if (error) {
             console.error('Error fetching quotes:', error);
