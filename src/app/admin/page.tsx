@@ -410,7 +410,9 @@ export default function AdminDashboard() {
                     return {
                         ...q,
                         assigned_to: userId || null,
-                        assigned_user: assignedUser ? { id: assignedUser.id, name: assignedUser.name, apellido: assignedUser.apellido } : null
+                        assigned_user: assignedUser ? { id: assignedUser.id, name: assignedUser.name, apellido: assignedUser.apellido } : null,
+                        // Ensure advisor is present for dashboard grouping if not already
+                        advisor: q.advisor || (assignedUser ? { name: assignedUser.name, apellido: assignedUser.apellido, telefono: assignedUser.telefono, email: assignedUser.email } : null)
                     };
                 }
                 return q;
@@ -980,6 +982,69 @@ export default function AdminDashboard() {
                             </div>
                         </div>
 
+                        {/* 0. Sales Pipeline Report */}
+                        <div className="bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-8">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div>
+                                    <h3 className="text-xl font-black text-secondary dark:text-white uppercase tracking-tight flex items-center gap-2">
+                                        <TrendingUp className="w-5 h-5 text-primary" />
+                                        Pipeline de Ventas
+                                    </h3>
+                                    <p className="text-slate-400 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest mt-1">Estado del embudo por cantidad e importe total</p>
+                                </div>
+                                <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Valor Total Pipeline:</span>
+                                    <span className="text-sm font-black text-primary">
+                                        ${Math.round(dashboardQuotes.reduce((sum, q) => {
+                                            const base = q.pricing_type === 'lista' ? (q.precio_total_msi || 0) : (q.precio_total_contado || 0);
+                                            const logistics = Number(q.costo_logistico || 0);
+                                            return sum + ((base + logistics) * (q.factura ? 1.16 : 1));
+                                        }, 0)).toLocaleString()}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {['Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado'].map((status) => {
+                                    const quotes = dashboardQuotes.filter(q => q.status === status);
+                                    const amount = quotes.reduce((sum, q) => {
+                                        const base = q.pricing_type === 'lista' ? (q.precio_total_msi || 0) : (q.precio_total_contado || 0);
+                                        const logistics = Number(q.costo_logistico || 0);
+                                        return sum + ((base + logistics) * (q.factura ? 1.16 : 1));
+                                    }, 0);
+                                    const colors = {
+                                        'Nuevo': 'bg-blue-500',
+                                        'Contactado': 'bg-amber-500',
+                                        'Visita Técnica': 'bg-purple-500',
+                                        'Cerrado': 'bg-green-500'
+                                    };
+                                    const lightColors = {
+                                        'Nuevo': 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400',
+                                        'Contactado': 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400',
+                                        'Visita Técnica': 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400',
+                                        'Cerrado': 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400'
+                                    };
+
+                                    return (
+                                        <div key={status} className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-700/50 space-y-4 hover:shadow-lg transition-all group">
+                                            <div className="flex justify-between items-start">
+                                                <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${lightColors[status as keyof typeof lightColors]}`}>
+                                                    {status}
+                                                </div>
+                                                <div className="text-xs font-black text-slate-400 group-hover:text-primary transition-colors">{quotes.length} Leads</div>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <div className="text-xl font-black text-secondary dark:text-white">${Math.round(amount).toLocaleString()}</div>
+                                                <div className="w-full h-1 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                                                    <div className={`h-full ${colors[status as keyof typeof colors]} transition-all duration-1000`} style={{ width: `${dashboardQuotes.length > 0 ? (quotes.length / dashboardQuotes.length) * 100 : 0}%` }} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                         {/* 1. Quick Stats Grid */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                             {[
@@ -1126,20 +1191,34 @@ export default function AdminDashboard() {
                                     <button onClick={() => { setActiveTab('quotes'); setStatusFilter('Nuevo'); }} className="text-[9px] font-black py-2 px-4 bg-white dark:bg-slate-800 border border-orange-100 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 rounded-xl hover:bg-orange-600 hover:text-white transition-all uppercase tracking-widest shadow-sm">Ver Todos</button>
                                 </div>
                                 <div className="space-y-3">
-                                    {dashboardQuotes.filter(q => q.status === 'Nuevo').slice(0, 4).map((q, i) => (
-                                        <div key={i} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-orange-100 dark:border-orange-900/30 flex items-center justify-between shadow-sm hover:shadow-md transition-all">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/30 text-orange-500 rounded-xl flex items-center justify-center font-black">{q.contact_info?.name?.[0] || '?'}</div>
-                                                <div>
-                                                    <div className="text-xs font-black text-secondary dark:text-slate-200">{q.contact_info?.name || 'Cliente'}</div>
-                                                    <div className="text-[9px] text-slate-400 dark:text-slate-400 font-bold uppercase">{q.ciudad} • {formatShortDateCDMX(q.created_at)}</div>
+                                    {dashboardQuotes
+                                        .filter(q => q.status === 'Nuevo')
+                                        .sort((a, b) => {
+                                            const valA = ((a.pricing_type === 'lista' ? (a.precio_total_msi || 0) : (a.precio_total_contado || 0)) + Number(a.costo_logistico || 0)) * (a.factura ? 1.16 : 1);
+                                            const valB = ((b.pricing_type === 'lista' ? (b.precio_total_msi || 0) : (b.precio_total_contado || 0)) + Number(b.costo_logistico || 0)) * (b.factura ? 1.16 : 1);
+                                            return valB - valA;
+                                        })
+                                        .slice(0, 4)
+                                        .map((q, i) => {
+                                            const totalVal = ((q.pricing_type === 'lista' ? (q.precio_total_msi || 0) : (q.precio_total_contado || 0)) + Number(q.costo_logistico || 0)) * (q.factura ? 1.16 : 1);
+                                            return (
+                                                <div key={i} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-orange-100 dark:border-orange-900/30 flex items-center justify-between shadow-sm hover:shadow-md transition-all">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/30 text-orange-500 rounded-xl flex items-center justify-center font-black">{q.contact_info?.name?.[0] || '?'}</div>
+                                                        <div>
+                                                            <div className="text-xs font-black text-secondary dark:text-slate-200">{q.contact_info?.name || 'Cliente'}</div>
+                                                            <div className="text-[9px] text-slate-400 dark:text-slate-400 font-bold uppercase">
+                                                                {q.ciudad} • ${Math.round(totalVal).toLocaleString()}
+                                                                <span className="text-orange-600 dark:text-orange-400 font-black ml-2 tracking-widest">(SIN ATENDER)</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="text-[9px] font-black text-primary px-2 py-0.5 bg-primary/5 dark:bg-primary/10 rounded-full uppercase">{q.area}m²</div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-[9px] font-black text-primary px-2 py-0.5 bg-primary/5 dark:bg-primary/10 rounded-full uppercase">{q.area}m²</div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                            );
+                                        })}
                                     {dashboardQuotes.filter(q => q.status === 'Nuevo').length === 0 && (
                                         <div className="p-8 text-center text-slate-400 dark:text-slate-500 font-bold italic border-2 border-dashed border-orange-100 dark:border-orange-900/20 rounded-[2rem]">¡Todo al día! Sin pendientes.</div>
                                     )}
@@ -1158,39 +1237,58 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {Array.from(new Set(dashboardQuotes.filter(q => q.advisor).map(q => q.advisor.name + ' ' + (q.advisor.apellido || ''))))
+                                {Array.from(new Set(dashboardQuotes.map(q => {
+                                    const exec = q.assigned_user || q.advisor;
+                                    return exec ? exec.name + ' ' + (exec.apellido || '') : null;
+                                }).filter(Boolean)))
                                     .map(advisorName => {
-                                        const advisorQuotes = dashboardQuotes.filter(q => (q.advisor?.name + ' ' + (q.advisor?.apellido || '')) === advisorName);
+                                        const advisorQuotes = dashboardQuotes.filter(q => {
+                                            const exec = q.assigned_user || q.advisor;
+                                            return exec && (exec.name + ' ' + (exec.apellido || '')) === advisorName;
+                                        });
                                         const closedSales = advisorQuotes.filter(q => q.status === 'Cerrado').length;
                                         const convRate = advisorQuotes.length > 0 ? Math.round((closedSales / advisorQuotes.length) * 100) : 0;
-                                        const totalVol = advisorQuotes.reduce((sum, q) => sum + (q.precio_total_contado || 0), 0);
+
+                                        const calculateQuoteValue = (q: any) => {
+                                            const base = q.pricing_type === 'lista' ? (q.precio_total_msi || 0) : (q.precio_total_contado || 0);
+                                            const logistics = Number(q.costo_logistico || 0);
+                                            return (base + logistics) * (q.factura ? 1.16 : 1);
+                                        };
 
                                         return (
-                                            <div key={advisorName} className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-700/50 space-y-4 hover:border-primary/20 transition-all group">
+                                            <div key={advisorName} className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-700/50 space-y-4 hover:border-primary/20 transition-all group">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center text-primary border border-slate-100 dark:border-slate-700 font-black shadow-sm group-hover:bg-primary group-hover:text-white transition-all text-lg">
                                                         {advisorName[0]}
                                                     </div>
-                                                    <div>
-                                                        <div className="text-sm font-black text-secondary dark:text-white leading-tight">{advisorName}</div>
-                                                        <div className="text-[9px] text-slate-400 dark:text-slate-400 font-black uppercase tracking-widest">Asesor Comercial</div>
+                                                    <div className="flex-1">
+                                                        <div className="flex justify-between items-start">
+                                                            <div className="text-sm font-black text-secondary dark:text-white leading-tight">{advisorName}</div>
+                                                            <div className="text-[10px] font-black text-primary bg-primary/5 px-2 py-0.5 rounded-full">{convRate}% Cierre</div>
+                                                        </div>
+                                                        <div className="text-[9px] text-slate-400 dark:text-slate-400 font-black uppercase tracking-widest">Pipeline Personal</div>
                                                     </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-2 gap-3 pt-2">
-                                                    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                                                        <div className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase mb-1">Cierres</div>
-                                                        <div className="text-sm font-black text-secondary dark:text-white">{closedSales} <span className="text-[10px] text-primary opacity-60">({convRate}%)</span></div>
-                                                    </div>
-                                                    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                                                        <div className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase mb-1">Volumen</div>
-                                                        <div className="text-sm font-black text-secondary dark:text-white">${Math.round(totalVol / 1000)}k</div>
-                                                    </div>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    {['Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado'].map(status => {
+                                                        const qs = advisorQuotes.filter(q => q.status === status);
+                                                        const amt = qs.reduce((sum, q) => sum + calculateQuoteValue(q), 0);
+                                                        return (
+                                                            <div key={status} className="bg-white dark:bg-slate-900/60 p-3 rounded-2xl border border-slate-100 dark:border-slate-800/50">
+                                                                <div className="flex justify-between items-center mb-0.5">
+                                                                    <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">{status}</span>
+                                                                    <span className="text-[8px] font-bold text-slate-300">{qs.length}</span>
+                                                                </div>
+                                                                <div className="text-[11px] font-black text-secondary dark:text-white">${Math.round(amt / 1000)}k</div>
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                         );
                                     })}
-                                {quotes.filter(q => q.advisor).length === 0 && (
+                                {(quotes.filter(q => q.assigned_user || q.advisor).length === 0) && (
                                     <div className="col-span-full p-12 text-center text-slate-300 font-bold italic border-2 border-dashed border-slate-100 rounded-[2rem]">
                                         Aún no hay asignaciones registradas.
                                     </div>
