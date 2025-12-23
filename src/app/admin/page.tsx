@@ -883,14 +883,26 @@ export default function AdminDashboard() {
         const matchesSearch = q.contact_info.name.toLowerCase().includes(searchTerm.toLowerCase()) || q.ciudad.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'All' || q.status === statusFilter;
 
-        // Normalize date comparison for CDMX
-        const qDateCDMXStr = new Date(q.created_at).toLocaleString('en-US', { timeZone: 'America/Mexico_City' });
-        const qDate = new Date(qDateCDMXStr);
+        // Range Date Filtering (Same as dashboard)
+        let matchesDate = true;
+        if (rangeType !== 'all') {
+            const cdmxNowStr = new Date().toLocaleString('en-US', { timeZone: 'America/Mexico_City' });
+            const now = new Date(cdmxNowStr);
+            const qDate = new Date(new Date(q.created_at).toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
 
-        const matchesStartDate = !startDate || qDate >= new Date(startDate + 'T00:00:00');
-        const matchesEndDate = !endDate || qDate <= new Date(endDate + 'T23:59:59');
+            if (rangeType === 'today') {
+                const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+                matchesDate = qDate.getTime() >= todayStart;
+            } else if (rangeType === 'week') {
+                const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).getTime();
+                matchesDate = qDate.getTime() >= weekStart;
+            } else if (rangeType === 'month') {
+                const monthStart = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()).getTime();
+                matchesDate = qDate.getTime() >= monthStart;
+            }
+        }
 
-        return matchesSearch && matchesStatus && matchesStartDate && matchesEndDate;
+        return matchesSearch && matchesStatus && matchesDate;
     }).sort((a, b) => {
         // Multi-level sort: 1. City (ASC), 2. Time (ASC - Most recent at the end)
         const cityA = (a.ciudad || '').toLowerCase();
@@ -909,49 +921,99 @@ export default function AdminDashboard() {
         <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 p-4 md:p-8 font-sans transition-colors duration-300">
             <div className="max-w-7xl mx-auto space-y-8 admin-dashboard-layout">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <div className="hidden sm:block">
-                            <img src="/logo.png" alt="Thermo House" className="h-12 w-auto filter brightness-110 drop-shadow-sm" />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="text-[10px] font-black uppercase tracking-[0.2em] px-2 py-0.5 bg-primary/10 text-primary rounded-md">
-                                    {session.role === 'admin' ? 'Acceso Total' : session.role === 'manager' ? 'Gerencia Global' : `Zona: ${session.ciudad}`}
-                                </span>
+                <div className="flex flex-col gap-6">
+                    {/* Top Row: Brand/Title and Main Actions */}
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="hidden sm:block">
+                                <img src="/logo.png" alt="Thermo House" className="h-10 w-auto filter brightness-110 drop-shadow-sm" />
                             </div>
-                            <h1 className="text-3xl font-black text-secondary dark:text-white uppercase tracking-tight">Management Suite</h1>
-                            <p className="text-slate-400 dark:text-slate-300 text-sm">Bienvenido de nuevo, {session.name}</p>
+                            <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] px-2 py-0.5 bg-primary/10 text-primary rounded-md">
+                                        {session.role === 'admin' ? 'Acceso Total' : session.role === 'manager' ? 'Gerencia Global' : `Zona: ${session.ciudad}`}
+                                    </span>
+                                </div>
+                                <h1 className="text-2xl sm:text-3xl font-black text-secondary dark:text-white uppercase tracking-tight">Management</h1>
+                                <p className="text-slate-400 dark:text-slate-300 text-xs hidden sm:block">Sesión iniciada como {session.name}</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <ThemeToggle hideLabels />
+                            <button
+                                onClick={handleLogout}
+                                className="bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 p-2.5 rounded-xl text-sm font-bold border border-red-100 dark:border-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/20 transition-all shadow-sm"
+                                title="Cerrar Sesión"
+                            >
+                                <LogOut className="w-4 h-4" />
+                            </button>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className="bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-1">
-                            {(session.role === 'admin' || session.role === 'manager') && (
-                                <button onClick={() => setActiveTab('dashboard')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white'}`} title="Resumen general de métricas">Dashboard</button>
-                            )}
-                            <button onClick={() => setActiveTab('quotes')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'quotes' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white'}`} title="Gestión de prospectos y cotizaciones">Leads</button>
-                            {session.role === 'admin' && (
-                                <>
-                                    <button onClick={() => setActiveTab('products')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'products' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white'}`} title="Fichas técnicas y productos maestros">Productos</button>
-                                </>
-                            )}
-                            {(session.role === 'admin' || session.role === 'manager' || session.role === 'editor') && (
-                                <>
-                                    <button onClick={() => setActiveTab('prices')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'prices' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white'}`} title="Consulta de tarifas regionales">Precios</button>
-                                </>
-                            )}
-                            {session.role === 'admin' && (
-                                <>
-                                    <button onClick={() => setActiveTab('locations')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'locations' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white'}`} title="Configuración de ciudades">Ubicaciones</button>
-                                    <button onClick={() => setActiveTab('config')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'config' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white'}`} title="Ajustes globales del sistema">Configuración</button>
-                                </>
-                            )}
-                            {(session.role === 'admin' || session.role === 'manager') && (
-                                <button onClick={() => setActiveTab('users')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white'}`} title="Administración de equipo">Equipo</button>
-                            )}
-                        </div>
-                        <ThemeToggle hideLabels />
-                        <button onClick={handleLogout} className="bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 px-4 py-2 rounded-xl text-sm font-bold border border-red-100 dark:border-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/20 transition-all shadow-sm"><LogOut className="w-4 h-4" /></button>
+
+                    {/* Navigation Row: Tabs */}
+                    <div className="bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-nowrap gap-1 w-full overflow-hidden">
+                        {(session.role === 'admin' || session.role === 'manager') && (
+                            <button
+                                onClick={() => setActiveTab('dashboard')}
+                                className={`flex items-center justify-center lg:justify-start gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                            >
+                                <LayoutGrid className="w-3.5 h-3.5" />
+                                <span>Dashboard</span>
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setActiveTab('quotes')}
+                            className={`flex items-center justify-center lg:justify-start gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'quotes' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                        >
+                            <Users className="w-3.5 h-3.5" />
+                            <span>Leads</span>
+                        </button>
+                        {session.role === 'admin' && (
+                            <button
+                                onClick={() => setActiveTab('products')}
+                                className={`flex items-center justify-center lg:justify-start gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'products' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                            >
+                                <Package className="w-3.5 h-3.5" />
+                                <span>Productos</span>
+                            </button>
+                        )}
+                        {(session.role === 'admin' || session.role === 'manager' || session.role === 'editor') && (
+                            <button
+                                onClick={() => setActiveTab('prices')}
+                                className={`flex items-center justify-center lg:justify-start gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'prices' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                            >
+                                <BarChart3 className="w-3.5 h-3.5" />
+                                <span>Precios</span>
+                            </button>
+                        )}
+                        {session.role === 'admin' && (
+                            <>
+                                <button
+                                    onClick={() => setActiveTab('locations')}
+                                    className={`flex items-center justify-center lg:justify-start gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'locations' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                >
+                                    <MapPin className="w-3.5 h-3.5" />
+                                    <span>Zonas</span>
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('config')}
+                                    className={`flex items-center justify-center lg:justify-start gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'config' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                >
+                                    <Key className="w-3.5 h-3.5" />
+                                    <span>Config</span>
+                                </button>
+                            </>
+                        )}
+                        {(session.role === 'admin' || session.role === 'manager') && (
+                            <button
+                                onClick={() => setActiveTab('users')}
+                                className={`flex items-center justify-center lg:justify-start gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                            >
+                                <UserCircle className="w-3.5 h-3.5" />
+                                <span>Equipo</span>
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -1300,62 +1362,77 @@ export default function AdminDashboard() {
 
                 {activeTab === 'quotes' && (
                     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden min-h-[600px] transition-colors duration-300">
-                        <div className="p-6 border-b border-slate-50 dark:border-slate-800 flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
-                            <div className="flex gap-4 items-center flex-1 w-full">
-                                <div className="relative flex-1 md:max-w-md">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                    <input type="text" placeholder="Buscar cliente o ciudad..." className="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-secondary dark:text-white outline-none focus:ring-4 focus:ring-primary/10 transition-all text-sm font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-                                </div>
-                                <button
-                                    onClick={() => setManualLeadModal(true)}
-                                    className="flex items-center gap-2 bg-secondary dark:bg-primary text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    Nuevo Lead Manual
-                                </button>
-                                {selectedLeads.size > 0 && (
+                        <div className="p-6 border-b border-slate-50 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 space-y-6">
+                            {/* Row 1: Manual Lead (1) and Search (2) */}
+                            <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
+                                {/* 1. Nuevo Lead Manual */}
+                                <div className="flex flex-wrap gap-2">
                                     <button
-                                        onClick={exportToCSV}
-                                        className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20"
-                                        title="Descargar datos de los leads seleccionados en formato CSV"
+                                        onClick={() => setManualLeadModal(true)}
+                                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-secondary dark:bg-primary text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg min-w-[200px]"
                                     >
-                                        <Download className="w-4 h-4" />
-                                        Exportar {selectedLeads.size} Seleccionado(s)
+                                        <Plus className="w-4 h-4" />
+                                        Nuevo Lead Manual
                                     </button>
-                                )}
-                            </div>
-
-                            <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
-                                <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
-                                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                    <input
-                                        type="date"
-                                        className="text-[10px] font-bold outline-none bg-transparent dark:text-white"
-                                        value={startDate}
-                                        onChange={e => setStartDate(e.target.value)}
-                                        placeholder="Inicio"
-                                    />
-                                    <span className="text-slate-300 dark:text-slate-200">|</span>
-                                    <input
-                                        type="date"
-                                        className="text-[10px] font-bold outline-none bg-transparent dark:text-white"
-                                        value={endDate}
-                                        onChange={e => setEndDate(e.target.value)}
-                                        placeholder="Fin"
-                                    />
-                                    {(startDate || endDate) && (
+                                    {selectedLeads.size > 0 && (
                                         <button
-                                            onClick={() => { setStartDate(''); setEndDate(''); }}
-                                            className="ml-1 p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md text-slate-400"
-                                            title="Limpiar filtros de fecha"
+                                            onClick={exportToCSV}
+                                            className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-emerald-600 dark:bg-emerald-500 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg"
                                         >
-                                            <X className="w-3 h-3" />
+                                            <Download className="w-4 h-4" />
+                                            Exportar {selectedLeads.size}
                                         </button>
                                     )}
                                 </div>
-                                <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+
+                                {/* 2. Buscar Clientes */}
+                                <div className="relative flex-1 lg:max-w-xl">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar cliente, ciudad o folio..."
+                                        className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-secondary dark:text-white outline-none focus:ring-4 focus:ring-primary/10 transition-all text-sm font-medium shadow-sm"
+                                        value={searchTerm}
+                                        onChange={e => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Row 2: Date Presets (3) and Status Filters (4) */}
+                            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-6">
+                                {/* 3. Selecciones de Fechas (Presets) */}
+                                <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto scrollbar-hide pb-2 md:pb-0">
+                                    <div className="flex bg-white dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                        {[
+                                            { id: 'all', label: 'TODO' },
+                                            { id: 'today', label: 'DÍA' },
+                                            { id: 'week', label: 'SEMANA' },
+                                            { id: 'month', label: 'MES' }
+                                        ].map((r) => (
+                                            <button
+                                                key={r.id}
+                                                onClick={() => setRangeType(r.id as any)}
+                                                className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${rangeType === r.id ? 'bg-primary text-white shadow-lg' : 'text-slate-400 dark:text-slate-300 hover:text-secondary dark:hover:text-white'}`}
+                                            >
+                                                {r.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 4. Selecciones de Status Clientes */}
+                                <div className="flex flex-wrap gap-2 w-full md:w-auto mt-2 md:mt-0">
                                     {['All', 'Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado'].map(status => (
-                                        <button key={status} onClick={() => setStatusFilter(status)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${statusFilter === status ? 'bg-secondary dark:bg-primary text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-300 border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>{status}</button>
+                                        <button
+                                            key={status}
+                                            onClick={() => setStatusFilter(status)}
+                                            className={`flex-1 md:flex-none px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${statusFilter === status
+                                                ? 'bg-secondary dark:bg-primary text-white shadow-md'
+                                                : 'bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-300 border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                                }`}
+                                        >
+                                            {status}
+                                        </button>
                                     ))}
                                 </div>
                             </div>
