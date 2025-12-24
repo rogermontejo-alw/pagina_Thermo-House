@@ -1,5 +1,5 @@
-'use client';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 export default function Hero() {
     const scrollToSection = (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
@@ -53,6 +53,7 @@ export default function Hero() {
                             <button
                                 onClick={(e) => scrollToSection(e, 'sistemas')}
                                 className="w-full sm:w-auto min-w-[150px] bg-primary hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl text-sm font-black transition-all shadow-lg shadow-orange-500/25 hover:scale-[1.02] uppercase tracking-wider"
+                                aria-label="Ver sistemas de impermeabilización"
                             >
                                 Ver Sistemas
                             </button>
@@ -60,6 +61,7 @@ export default function Hero() {
                             <button
                                 onClick={(e) => scrollToSection(e, 'cotizador')}
                                 className="w-full sm:w-auto min-w-[150px] px-5 py-2.5 rounded-xl text-sm font-bold text-white border-2 border-white/20 hover:bg-white/10 transition-all backdrop-blur-sm"
+                                aria-label="Comenzar cotización"
                             >
                                 Cotizar Ahora
                             </button>
@@ -73,9 +75,12 @@ export default function Hero() {
                         transition={{ duration: 1, ease: "easeOut" }}
                         className="flex-shrink-0 hidden md:block"
                     >
-                        <img
+                        <Image
                             src="/logo.png"
                             alt="Thermo House Logo"
+                            width={300}
+                            height={300}
+                            priority
                             className="w-auto h-40 md:h-52 lg:h-60 filter brightness-110 drop-shadow-[0_20px_50px_rgba(255,107,38,0.3)]"
                         />
                     </motion.div>
@@ -86,7 +91,14 @@ export default function Hero() {
                         animate={{ opacity: 1, y: 0 }}
                         className="md:hidden order-first mb-8"
                     >
-                        <img src="/logo.png" alt="Thermo House Logo" className="h-28 w-auto filter brightness-110 drop-shadow-xl" />
+                        <Image
+                            src="/logo.png"
+                            alt="Thermo House Logo"
+                            width={112}
+                            height={112}
+                            priority
+                            className="h-28 w-auto filter brightness-110 drop-shadow-xl"
+                        />
                     </motion.div>
                 </div>
             </div>

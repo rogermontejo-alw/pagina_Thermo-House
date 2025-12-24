@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getLocations } from '@/app/actions/admin-locations';
 import { Location } from '@/types';
+import Image from 'next/image';
 
 export default function Footer() {
     const [branches, setBranches] = useState<Location[]>([]);
@@ -26,7 +27,13 @@ export default function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
                     <div className="space-y-6">
                         <div className="flex items-center gap-2">
-                            <img src="/logo.png" alt="Thermo House" className="h-8 w-auto filter brightness-0 invert" />
+                            <Image
+                                src="/logo.png"
+                                alt="Thermo House"
+                                width={32}
+                                height={32}
+                                className="h-8 w-auto filter brightness-0 invert"
+                            />
                             <span className="text-xl font-black uppercase tracking-tighter">Thermo<span className="text-primary">House</span></span>
                         </div>
                         <p className="text-slate-400 text-sm leading-relaxed">
@@ -66,7 +73,7 @@ export default function Footer() {
                 <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
                     <div className="flex flex-col md:flex-row items-center gap-4">
                         <p>© {new Date().getFullYear()} Thermo House. Todos los derechos reservados.</p>
-                        <span className="px-2 py-0.5 bg-white/5 rounded-md text-[8px] border border-white/10 text-slate-600">v0.1.1-SEO</span>
+                        <span className="px-2 py-0.5 bg-white/5 rounded-md text-[8px] border border-white/10 text-slate-600">v0.1.2-SPEED</span>
                     </div>
                     <div className="flex gap-8">
                         <a href="#" className="hover:text-white transition-colors">Privacidad</a>

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Menu, X, ArrowRight, MapPin, Phone, Mail, Clock } from 'lucide-react';
+import Image from 'next/image';
+import { Menu, X, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getLocations } from '@/app/actions/admin-locations';
 import { Location } from '@/types';
@@ -97,7 +98,14 @@ export default function Navbar() {
                     <div className="flex items-center justify-between h-14 md:h-14">
                         <div className={`flex-shrink-0 flex items-center justify-center h-full transition-opacity duration-300 ${isOpen ? 'opacity-0 md:opacity-100' : 'opacity-100'}`}>
                             <Link href="/" className="flex items-center gap-2 group h-full">
-                                <img src="/logo.png" alt="Thermo House Logo" className="h-5 md:h-6 w-auto object-contain filter brightness-110 drop-shadow-sm self-center" />
+                                <Image
+                                    src="/logo.png"
+                                    alt="Thermo House Logo"
+                                    width={24}
+                                    height={24}
+                                    priority
+                                    className="h-5 md:h-6 w-auto object-contain filter brightness-110 drop-shadow-sm self-center"
+                                />
                                 <span className="text-[12px] md:text-sm font-black text-secondary tracking-tight uppercase self-center leading-none">
                                     Thermo<span className="text-primary font-bold">House</span>
                                 </span>
@@ -124,6 +132,7 @@ export default function Navbar() {
                             <button
                                 onClick={(e) => scrollToSection(e, '#cotizador')}
                                 className="bg-primary hover:bg-orange-600 text-white px-5 py-2 rounded-full font-black transition-all shadow-md hover:shadow-primary/20 active:scale-95 text-[10px] uppercase tracking-widest"
+                                aria-label="Abrir cotizador"
                             >
                                 Cotizar
                             </button>
@@ -134,6 +143,7 @@ export default function Navbar() {
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
                                 className={`inline-flex items-center justify-center p-2 rounded-full transition-all duration-300 ${isOpen ? 'bg-primary text-white scale-110' : 'text-muted-foreground hover:text-primary hover:bg-slate-100'}`}
+                                aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
                             >
                                 {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-5 w-5" />}
                             </button>
@@ -158,7 +168,13 @@ export default function Navbar() {
                                     transition={{ duration: 0.2 }}
                                     className="bg-white/5 backdrop-blur-md border border-white/10 px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-3"
                                 >
-                                    <img src="/logo.png" alt="Thermo House" className="h-9 w-auto filter brightness-110" />
+                                    <Image
+                                        src="/logo.png"
+                                        alt="Thermo House"
+                                        width={36}
+                                        height={36}
+                                        className="h-9 w-auto filter brightness-110"
+                                    />
                                     <div className="flex flex-col leading-none">
                                         <span className="text-white font-black text-lg tracking-tighter uppercase">Thermo<span className="text-primary">House</span></span>
                                         <span className="text-white/30 text-[7px] font-bold uppercase tracking-[0.3em]">Sistemas Elite</span>
