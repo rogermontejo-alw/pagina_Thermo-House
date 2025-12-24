@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { getAllPostsAdmin, createBlogPost, updateBlogPost, deleteBlogPost } from '@/app/actions/blog';
 import { BlogPost } from '@/types';
+import { supabase } from '@/lib/supabase';
 
 export default function BlogManager() {
     const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -16,6 +17,7 @@ export default function BlogManager() {
     const [isEditing, setIsEditing] = useState(false);
     const [currentPost, setCurrentPost] = useState<Partial<BlogPost> | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [uploading, setUploading] = useState(false);
 
     const categories = [
         { id: 'mantenimiento', name: 'Mantenimiento' },
@@ -90,6 +92,49 @@ export default function BlogManager() {
         }
     };
 
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validar formato
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Por favor selecciona una imagen válida (JPG, PNG, WebP, AVIF, GIF).');
+            return;
+        }
+
+        // Recomendación WebP
+        if (file.type !== 'image/webp' && file.size > 1024 * 1024) {
+            console.warn('Considera usar formato WebP para imágenes de más de 1MB.');
+        }
+
+        try {
+            setUploading(true);
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random()}.${fileExt}`;
+            const filePath = `posts/${fileName}`;
+
+            const { error: uploadError, data } = await supabase.storage
+                .from('blog-images')
+                .upload(filePath, file);
+
+            if (uploadError) {
+                throw uploadError;
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('blog-images')
+                .getPublicUrl(filePath);
+
+            setCurrentPost({ ...currentPost, image_url: publicUrl });
+            alert('Imagen subida con éxito.');
+        } catch (error: any) {
+            alert('Error subiendo imagen: ' + error.message);
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const filteredPosts = posts.filter(p =>
         p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.slug.toLowerCase().includes(searchTerm.toLowerCase())
@@ -154,6 +199,45 @@ export default function BlogManager() {
                                         className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl p-3 focus:ring-2 ring-primary h-96 font-mono text-sm"
                                         placeholder="Escribe aquí tu artículo..."
                                     />
+                                    <div className="flex justify-end pt-2">
+                                        <label className="cursor-pointer group">
+                                            <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 group-hover:text-primary transition-colors">
+                                                <ImageIcon className="w-3 h-3" />
+                                                {uploading ? 'Subiendo...' : 'Subir imagen para el contenido y copiar link'}
+                                            </div>
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                accept="image/*"
+                                                onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+                                                    setUploading(true);
+                                                    try {
+                                                        const fileExt = file.name.split('.').pop();
+                                                        const fileName = `${Math.random()}.${fileExt}`;
+                                                        const filePath = `content/${fileName}`;
+                                                        const { error: uploadError } = await supabase.storage
+                                                            .from('blog-images')
+                                                            .upload(filePath, file);
+                                                        if (uploadError) throw uploadError;
+                                                        const { data: { publicUrl } } = supabase.storage
+                                                            .from('blog-images')
+                                                            .getPublicUrl(filePath);
+
+                                                        // Copiar al portapapeles
+                                                        await navigator.clipboard.writeText(publicUrl);
+                                                        alert('¡URL copiada al portapapeles! Ya puedes pegarla en el contenido.');
+                                                    } catch (err: any) {
+                                                        alert('Error: ' + err.message);
+                                                    } finally {
+                                                        setUploading(false);
+                                                    }
+                                                }}
+                                                disabled={uploading}
+                                            />
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -176,14 +260,62 @@ export default function BlogManager() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-black uppercase text-slate-400 mb-1">URL de Imagen</label>
-                                    <input
-                                        type="text"
-                                        value={currentPost?.image_url || ''}
-                                        onChange={e => setCurrentPost({ ...currentPost, image_url: e.target.value })}
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl p-3 focus:ring-2 ring-primary text-xs"
-                                        placeholder="https://..."
-                                    />
+                                    <label className="block text-xs font-black uppercase text-slate-400 mb-1">Imagen de Portada</label>
+                                    <div className="space-y-3">
+                                        {currentPost?.image_url ? (
+                                            <div className="relative group rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700 aspect-video bg-slate-50 dark:bg-slate-900">
+                                                <img
+                                                    src={currentPost.image_url}
+                                                    alt="Preview"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                    <button
+                                                        onClick={() => setCurrentPost({ ...currentPost, image_url: '' })}
+                                                        className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-sm transition-colors"
+                                                        title="Eliminar imagen"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center text-center bg-slate-50/50 dark:bg-slate-900/30">
+                                                <div className="p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm mb-3 text-slate-400">
+                                                    <ImageIcon className="w-8 h-8" />
+                                                </div>
+                                                <p className="text-sm font-medium text-slate-500 mb-1">No hay imagen de portada</p>
+                                                <p className="text-[10px] text-slate-400 mb-4 uppercase font-bold tracking-tighter">Formatos recomendados: WebP o AVIF</p>
+                                            </div>
+                                        )}
+
+                                        <div className="flex gap-2">
+                                            <label className="flex-1">
+                                                <div className={`w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl p-3 text-center text-xs font-bold cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                    <ImageIcon className="w-4 h-4" />
+                                                    {uploading ? 'Subiendo...' : currentPost?.image_url ? 'Cambiar Imagen' : 'Subir Imagen'}
+                                                </div>
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={handleFileUpload}
+                                                    disabled={uploading}
+                                                />
+                                            </label>
+                                        </div>
+
+                                        <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
+                                            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1">O usar una URL externa</label>
+                                            <input
+                                                type="text"
+                                                value={currentPost?.image_url || ''}
+                                                onChange={e => setCurrentPost({ ...currentPost, image_url: e.target.value })}
+                                                className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl p-2 focus:ring-2 ring-primary text-[10px] font-mono"
+                                                placeholder="https://externa.com/imagen.jpg"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-black uppercase text-slate-400 mb-1">Categoría</label>
