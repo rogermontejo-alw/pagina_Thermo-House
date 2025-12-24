@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { Menu, X, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getLocations } from '@/app/actions/admin-locations';
@@ -14,6 +15,7 @@ export default function Navbar() {
     const [isVisible, setIsVisible] = useState(true);
     const [branches, setBranches] = useState<string[]>([]);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const pathname = usePathname();
 
     useEffect(() => {
         const fetchBranches = async () => {
@@ -29,11 +31,11 @@ export default function Navbar() {
     }, []);
 
     const menuItems = [
-        { name: 'Inicio', href: '#inicio' },
-        { name: 'Sistemas', href: '#sistemas' },
-        { name: 'Garantía', href: '#garantia' },
-        { name: 'Cotizar', href: '#cotizador' },
-        { name: 'Sucursales', href: '#sucursales' },
+        { name: 'Inicio', href: '/#inicio' },
+        { name: 'Sistemas', href: '/#sistemas' },
+        { name: 'Garantía', href: '/#garantia' },
+        { name: 'Cotizar', href: '/#cotizador' },
+        { name: 'Sucursales', href: '/#sucursales' },
     ];
 
     useEffect(() => {
@@ -69,15 +71,19 @@ export default function Navbar() {
     }, []);
 
     const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>, href: string) => {
-        e.preventDefault();
-        setIsOpen(false);
-        const targetId = href.replace('#', '');
-        const elem = document.getElementById(targetId);
-        if (elem) {
-            elem.scrollIntoView({ behavior: 'smooth' });
-            setIsVisible(true);
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-            timeoutRef.current = setTimeout(() => setIsVisible(false), 1200);
+        const targetId = href.split('#')[1];
+        const isHomePage = pathname === '/';
+
+        if (isHomePage) {
+            e.preventDefault();
+            setIsOpen(false);
+            const elem = document.getElementById(targetId);
+            if (elem) {
+                elem.scrollIntoView({ behavior: 'smooth' });
+                setIsVisible(true);
+                if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                timeoutRef.current = setTimeout(() => setIsVisible(false), 1200);
+            }
         }
     };
 
@@ -115,14 +121,14 @@ export default function Navbar() {
                         <div className="hidden md:block">
                             <div className="flex items-center space-x-2">
                                 {menuItems.map((item) => (
-                                    <a
+                                    <Link
                                         key={item.name}
                                         href={item.href}
                                         onClick={(e) => scrollToSection(e, item.href)}
                                         className="text-slate-600 dark:text-slate-300 hover:text-white dark:hover:text-secondary-foreground hover:bg-secondary px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300"
                                     >
                                         {item.name}
-                                    </a>
+                                    </Link>
                                 ))}
                             </div>
                         </div>
@@ -130,7 +136,7 @@ export default function Navbar() {
                         <div className="hidden md:flex items-center gap-4">
                             <ThemeToggle minimal />
                             <button
-                                onClick={(e) => scrollToSection(e, '#cotizador')}
+                                onClick={(e) => scrollToSection(e, '/#cotizador')}
                                 className="bg-primary hover:bg-orange-600 text-white px-5 py-2 rounded-full font-black transition-all shadow-md hover:shadow-primary/20 active:scale-95 text-[10px] uppercase tracking-widest"
                                 aria-label="Abrir cotizador"
                             >
@@ -186,20 +192,23 @@ export default function Navbar() {
                             <div className="flex-grow flex flex-col justify-center px-10">
                                 <nav className="space-y-6">
                                     {menuItems.map((item, idx) => (
-                                        <motion.a
+                                        <motion.div
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
                                             transition={{ duration: 0.15, delay: 0.03 * idx }}
                                             key={item.name}
-                                            href={item.href}
-                                            onClick={(e) => scrollToSection(e, item.href)}
-                                            className="group flex items-end gap-3 text-white hover:text-primary transition-all"
                                         >
-                                            <span className="text-primary/40 font-black text-xs mb-1.5 font-mono">0{idx + 1}</span>
-                                            <span className="text-3xl font-black uppercase tracking-tighter transition-all leading-none">
-                                                {item.name}
-                                            </span>
-                                        </motion.a>
+                                            <Link
+                                                href={item.href}
+                                                onClick={(e) => scrollToSection(e, item.href)}
+                                                className="group flex items-end gap-3 text-white hover:text-primary transition-all"
+                                            >
+                                                <span className="text-primary/40 font-black text-xs mb-1.5 font-mono">0{idx + 1}</span>
+                                                <span className="text-3xl font-black uppercase tracking-tighter transition-all leading-none">
+                                                    {item.name}
+                                                </span>
+                                            </Link>
+                                        </motion.div>
                                     ))}
                                 </nav>
                             </div>
@@ -213,7 +222,7 @@ export default function Navbar() {
                                     className="space-y-6 flex flex-col items-center"
                                 >
                                     <button
-                                        onClick={(e) => scrollToSection(e, '#cotizador')}
+                                        onClick={(e) => scrollToSection(e, '/#cotizador')}
                                         className="w-full max-w-[240px] bg-primary text-white p-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 text-sm flex items-center justify-center gap-3 active:scale-95 transition-transform"
                                     >
                                         Cotizar Proyecto

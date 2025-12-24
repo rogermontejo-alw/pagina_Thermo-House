@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Shield, Hammer, Feather, Sparkles, Zap, Package, Building2, Factory, Check } from 'lucide-react';
 import { getAllSolutions } from '@/app/actions/get-solutions';
@@ -223,12 +224,12 @@ export default function SystemsSection() {
                                         </ul>
                                     </div>
 
-                                    <button
-                                        onClick={() => document.getElementById('cotizador')?.scrollIntoView({ behavior: 'smooth' })}
-                                        className={`w-full py-4 md:py-3.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${isPremium ? 'bg-primary text-white hover:bg-orange-600' : 'bg-secondary dark:bg-slate-700 text-white hover:bg-slate-800'}`}
+                                    <Link
+                                        href="/#cotizador"
+                                        className={`w-full py-4 md:py-3.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 text-center ${isPremium ? 'bg-primary text-white hover:bg-orange-600' : 'bg-secondary dark:bg-slate-700 text-white hover:bg-slate-800'}`}
                                     >
                                         Cotizar este Sistema
-                                    </button>
+                                    </Link>
                                 </div>
                                 {isPremium && <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-secondary via-primary to-secondary" />}
                             </div>

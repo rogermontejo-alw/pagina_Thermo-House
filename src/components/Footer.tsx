@@ -5,6 +5,8 @@ import { getLocations } from '@/app/actions/admin-locations';
 import { Location } from '@/types';
 import Image from 'next/image';
 
+import Link from 'next/link';
+
 export default function Footer() {
     const [branches, setBranches] = useState<Location[]>([]);
 
@@ -44,10 +46,10 @@ export default function Footer() {
                     <div className="space-y-6">
                         <h4 className="text-xs font-black uppercase tracking-[0.3em] text-primary">Navegación</h4>
                         <ul className="space-y-3 text-slate-400 text-sm font-bold uppercase tracking-widest">
-                            <li><a href="#sistemas" className="hover:text-primary transition-colors">Sistemas</a></li>
-                            <li><a href="#garantia" className="hover:text-primary transition-colors">Garantía</a></li>
-                            <li><a href="#sucursales" className="hover:text-primary transition-colors">Sucursales</a></li>
-                            <li><a href="#cotizador" className="hover:text-primary transition-colors">Cotizador</a></li>
+                            <li><Link href="/#sistemas" className="hover:text-primary transition-colors">Sistemas</Link></li>
+                            <li><Link href="/#garantia" className="hover:text-primary transition-colors">Garantía</Link></li>
+                            <li><Link href="/#sucursales" className="hover:text-primary transition-colors">Sucursales</Link></li>
+                            <li><Link href="/#cotizador" className="hover:text-primary transition-colors">Cotizador</Link></li>
                         </ul>
                     </div>
 
@@ -76,8 +78,8 @@ export default function Footer() {
                         <span className="px-2 py-0.5 bg-white/5 rounded-md text-[8px] border border-white/10 text-slate-600">v0.1.2-SPEED</span>
                     </div>
                     <div className="flex gap-8">
-                        <a href="#" className="hover:text-white transition-colors">Privacidad</a>
-                        <a href="#" className="hover:text-white transition-colors">Términos</a>
+                        <Link href="/privacidad" className="hover:text-white transition-colors">Privacidad</Link>
+                        <Link href="/terminos" className="hover:text-white transition-colors">Términos</Link>
                     </div>
                 </div>
             </div>
