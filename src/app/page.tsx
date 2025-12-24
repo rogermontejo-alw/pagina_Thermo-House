@@ -12,6 +12,7 @@ const CalculatorSection = dynamic(() => import('@/components/CalculatorSection')
 });
 const Footer = dynamic(() => import('@/components/Footer'));
 const CTASection = dynamic(() => import('@/components/SectionWrapper').then(mod => mod.CTASection));
+const BlogPreviewSection = dynamic(() => import('@/components/BlogPreviewSection'));
 
 export default function Home() {
   return (
@@ -45,6 +46,10 @@ export default function Home() {
 
         <SectionWrapper bg="white">
           <BranchesSection />
+        </SectionWrapper>
+
+        <SectionWrapper bg="slate">
+          <BlogPreviewSection />
         </SectionWrapper>
 
         {/* Final Call to Action */}

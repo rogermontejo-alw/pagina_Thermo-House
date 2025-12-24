@@ -6,8 +6,9 @@ import { Calendar, ArrowLeft, Clock, Share2, Facebook, Twitter, LinkIcon, Tag } 
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-    const res = await getPostBySlug(params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
+    const res = await getPostBySlug(slug);
     if (!res.success || !res.data) return { title: 'Post No Encontrado' };
 
     const post = res.data;
@@ -22,8 +23,12 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     };
 }
 
-export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-    const res = await getPostBySlug(params.slug);
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
+    const res = await getPostBySlug(slug);
 
     if (!res.success || !res.data) {
         notFound();
@@ -79,26 +84,34 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                     {/* Main Image */}
                     {post.image_url && (
                         <div className="relative aspect-[21/9] rounded-[3rem] overflow-hidden mb-16 border border-slate-100 dark:border-slate-800 shadow-2xl">
-                            <Image
+                            <img
                                 src={post.image_url}
                                 alt={post.title}
-                                fill
-                                className="object-cover"
-                                priority
+                                className="w-full h-full object-cover"
                             />
                         </div>
                     )}
 
                     {/* Content */}
                     <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-8 md:p-12 lg:p-16 border border-slate-100 dark:border-slate-800 shadow-xl mb-16">
-                        <div
-                            className="prose prose-slate dark:prose-invert max-w-none 
+                        <div className="prose prose-slate dark:prose-invert max-w-none 
                             prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight
                             prose-p:text-slate-600 dark:prose-p:text-slate-300 prose-p:text-lg prose-p:leading-relaxed
                             prose-strong:text-secondary dark:prose-strong:text-white
-                            prose-img:rounded-3xl"
-                            dangerouslySetInnerHTML={{ __html: post.content }}
-                        />
+                            prose-img:rounded-3xl prose-hr:border-slate-100 dark:prose-hr:border-slate-800
+                            prose-li:text-slate-600 dark:prose-li:text-slate-300 prose-li:text-lg">
+                            <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                    // Transformamos las líneas --- en un espacio en blanco generoso
+                                    hr: () => <div className="py-8" />,
+                                    // Aseguramos que los enlaces se vean bien
+                                    a: ({ node, ...props }) => <a {...props} className="text-primary font-bold hover:underline" target="_blank" rel="noopener noreferrer" />
+                                }}
+                            >
+                                {post.content}
+                            </ReactMarkdown>
+                        </div>
                     </div>
 
                     {/* Footer / Sharing */}
@@ -122,6 +135,17 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                             <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 font-medium italic">Thermo House Waterproofing</h4>
                             <p className="text-secondary dark:text-white font-black text-sm uppercase">Cuidando tu patrimonio para siempre.</p>
                         </div>
+                    </div>
+
+                    {/* Final Back Link */}
+                    <div className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800/50 flex justify-center">
+                        <Link
+                            href="/blog"
+                            className="inline-flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-widest hover:-translate-x-1 transition-transform group"
+                        >
+                            <ArrowLeft className="w-4 h-4 transition-transform group-hover:scale-110" />
+                            Explorar más artículos en el Blog
+                        </Link>
                     </div>
                 </article>
             </div>

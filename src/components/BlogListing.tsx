@@ -73,11 +73,10 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
                         >
                             <div className="relative aspect-[16/10] overflow-hidden">
                                 {post.image_url ? (
-                                    <Image
+                                    <img
                                         src={post.image_url}
                                         alt={post.title}
-                                        fill
-                                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                     />
                                 ) : (
                                     <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">

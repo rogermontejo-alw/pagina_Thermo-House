@@ -3,6 +3,7 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAdminSession } from './admin-auth';
 import { BlogPost } from '@/types';
+import { revalidatePath } from 'next/cache';
 
 /**
  * Gets all published blog posts (Public).
@@ -98,6 +99,8 @@ export async function createBlogPost(post: Omit<BlogPost, 'id' | 'created_at' | 
             return { success: false, error: error.message };
         }
 
+        revalidatePath('/blog');
+        revalidatePath('/');
         return { success: true, data: data as BlogPost };
     } catch (err: any) {
         return { success: false, error: err.message };
@@ -132,6 +135,9 @@ export async function updateBlogPost(id: string, updates: Partial<BlogPost>) {
             return { success: false, error: error.message };
         }
 
+        revalidatePath('/blog');
+        revalidatePath(`/blog/${data.slug}`);
+        revalidatePath('/');
         return { success: true, data: data as BlogPost };
     } catch (err: any) {
         return { success: false, error: err.message };
@@ -156,6 +162,8 @@ export async function deleteBlogPost(id: string) {
             return { success: false, error: error.message };
         }
 
+        revalidatePath('/blog');
+        revalidatePath('/');
         return { success: true };
     } catch (err: any) {
         return { success: false, error: err.message };
