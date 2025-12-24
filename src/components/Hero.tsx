@@ -11,29 +11,40 @@ export default function Hero() {
     };
 
     return (
-        <div id="inicio" className="dark-section relative min-h-screen flex flex-col justify-center overflow-hidden border-b border-white/5">
+        <div id="inicio" className="relative min-h-screen flex flex-col justify-center overflow-hidden border-b border-slate-200 dark:border-white/5 transition-colors duration-500 bg-slate-50 dark:bg-[#020617]">
             <div className="absolute inset-0 z-0">
-                {/* Gradiente sutil Dark Navy consistente con Branding */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black via-[#020617] to-[#0f172a]" />
+                {/* Adaptive background */}
+                <div className="absolute inset-0 bg-slate-50 dark:bg-gradient-to-b dark:from-black dark:via-[#020617] dark:to-[#0f172a]" />
 
-                {/* Acentos de luz sutiles para profundidad premium */}
-                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px]" />
-                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[500px] h-[500px] bg-[#38bdf8]/10 rounded-full blur-[100px]" />
+                {/* Light mode specific accents */}
+                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[600px] h-[600px] bg-primary/5 dark:bg-primary/10 rounded-full blur-[120px]" />
+                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[500px] h-[500px] bg-slate-200/50 dark:bg-[#38bdf8]/10 rounded-full blur-[100px]" />
             </div>
 
             <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 font-sans">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-12 text-center md:text-left">
                     {/* Left Column: Text Content */}
                     <div className="flex-1 max-w-xl text-center md:text-left">
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6 }}
+                            className="inline-block px-4 py-1.5 rounded-full bg-primary/5 dark:bg-primary/10 border border-primary/10 dark:border-primary/20 mb-6"
+                        >
+                            <span className="text-primary text-[10px] md:text-xs font-black uppercase tracking-[0.3em]">
+                                Empresa 100% Mexicana
+                            </span>
+                        </motion.div>
+
                         <motion.h1
                             initial={{ opacity: 0, x: -30 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8, ease: "easeOut" }}
-                            className="text-xl sm:text-3xl md:text-4xl font-black tracking-tight text-white mb-3 leading-tight"
+                            className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-secondary dark:text-white mb-6 leading-[1.1] uppercase"
                         >
-                            La Única Inversión que <br />
-                            <span className="text-primary italic">
-                                Dura para Siempre.
+                            Thermo House: <br />
+                            <span className="text-primary">
+                                Impermeabilización Profesional con Poliuretano.
                             </span>
                         </motion.h1>
 
@@ -41,9 +52,9 @@ export default function Hero() {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                            className="text-sm md:text-base text-slate-300/80 leading-relaxed mb-8 max-w-md mx-auto md:mx-0"
+                            className="text-sm md:text-lg text-slate-600 dark:text-slate-300/90 leading-relaxed mb-10 max-w-xl mx-auto md:mx-0 font-medium"
                         >
-                            Protección de por vida para su hogar. Nuestros sistemas de impermeabilización y aislamiento térmico ofrecen una barrera impenetrable contra los elementos.
+                            Ya seas una empresa, industria u hogar, en <span className="text-secondary dark:text-white font-bold">Thermo House</span> te ofrecemos impermeabilización realizada por profesionales con más de 15 años de experiencia. Garantía de por vida* por escrito, diagnósticos serios y atención formal en varios estados de México.
                         </motion.p>
 
                         <motion.div
@@ -62,7 +73,7 @@ export default function Hero() {
 
                             <button
                                 onClick={(e) => scrollToSection(e, 'cotizador')}
-                                className="w-full sm:w-auto min-w-[150px] px-5 py-2.5 rounded-xl text-sm font-bold text-white border-2 border-white/20 hover:bg-white/10 transition-all backdrop-blur-sm"
+                                className="w-full sm:w-auto min-w-[150px] px-5 py-2.5 rounded-xl text-sm font-bold text-secondary dark:text-white border-2 border-secondary/10 dark:border-white/20 hover:bg-secondary/5 dark:hover:bg-white/10 transition-all backdrop-blur-sm"
                                 aria-label="Comenzar cotización"
                             >
                                 Cotizar Ahora

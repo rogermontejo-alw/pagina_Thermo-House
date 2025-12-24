@@ -10,7 +10,7 @@ export default function SectionWrapper({ children, className, bg = "white" }: { 
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.6 }}
-            className={`py-16 md:py-24 ${bg === "slate" ? "bg-slate-50 dark:bg-slate-900/50" : "bg-white dark:bg-slate-950"} ${className || ""}`}
+            className={`py-16 md:py-24 border-y border-transparent transition-colors duration-500 ${bg === "slate" ? "bg-slate-100/80 dark:bg-slate-900/50 border-slate-200/60 dark:border-white/5" : "bg-white dark:bg-slate-950"} ${className || ""}`}
         >
             <div className="max-w-5xl mx-auto px-4">
                 {children}

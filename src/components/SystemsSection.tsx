@@ -141,12 +141,14 @@ export default function SystemsSection() {
                             <button
                                 onClick={() => setRoofType('concrete')}
                                 className={`relative z-10 flex-1 flex items-center justify-center gap-2 px-4 rounded-full text-[10px] md:text-sm font-black transition-colors duration-300 ${roofType === 'concrete' ? 'text-white' : 'text-slate-500 dark:text-slate-200'}`}
+                                aria-label="Ver sistemas para techos de concreto"
                             >
                                 <Building2 className="w-4 h-4" /> Techo de Concreto
                             </button>
                             <button
                                 onClick={() => setRoofType('sheet')}
                                 className={`relative z-10 flex-1 flex items-center justify-center gap-2 px-4 rounded-full text-[10px] md:text-sm font-black transition-colors duration-300 ${roofType === 'sheet' ? 'text-white' : 'text-slate-500 dark:text-slate-200'}`}
+                                aria-label="Ver sistemas para techos de lámina"
                             >
                                 <Factory className="w-4 h-4" /> Techo de Lámina
                             </button>
@@ -162,7 +164,7 @@ export default function SystemsSection() {
                         const isBestSeller = sys.internal_id === 'th-light';
 
                         return (
-                            <div key={sys.id} className={`group bg-white dark:bg-slate-800 rounded-[2.5rem] p-6 md:p-7 border-2 transition-all duration-500 relative overflow-hidden flex flex-col ${isPremium ? 'border-primary/20 dark:border-primary/20 shadow-xl' : 'border-slate-100 dark:border-slate-700/50 hover:border-slate-200 dark:hover:border-slate-600 shadow-sm hover:shadow-2xl'}`}>
+                            <div key={sys.id} className={`group bg-white dark:bg-slate-800 rounded-[2.5rem] p-6 md:p-7 border-2 transition-all duration-500 relative overflow-hidden flex flex-col ${isPremium ? 'border-primary/20 dark:border-primary/20 shadow-xl' : 'border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 shadow-sm hover:shadow-2xl'}`}>
                                 {isBestSeller && (
                                     <div className="absolute top-0 right-0 bg-primary dark:bg-orange-600 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-tight z-10">MAS VENDIDO</div>
                                 )}
@@ -180,7 +182,7 @@ export default function SystemsSection() {
                                     <h3 className="text-xl md:text-2xl font-black text-secondary dark:text-white mb-1 uppercase tracking-tighter">{sys.title}</h3>
                                     <p className="text-[10px] font-black text-primary mb-4 md:mb-3 uppercase tracking-[0.2em] opacity-80">{sys.grosor || 'Espesor Estándar'}</p>
 
-                                    <div className="bg-slate-50/50 dark:bg-slate-900/50 rounded-2xl p-5 md:p-4 border border-slate-100 dark:border-slate-700 mb-6 md:mb-4 flex-grow">
+                                    <div className="bg-slate-100/50 dark:bg-slate-900/50 rounded-2xl p-5 md:p-4 border border-slate-200 dark:border-slate-700 mb-6 md:mb-4 flex-grow">
                                         <ul className="space-y-3 md:space-y-2">
                                             {(() => {
                                                 const featureText = `${sys.beneficio_principal || ''}\n${sys.detalle_costo_beneficio || ''}`;
@@ -214,8 +216,8 @@ export default function SystemsSection() {
                                                     }
 
                                                     return (
-                                                        <li key={idx} className="flex items-start gap-3 text-[12px] text-slate-600 dark:text-slate-300 font-medium leading-tight">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 flex-shrink-0 mt-1.5" />
+                                                        <li key={idx} className="flex items-start gap-3 text-[12px] text-slate-700 dark:text-slate-300 font-medium leading-tight">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-500 dark:bg-slate-400 flex-shrink-0 mt-1.5" />
                                                             <span>{feature}</span>
                                                         </li>
                                                     );

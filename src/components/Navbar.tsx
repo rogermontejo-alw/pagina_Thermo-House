@@ -33,6 +33,7 @@ export default function Navbar() {
     const menuItems = [
         { name: 'Inicio', href: '/#inicio' },
         { name: 'Sistemas', href: '/#sistemas' },
+        { name: 'Blog', href: '/blog' },
         { name: 'Garantía', href: '/#garantia' },
         { name: 'Cotizar', href: '/#cotizador' },
         { name: 'Sucursales', href: '/#sucursales' },
@@ -71,19 +72,25 @@ export default function Navbar() {
     }, []);
 
     const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>, href: string) => {
+        const isHashLink = href.includes('#');
         const targetId = href.split('#')[1];
         const isHomePage = pathname === '/';
 
-        if (isHomePage) {
+        if (isHomePage && isHashLink) {
             e.preventDefault();
             setIsOpen(false);
-            const elem = document.getElementById(targetId);
-            if (elem) {
-                elem.scrollIntoView({ behavior: 'smooth' });
-                setIsVisible(true);
-                if (timeoutRef.current) clearTimeout(timeoutRef.current);
-                timeoutRef.current = setTimeout(() => setIsVisible(false), 1200);
+            if (targetId) {
+                const elem = document.getElementById(targetId);
+                if (elem) {
+                    elem.scrollIntoView({ behavior: 'smooth' });
+                    setIsVisible(true);
+                    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                    timeoutRef.current = setTimeout(() => setIsVisible(false), 1200);
+                }
             }
+        } else {
+            // For non-hash links or when not on homepage
+            setIsOpen(false);
         }
     };
 

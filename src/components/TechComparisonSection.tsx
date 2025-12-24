@@ -96,6 +96,7 @@ export default function TechComparisonSection() {
                     <button
                         onClick={() => document.getElementById('cotizador')?.scrollIntoView({ behavior: 'smooth' })}
                         className="w-full sm:w-auto bg-secondary dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white px-8 py-3 rounded-lg font-semibold transition-all"
+                        aria-label="Obtener asesoría técnica gratuita"
                     >
                         Obtenga una Consulta Gratuita
                     </button>

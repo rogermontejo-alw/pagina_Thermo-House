@@ -1,13 +1,17 @@
+import dynamic from 'next/dynamic';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
-import SystemsSection from '@/components/SystemsSection';
-import MethodSection from '@/components/MethodSection';
-import TechComparisonSection from '@/components/TechComparisonSection';
-import WarrantySection from '@/components/WarrantySection';
-import BranchesSection from '@/components/BranchesSection';
-import Footer from '@/components/Footer';
-import CalculatorSection from '@/components/CalculatorSection';
-import SectionWrapper, { CTASection } from '@/components/SectionWrapper';
+import SectionWrapper from '@/components/SectionWrapper';
+const SystemsSection = dynamic(() => import('@/components/SystemsSection'));
+const MethodSection = dynamic(() => import('@/components/MethodSection'));
+const TechComparisonSection = dynamic(() => import('@/components/TechComparisonSection'));
+const WarrantySection = dynamic(() => import('@/components/WarrantySection'));
+const BranchesSection = dynamic(() => import('@/components/BranchesSection'));
+const CalculatorSection = dynamic(() => import('@/components/CalculatorSection'), {
+  loading: () => <div className="h-96 flex items-center justify-center bg-slate-100 dark:bg-slate-900 animate-pulse text-slate-400 font-bold uppercase tracking-widest text-xs">Cargando Herramientas Técnicas...</div>
+});
+const Footer = dynamic(() => import('@/components/Footer'));
+const CTASection = dynamic(() => import('@/components/SectionWrapper').then(mod => mod.CTASection));
 
 export default function Home() {
   return (

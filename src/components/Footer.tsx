@@ -47,6 +47,7 @@ export default function Footer() {
                         <h4 className="text-xs font-black uppercase tracking-[0.3em] text-primary">Navegación</h4>
                         <ul className="space-y-3 text-slate-400 text-sm font-bold uppercase tracking-widest">
                             <li><Link href="/#sistemas" className="hover:text-primary transition-colors">Sistemas</Link></li>
+                            <li><Link href="/blog" className="hover:text-primary transition-colors">Blog</Link></li>
                             <li><Link href="/#garantia" className="hover:text-primary transition-colors">Garantía</Link></li>
                             <li><Link href="/#sucursales" className="hover:text-primary transition-colors">Sucursales</Link></li>
                             <li><Link href="/#cotizador" className="hover:text-primary transition-colors">Cotizador</Link></li>

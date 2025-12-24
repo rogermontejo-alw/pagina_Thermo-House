@@ -68,12 +68,13 @@ export default function MethodSection() {
                 </div>
 
                 <div className="mt-12 md:mt-16 text-center">
-                    <p className="text-muted-foreground mb-6 md:mb-8 max-w-2xl mx-auto text-sm md:text-base">
+                    <p className="text-slate-600 dark:text-slate-400 mb-6 md:mb-8 max-w-2xl mx-auto text-sm md:text-base">
                         Nuestro compromiso con materiales de calidad y una aplicación experta garantiza una solución duradera y efectiva para su propiedad.
                     </p>
                     <button
                         onClick={() => document.getElementById('cotizador')?.scrollIntoView({ behavior: 'smooth' })}
                         className="w-full sm:w-auto bg-primary hover:bg-orange-600 text-white px-8 py-3 rounded-lg font-semibold shadow-lg shadow-orange-500/20 transition-all"
+                        aria-label="Solicitar consulta gratuita sobre impermeabilización"
                     >
                         Solicite su Consulta Gratuita
                     </button>

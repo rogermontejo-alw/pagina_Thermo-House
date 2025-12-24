@@ -20,6 +20,7 @@ import { getLocations, createLocation, deleteLocation, updateLocation } from '@/
 import { getAppConfig, updateAppConfig } from '@/app/actions/get-config';
 import { MEXICAN_CITIES_BY_STATE } from '@/lib/mexico-data';
 import ThemeToggle from '@/components/ThemeToggle';
+import BlogManager from '@/components/BlogManager';
 
 // Helper to format dates in Mexico City timezone
 const formatDateCDMX = (dateStr: string | Date, options: Intl.DateTimeFormatOptions = {}) => {
@@ -71,7 +72,7 @@ const getFolio = (quote: any) => {
 
 export default function AdminDashboard() {
     const [session, setSession] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'quotes' | 'users' | 'prices' | 'locations' | 'products' | 'config'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'quotes' | 'users' | 'prices' | 'locations' | 'products' | 'config' | 'blog'>('dashboard');
     const [quotes, setQuotes] = useState<any[]>([]);
     const [users, setUsers] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
@@ -1006,13 +1007,22 @@ export default function AdminDashboard() {
                             </>
                         )}
                         {(session.role === 'admin' || session.role === 'manager') && (
-                            <button
-                                onClick={() => setActiveTab('users')}
-                                className={`flex items-center justify-center lg:justify-start gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                            >
-                                <UserCircle className="w-3.5 h-3.5" />
-                                <span>Equipo</span>
-                            </button>
+                            <>
+                                <button
+                                    onClick={() => setActiveTab('blog')}
+                                    className={`flex items-center justify-center lg:justify-start gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'blog' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                >
+                                    <FileText className="w-3.5 h-3.5" />
+                                    <span>Blog</span>
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('users')}
+                                    className={`flex items-center justify-center lg:justify-start gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                >
+                                    <UserCircle className="w-3.5 h-3.5" />
+                                    <span>Equipo</span>
+                                </button>
+                            </>
                         )}
                     </div>
                 </div>
@@ -1357,6 +1367,19 @@ export default function AdminDashboard() {
                                 )}
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {activeTab === 'blog' && (session.role === 'admin' || session.role === 'manager') && (
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-black text-secondary dark:text-white uppercase tracking-tight flex items-center gap-3">
+                                <FileText className="w-6 h-6 text-primary" />
+                                Gestión de Blog
+                            </h2>
+                            <p className="text-slate-400 dark:text-slate-300 text-sm mt-1">Crea y edita artículos para la sección de noticias y consejos.</p>
+                        </div>
+                        <BlogManager />
                     </div>
                 )}
 

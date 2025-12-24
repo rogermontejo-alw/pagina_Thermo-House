@@ -51,3 +51,17 @@ export interface Location {
   is_branch?: boolean;
   created_at?: string;
 }
+
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle?: string;
+  content: string; // Markdown or HTML
+  image_url?: string;
+  author_id?: string;
+  published_at: string;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+}
