@@ -41,7 +41,7 @@ export default function Navbar() {
 
     useEffect(() => {
         const handleScroll = () => {
-            if (window.innerWidth < 768) {
+            if (window.innerWidth < 890) {
                 setIsVisible(true);
                 return;
             }
@@ -54,7 +54,7 @@ export default function Navbar() {
         };
 
         const handleMouseMove = (e: MouseEvent) => {
-            if (window.innerWidth < 768) return;
+            if (window.innerWidth < 890) return;
             if (e.clientY < 60) {
                 setIsVisible(true);
                 if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -97,7 +97,7 @@ export default function Navbar() {
     return (
         <>
             <div
-                className="fixed top-0 left-0 w-full h-4 z-[51] hidden md:block"
+                className="fixed top-0 left-0 w-full h-4 z-[51] hidden min-[890px]:block"
                 onMouseEnter={() => setIsVisible(true)}
             />
 
@@ -105,11 +105,11 @@ export default function Navbar() {
                 initial={{ y: 0 }}
                 animate={{ y: isVisible || isOpen ? 0 : -100 }}
                 transition={{ type: 'spring', stiffness: 450, damping: 45 }}
-                className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl z-50 bg-background/90 backdrop-blur-md border-b border-border shadow-lg rounded-b-2xl md:mt-0"
+                className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl z-50 bg-background/90 backdrop-blur-md border-b border-border shadow-lg rounded-b-2xl min-[890px]:mt-0"
             >
                 <div className="mx-auto px-4 sm:px-6">
-                    <div className="flex items-center justify-between h-14 md:h-14">
-                        <div className={`flex-shrink-0 flex items-center justify-center h-full transition-opacity duration-300 ${isOpen ? 'opacity-0 md:opacity-100' : 'opacity-100'}`}>
+                    <div className="flex items-center justify-between h-14 min-[890px]:h-14">
+                        <div className={`flex-shrink-0 flex items-center justify-center h-full transition-opacity duration-300 ${isOpen ? 'opacity-0 min-[890px]:opacity-100' : 'opacity-100'}`}>
                             <Link href="/" className="flex items-center gap-2 group h-full">
                                 <Image
                                     src="/logo.png"
@@ -117,15 +117,15 @@ export default function Navbar() {
                                     width={24}
                                     height={24}
                                     priority
-                                    className="h-5 md:h-6 w-auto object-contain filter brightness-110 drop-shadow-sm self-center"
+                                    className="h-5 min-[890px]:h-6 w-auto object-contain filter brightness-110 drop-shadow-sm self-center"
                                 />
-                                <span className="text-[12px] md:text-sm font-black text-secondary tracking-tight uppercase self-center leading-none">
+                                <span className="text-[12px] min-[890px]:text-sm font-black text-secondary tracking-tight uppercase self-center leading-none">
                                     Thermo<span className="text-primary font-bold">House</span>
                                 </span>
                             </Link>
                         </div>
 
-                        <div className="hidden md:block">
+                        <div className="hidden min-[890px]:block">
                             <div className="flex items-center space-x-2">
                                 {menuItems.map((item) => (
                                     <Link
@@ -140,7 +140,7 @@ export default function Navbar() {
                             </div>
                         </div>
 
-                        <div className="hidden md:flex items-center gap-4">
+                        <div className="hidden min-[890px]:flex items-center gap-4">
                             <ThemeToggle minimal />
                             <button
                                 onClick={(e) => scrollToSection(e, '/#cotizador')}
@@ -151,7 +151,7 @@ export default function Navbar() {
                             </button>
                         </div>
 
-                        <div className="-mr-2 flex items-center gap-2 md:hidden z-[60]">
+                        <div className="-mr-2 flex items-center gap-2 min-[890px]:hidden z-[60]">
                             <ThemeToggle minimal />
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
@@ -171,7 +171,7 @@ export default function Navbar() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
-                            className="fixed inset-0 h-screen w-screen bg-secondary/98 dark:bg-slate-950/98 backdrop-blur-3xl z-[55] md:hidden flex flex-col"
+                            className="fixed inset-0 h-screen w-screen bg-secondary/98 dark:bg-slate-950/98 backdrop-blur-3xl z-[55] min-[890px]:hidden flex flex-col"
                         >
                             {/* Header: Logo en cápsula de cristal */}
                             <div className="pt-12 pb-8 flex flex-col items-center">
