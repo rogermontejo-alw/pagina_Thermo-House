@@ -15,6 +15,7 @@ export default function ThemeToggle({ minimal = false, hideLabels = false }: The
 
     useEffect(() => {
         setMounted(true);
+        console.log('🌓 ThemeToggle mounted');
         const storedTheme = localStorage.getItem('theme');
         const isDark = document.documentElement.classList.contains('dark');
         setTheme(isDark ? 'dark' : 'light');
