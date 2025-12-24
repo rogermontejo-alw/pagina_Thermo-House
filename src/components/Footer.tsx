@@ -64,7 +64,10 @@ export default function Footer() {
                 </div>
 
                 <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-                    <p>© {new Date().getFullYear()} Thermo House. Todos los derechos reservados.</p>
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                        <p>© {new Date().getFullYear()} Thermo House. Todos los derechos reservados.</p>
+                        <span className="px-2 py-0.5 bg-white/5 rounded-md text-[8px] border border-white/10 text-slate-600">v0.1.1-SEO</span>
+                    </div>
                     <div className="flex gap-8">
                         <a href="#" className="hover:text-white transition-colors">Privacidad</a>
                         <a href="#" className="hover:text-white transition-colors">Términos</a>
