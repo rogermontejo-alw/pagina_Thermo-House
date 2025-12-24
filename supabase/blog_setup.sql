@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS blog_posts (
   subtitle TEXT,
   content TEXT NOT NULL, -- Supports Markdown
   image_url TEXT,
+  category TEXT DEFAULT 'mantenimiento',
   author_id UUID REFERENCES admin_users(id),
   published_at TIMESTAMPTZ DEFAULT now(),
   is_published BOOLEAN DEFAULT false,

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus, Search, Edit3, Trash2, Globe, Eye, EyeOff, Calendar,
-    Image as ImageIcon, FileText, ChevronRight, X, Save, ArrowLeft
+    Image as ImageIcon, FileText, ChevronRight, X, Save, ArrowLeft, Tag
 } from 'lucide-react';
 import { getAllPostsAdmin, createBlogPost, updateBlogPost, deleteBlogPost } from '@/app/actions/blog';
 import { BlogPost } from '@/types';
@@ -16,6 +16,14 @@ export default function BlogManager() {
     const [isEditing, setIsEditing] = useState(false);
     const [currentPost, setCurrentPost] = useState<Partial<BlogPost> | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+
+    const categories = [
+        { id: 'mantenimiento', name: 'Mantenimiento' },
+        { id: 'ahorro-energetico', name: 'Ahorro Energético' },
+        { id: 'guias-tecnicas', name: 'Guías Técnicas' },
+        { id: 'costos-presupuestos', name: 'Costos y Presupuestos' },
+        { id: 'casos-exito', name: 'Casos de Éxito' }
+    ];
 
     useEffect(() => {
         loadPosts();
@@ -37,6 +45,7 @@ export default function BlogManager() {
             content: '',
             slug: '',
             image_url: '',
+            category: 'mantenimiento',
             is_published: false
         });
         setIsEditing(true);
@@ -176,6 +185,18 @@ export default function BlogManager() {
                                         placeholder="https://..."
                                     />
                                 </div>
+                                <div>
+                                    <label className="block text-xs font-black uppercase text-slate-400 mb-1">Categoría</label>
+                                    <select
+                                        value={currentPost?.category || 'mantenimiento'}
+                                        onChange={e => setCurrentPost({ ...currentPost, category: e.target.value })}
+                                        className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl p-3 focus:ring-2 ring-primary text-xs font-bold"
+                                    >
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
                                 <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-xl">
                                     <span className="text-sm font-bold">Publicado</span>
                                     <button
@@ -248,15 +269,22 @@ export default function BlogManager() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-center">
-                                        {post.is_published ? (
-                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase">
-                                                <Eye className="w-3 h-3" /> Publicado
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-black uppercase">
-                                                <EyeOff className="w-3 h-3" /> Borrador
-                                            </span>
-                                        )}
+                                        <div className="flex flex-col items-center gap-1">
+                                            {post.is_published ? (
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-[10px] font-black uppercase">
+                                                    <Eye className="w-3 h-3" /> Publicado
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-900/50 text-slate-500 rounded-full text-[10px] font-black uppercase">
+                                                    <EyeOff className="w-3 h-3" /> Borrador
+                                                </span>
+                                            )}
+                                            {post.category && (
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                                                    {categories.find(c => c.id === post.category)?.name || post.category}
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2 text-xs text-slate-500">

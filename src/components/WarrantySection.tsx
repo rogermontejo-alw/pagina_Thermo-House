@@ -1,8 +1,31 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { ShieldCheck, Droplets, Sun, ChevronDown } from 'lucide-react';
+import { getLocations } from '@/app/actions/admin-locations';
+import { Location } from '@/types';
 
 export default function WarrantySection() {
+    const [phoneNumber, setPhoneNumber] = useState("529992006267"); // Fallback
+
+    useEffect(() => {
+        const fetchPhone = async () => {
+            const res = await getLocations();
+            if (res.success && res.data) {
+                const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                const merida = res.data.find((l: Location) => norm(l.ciudad) === 'merida');
+                if (merida && merida.telefono) {
+                    // Clean and ensure 52 prefix for WhatsApp
+                    const clean = merida.telefono.replace(/\D/g, '');
+                    const finalPhone = clean.startsWith('52') ? clean : `52${clean}`;
+                    setPhoneNumber(finalPhone);
+                }
+            }
+        };
+        fetchPhone();
+    }, []);
+
     return (
         <section id="garantia" className="py-2 transition-colors duration-500">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,7 +75,9 @@ export default function WarrantySection() {
                 </div>
 
                 {/* Maintenance Section (Active Warranty) */}
-                <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-8 shadow-sm border border-border dark:border-slate-700 flex flex-col lg:flex-row items-center gap-8 mb-12">
+                <div className="relative bg-teal-50/50 dark:bg-teal-950/30 rounded-[2.5rem] p-8 md:p-12 shadow-2xl shadow-accent/5 border border-accent/30 dark:border-white/40 flex flex-col lg:flex-row items-center gap-12 mb-16 overflow-hidden transition-all duration-500">
+                    {/* Background accent for the highlight */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
                     <div className="flex-1 space-y-4 md:space-y-6">
                         <h3 className="text-xl md:text-2xl font-bold text-secondary dark:text-white">Manteniendo Su Garantía Activa</h3>
                         <p className="text-sm md:text-base text-muted-foreground">
@@ -61,13 +86,29 @@ export default function WarrantySection() {
                         <p className="text-sm md:text-base text-muted-foreground">
                             Nuestro equipo se encargará de todo. Le recordaremos cuándo es el momento y programaremos una visita a su conveniencia.
                         </p>
-                        <button
-                            onClick={() => document.getElementById('cotizador')?.scrollIntoView({ behavior: 'smooth' })}
-                            className="w-full sm:w-auto bg-accent hover:bg-teal-600 text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
-                            aria-label="Programar una visita de mantenimiento preventivo"
+                        <motion.button
+                            onClick={() => {
+                                const message = encodeURIComponent("Hola, me gustaría programar una revisión de mantenimiento preventivo para mi sistema Thermo House.");
+                                window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+                            }}
+                            animate={{
+                                scale: [1, 1.05, 1],
+                                boxShadow: [
+                                    "0 0 0px rgba(20, 184, 166, 0)",
+                                    "0 0 20px rgba(20, 184, 166, 0.4)",
+                                    "0 0 0px rgba(20, 184, 166, 0)"
+                                ]
+                            }}
+                            transition={{
+                                duration: 3,
+                                repeat: Infinity,
+                                ease: "easeInOut"
+                            }}
+                            className="w-full sm:w-auto bg-accent hover:bg-teal-600 text-white px-8 py-3.5 rounded-xl font-black uppercase tracking-widest transition-colors shadow-xl relative z-10"
+                            aria-label="Programar una visita de mantenimiento preventivo en WhatsApp"
                         >
                             Programar Mantenimiento
-                        </button>
+                        </motion.button>
                     </div>
                     <div className="flex-1 w-full h-48 md:h-64 bg-slate-200 dark:bg-slate-700/50 rounded-xl overflow-hidden relative border border-slate-300/50 dark:border-transparent">
                         {/* Placeholder for Roof Image */}

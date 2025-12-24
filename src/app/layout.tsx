@@ -103,7 +103,7 @@ export default function RootLayout({
               "image": "https://thermohouse.mx/logo.png",
               "@id": "https://thermohouse.mx",
               "url": "https://thermohouse.mx",
-              "telephone": "+529990000000",
+              "telephone": "+529992006267",
               "address": {
                 "@type": "PostalAddress",
                 "streetAddress": "Mérida, Yucatán",

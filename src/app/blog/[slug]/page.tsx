@@ -2,7 +2,7 @@ import { getPostBySlug, getPublishedPosts } from '@/app/actions/blog';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
-import { Calendar, ArrowLeft, Clock, Share2, Facebook, Twitter, LinkIcon } from 'lucide-react';
+import { Calendar, ArrowLeft, Clock, Share2, Facebook, Twitter, LinkIcon, Tag } from 'lucide-react';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 
@@ -48,11 +48,20 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
 
                     {/* Header */}
                     <div className="mb-12">
-                        <div className="flex items-center gap-4 mb-6">
+                        <div className="flex flex-wrap items-center gap-4 mb-6">
                             <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.25em] rounded-full">
                                 {new Date(post.published_at!).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}
                             </span>
-                            <div className="flex items-center gap-2 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                            {post.category && (
+                                <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-secondary dark:bg-slate-800 text-white dark:text-slate-300 text-[10px] font-black uppercase tracking-[0.25em] rounded-full">
+                                    <Tag className="w-3 h-3 text-primary" />
+                                    {post.category === 'ahorro-energetico' ? 'Ahorro Energético' :
+                                        post.category === 'guias-tecnicas' ? 'Guías Técnicas' :
+                                            post.category === 'costos-presupuestos' ? 'Costos y Presupuestos' :
+                                                post.category === 'casos-exito' ? 'Casos de Éxito' : 'Mantenimiento'}
+                                </span>
+                            )}
+                            <div className="flex items-center gap-2 text-slate-400 text-[10px] font-black uppercase tracking-widest ml-auto md:ml-0">
                                 <Clock className="w-3.5 h-3.5" />
                                 {Math.ceil(post.content.split(' ').length / 200)} min lectura
                             </div>

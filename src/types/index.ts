@@ -62,6 +62,7 @@ export interface BlogPost {
   author_id?: string;
   published_at: string;
   is_published: boolean;
+  category?: string;
   created_at: string;
   updated_at: string;
 }
