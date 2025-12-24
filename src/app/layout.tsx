@@ -15,10 +15,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL('https://thermohouse.mx'),
   title: {
-    default: "Thermo House | Expertos en Impermeabilización y Aislamiento Térmico",
-    template: "%s | Thermo House"
+    default: "Thermohouse México | Impermeabilización y Aislamiento Térmico",
+    template: "%s | Thermohouse México"
   },
-  description: "Servicios integrales de impermeabilización tradicional y con poliuretano espreado. Expertos en aislamiento térmico, mantenimiento de techos y eliminación de filtraciones con garantía de por vida. ¡Cotice hoy!",
+  description: "Protege tu hogar del calor y la lluvia con Thermohouse. Expertos en sistemas de impermeabilización con poliuretano en México. ¡Cotiza hoy mismo desde $79/m²!",
   keywords: [
     "impermeabilización tradicional",
     "impermeabilización con poliuretano",
@@ -43,8 +43,8 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: "Thermo House | Impermeabilización y Mantenimiento de Techos",
-    description: "Soluciones definitivas en impermeabilización tradicional y térmica. Protegemos su patrimonio con tecnología de poliuretano y mantenimiento profesional.",
+    title: "Thermohouse México | Impermeabilización y Aislamiento Térmico",
+    description: "Protege tu hogar del calor y la lluvia con Thermohouse. Expertos en sistemas de impermeabilización con poliuretano en México. ¡Cotiza hoy mismo desde $79/m²!",
     url: 'https://thermohouse.mx',
     siteName: 'Thermo House',
     locale: 'es_MX',
@@ -60,8 +60,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Thermo House | Impermeabilización y Aislamiento Térmico",
-    description: "Especialistas en protección de techos y eficiencia energética. Tradicional y Poliuretano.",
+    title: "Thermohouse México | Impermeabilización y Aislamiento Térmico",
+    description: "Protege tu hogar del calor y la lluvia con Thermohouse. Expertos en sistemas de impermeabilización con poliuretano en México. ¡Cotiza hoy mismo desde $79/m²!",
     images: ['/og-image.png'],
   },
   icons: {
@@ -134,7 +134,7 @@ export default function RootLayout({
                 "https://www.facebook.com/thermohousemx",
                 "https://www.instagram.com/thermohousemx"
               ],
-              "description": "Expertos en impermeabilización tradicional, sistemas de poliuretano espreado y mantenimiento preventivo de techos. Garantía de por vida y protección térmica de alto rendimiento.",
+              "description": "Protege tu hogar del calor y la lluvia con Thermohouse. Expertos en sistemas de impermeabilización con poliuretano en México. ¡Cotiza hoy mismo desde $79/m²!",
               "hasOfferCatalog": {
                 "@type": "OfferCatalog",
                 "name": "Servicios de Protección de Techos",
