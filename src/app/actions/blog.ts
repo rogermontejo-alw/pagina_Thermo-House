@@ -161,3 +161,43 @@ export async function deleteBlogPost(id: string) {
         return { success: false, error: err.message };
     }
 }
+
+/**
+ * Admin: Uploads an image to storage.
+ */
+export async function uploadBlogImage(formData: FormData) {
+    try {
+        const session = await getAdminSession();
+        if (!session) return { success: false, error: 'No autorizado' };
+
+        const file = formData.get('file') as File;
+        if (!file) return { success: false, error: 'No se recibio ningún archivo' };
+
+        const buffer = await file.arrayBuffer();
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `uploads/${fileName}`;
+
+        // Use supabaseAdmin to bypass RLS policies on INSERT
+        const { data, error } = await supabaseAdmin.storage
+            .from('blog-images')
+            .upload(filePath, buffer, {
+                contentType: file.type,
+                upsert: true
+            });
+
+        if (error) {
+            console.error('Error uploading to storage:', error);
+            return { success: false, error: error.message };
+        }
+
+        const { data: { publicUrl } } = supabaseAdmin.storage
+            .from('blog-images')
+            .getPublicUrl(filePath);
+
+        return { success: true, url: publicUrl };
+    } catch (err: any) {
+        console.error('Critical error in uploadBlogImage:', err);
+        return { success: false, error: err.message };
+    }
+}

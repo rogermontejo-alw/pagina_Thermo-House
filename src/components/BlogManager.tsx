@@ -6,7 +6,13 @@ import {
     Plus, Search, Edit3, Trash2, Globe, Eye, EyeOff, Calendar,
     Image as ImageIcon, FileText, ChevronRight, X, Save, ArrowLeft, Tag
 } from 'lucide-react';
-import { getAllPostsAdmin, createBlogPost, updateBlogPost, deleteBlogPost } from '@/app/actions/blog';
+import {
+    getAllPostsAdmin,
+    createBlogPost,
+    updateBlogPost,
+    deleteBlogPost,
+    uploadBlogImage
+} from '@/app/actions/blog';
 import { BlogPost } from '@/types';
 import { supabase } from '@/lib/supabase';
 
@@ -18,6 +24,7 @@ export default function BlogManager() {
     const [currentPost, setCurrentPost] = useState<Partial<BlogPost> | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
 
     const categories = [
         { id: 'mantenimiento', name: 'Mantenimiento' },
@@ -92,8 +99,15 @@ export default function BlogManager() {
         }
     };
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
+        let file: File | undefined;
+
+        if ('files' in e.target && e.target.files) {
+            file = e.target.files[0];
+        } else if ('dataTransfer' in e && e.dataTransfer.files) {
+            file = e.dataTransfer.files[0];
+        }
+
         if (!file) return;
 
         // Validar formato
@@ -103,36 +117,40 @@ export default function BlogManager() {
             return;
         }
 
-        // Recomendación WebP
-        if (file.type !== 'image/webp' && file.size > 1024 * 1024) {
-            console.warn('Considera usar formato WebP para imágenes de más de 1MB.');
-        }
-
         try {
             setUploading(true);
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random()}.${fileExt}`;
-            const filePath = `posts/${fileName}`;
+            const formData = new FormData();
+            formData.append('file', file);
 
-            const { error: uploadError, data } = await supabase.storage
-                .from('blog-images')
-                .upload(filePath, file);
+            const res = await uploadBlogImage(formData);
 
-            if (uploadError) {
-                throw uploadError;
+            if (res.success && res.url) {
+                setCurrentPost({ ...currentPost, image_url: res.url });
+                alert('Imagen subida con éxito.');
+            } else {
+                throw new Error(res.error || 'Error desconocido');
             }
-
-            const { data: { publicUrl } } = supabase.storage
-                .from('blog-images')
-                .getPublicUrl(filePath);
-
-            setCurrentPost({ ...currentPost, image_url: publicUrl });
-            alert('Imagen subida con éxito.');
         } catch (error: any) {
             alert('Error subiendo imagen: ' + error.message);
         } finally {
             setUploading(false);
+            setIsDragging(false);
         }
+    };
+
+    const onDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const onDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const onDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        handleFileUpload(e);
     };
 
     const filteredPosts = posts.filter(p =>
@@ -214,20 +232,14 @@ export default function BlogManager() {
                                                     if (!file) return;
                                                     setUploading(true);
                                                     try {
-                                                        const fileExt = file.name.split('.').pop();
-                                                        const fileName = `${Math.random()}.${fileExt}`;
-                                                        const filePath = `content/${fileName}`;
-                                                        const { error: uploadError } = await supabase.storage
-                                                            .from('blog-images')
-                                                            .upload(filePath, file);
-                                                        if (uploadError) throw uploadError;
-                                                        const { data: { publicUrl } } = supabase.storage
-                                                            .from('blog-images')
-                                                            .getPublicUrl(filePath);
+                                                        const formData = new FormData();
+                                                        formData.append('file', file);
+                                                        const res = await uploadBlogImage(formData);
+                                                        if (!res.success || !res.url) throw new Error(res.error);
 
                                                         // Copiar al portapapeles
-                                                        await navigator.clipboard.writeText(publicUrl);
-                                                        alert('¡URL copiada al portapapeles! Ya puedes pegarla en el contenido.');
+                                                        await navigator.clipboard.writeText(res.url);
+                                                        alert('¡URL de imagen para contenido copiada!');
                                                     } catch (err: any) {
                                                         alert('Error: ' + err.message);
                                                     } finally {
@@ -291,9 +303,14 @@ export default function BlogManager() {
 
                                         <div className="flex gap-2">
                                             <label className="flex-1">
-                                                <div className={`w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl p-3 text-center text-xs font-bold cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                <div
+                                                    onDragOver={onDragOver}
+                                                    onDragLeave={onDragLeave}
+                                                    onDrop={onDrop}
+                                                    className={`w-full bg-slate-50 dark:bg-slate-900 border-2 border-dashed rounded-xl p-3 text-center text-xs font-bold cursor-pointer transition-all flex items-center justify-center gap-2 ${isDragging ? 'border-primary bg-primary/5 text-primary' : 'border-transparent hover:bg-slate-100 dark:hover:bg-slate-800'} ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                >
                                                     <ImageIcon className="w-4 h-4" />
-                                                    {uploading ? 'Subiendo...' : currentPost?.image_url ? 'Cambiar Imagen' : 'Subir Imagen'}
+                                                    {uploading ? 'Subiendo...' : isDragging ? '¡Suelta la imagen!' : currentPost?.image_url ? 'Cambiar Imagen' : 'Subir o Arrastrar'}
                                                 </div>
                                                 <input
                                                     type="file"
