@@ -25,7 +25,7 @@ export function CTASection() {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="dark-section py-16 md:py-24 text-center rounded-[3rem] mx-4 md:mx-12 mb-12"
+            className="dark-section py-16 md:py-24 text-center rounded-[3rem] max-w-5xl mx-auto mb-12"
         >
             <div className="max-w-3xl mx-auto px-4">
                 <h2 className="text-2xl md:text-5xl font-black text-white mb-6 uppercase tracking-tighter">¿Preparado para la Tranquilidad?</h2>

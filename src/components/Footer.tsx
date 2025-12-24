@@ -60,15 +60,17 @@ export default function Footer() {
                         <div className="space-y-3 text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em]">
                             {branches.length > 0 ? (
                                 branches.map(branch => (
-                                    <p key={branch.id}>{branch.ciudad}, {branch.estado}</p>
+                                    <Link key={branch.id} href="/#sucursales" className="block hover:text-primary transition-colors">
+                                        {branch.ciudad}, {branch.estado}
+                                    </Link>
                                 ))
                             ) : (
-                                <>
-                                    <p>Mérida, Yucatán</p>
-                                    <p>Cancún, Q. Roo</p>
-                                    <p>Playa del Carmen, Q. Roo</p>
-                                    <p>Tulum, Q. Roo</p>
-                                </>
+                                <div className="space-y-3">
+                                    <Link href="/#sucursales" className="block hover:text-primary transition-colors">Mérida, Yucatán</Link>
+                                    <Link href="/#sucursales" className="block hover:text-primary transition-colors">Cancún, Q. Roo</Link>
+                                    <Link href="/#sucursales" className="block hover:text-primary transition-colors">Playa del Carmen, Q. Roo</Link>
+                                    <Link href="/#sucursales" className="block hover:text-primary transition-colors">Tulum, Q. Roo</Link>
+                                </div>
                             )}
                         </div>
                     </div>
