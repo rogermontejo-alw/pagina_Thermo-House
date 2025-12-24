@@ -1,3 +1,5 @@
+'use client';
+
 import { ShieldCheck, Droplets, Sun, ChevronDown } from 'lucide-react';
 
 export default function WarrantySection() {
