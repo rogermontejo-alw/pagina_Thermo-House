@@ -22,7 +22,7 @@ export default function Footer() {
     }, []);
 
     return (
-        <footer className="bg-slate-950 py-20 border-t border-white/5 font-sans rounded-t-[3rem] scroll-snap-align-end text-white relative overflow-hidden">
+        <footer className="bg-slate-950 py-20 border-t border-white/5 font-sans rounded-t-[1.5rem] md:rounded-t-[4rem] scroll-snap-align-end text-white relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
 
             <div className="max-w-5xl mx-auto px-6">
@@ -44,7 +44,7 @@ export default function Footer() {
                     </div>
 
                     <div className="space-y-6">
-                        <h4 className="text-xs font-black uppercase tracking-[0.3em] text-primary">Navegación</h4>
+                        <h2 className="text-xs font-black uppercase tracking-[0.3em] text-primary">Navegación</h2>
                         <ul className="space-y-3 text-slate-400 text-sm font-bold uppercase tracking-widest">
                             <li><Link href="/#sistemas" className="hover:text-primary transition-colors">Sistemas</Link></li>
                             <li><Link href="/blog" className="hover:text-primary transition-colors">Blog</Link></li>
@@ -55,7 +55,7 @@ export default function Footer() {
                     </div>
 
                     <div className="space-y-6">
-                        <h4 className="text-xs font-black uppercase tracking-[0.3em] text-primary">Sedes</h4>
+                        <h2 className="text-xs font-black uppercase tracking-[0.3em] text-primary">Sedes</h2>
                         <div className="space-y-3 text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em]">
                             {branches.length > 0 ? (
                                 branches.map(branch => (
@@ -76,7 +76,7 @@ export default function Footer() {
                 <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
                     <div className="flex flex-col md:flex-row items-center gap-4">
                         <p>© {new Date().getFullYear()} Thermo House. Todos los derechos reservados.</p>
-                        <span className="px-2 py-0.5 bg-white/5 rounded-md text-[8px] border border-white/10 text-slate-600">v0.1.2-SPEED</span>
+                        <span className="px-2 py-0.5 bg-white/5 rounded-md text-[8px] border border-white/10 text-slate-600">v0.1.3-SPEED</span>
                     </div>
                     <div className="flex gap-8">
                         <Link href="/privacidad" className="hover:text-white transition-colors">Privacidad</Link>

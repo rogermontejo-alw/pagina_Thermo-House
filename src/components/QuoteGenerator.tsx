@@ -476,7 +476,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                             <div className="inline-flex items-center gap-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold mb-3 md:mb-4 border border-green-100 dark:border-green-800/50 uppercase tracking-widest">
                                 <Check className="w-3.5 h-3.5" /> Cotización Generada
                             </div>
-                            <h3 className="text-2xl md:text-5xl font-black text-secondary dark:text-white tracking-tighter">¡Todo Listo, {leadName.split(' ')[0] || 'Cliente'}!</h3>
+                            <h4 className="text-2xl md:text-5xl font-black text-secondary dark:text-white tracking-tighter">¡Todo Listo, {leadName.split(' ')[0] || 'Cliente'}!</h4>
                             <p className="text-slate-500 dark:text-slate-200 text-xs md:text-xl mt-2">Tu proyecto de <strong>{initialArea}m²</strong> en <strong>{city || address || 'tu ubicación'}</strong></p>
 
                             <div className="mt-8 mb-4 space-y-4">
@@ -627,7 +627,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                     <div className="fixed inset-0 bg-secondary/90 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
                         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[3rem] overflow-hidden shadow-2xl p-10 md:p-14 text-center space-y-6 border border-slate-100 dark:border-slate-800">
                             <div className="w-20 h-20 bg-green-50 dark:bg-green-900/30 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-green-100 dark:border-green-800/50"><CheckCircle2 className="w-10 h-10" /></div>
-                            <h3 className="text-3xl md:text-4xl font-black text-secondary dark:text-white uppercase tracking-tighter leading-none">¡Gracias por <br /> <span className="text-primary">Considerarnos!</span></h3>
+                            <h4 className="text-3xl md:text-4xl font-black text-secondary dark:text-white uppercase tracking-tighter leading-none">¡Gracias por <br /> <span className="text-primary">Considerarnos!</span></h4>
                             <p className="text-slate-500 dark:text-slate-200 font-medium text-base md:text-lg">Tu cotización ha sido registrada con éxito.</p>
                             <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700"><p className="text-slate-600 dark:text-slate-300 font-bold text-sm">En breve uno de nuestros especialistas te enviará la información detallada al medio de contacto que nos proporcionaste.</p></div>
                             <button onClick={() => { window.location.href = '/'; }} className="w-full bg-secondary dark:bg-primary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-primary/90 transition-all">Entendido</button>

@@ -39,9 +39,10 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
                         <button
                             key={cat.id}
                             onClick={() => setActiveCategory(cat.id)}
+                            aria-label={`Filtrar por ${cat.name}`}
                             className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id
-                                    ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105'
-                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-secondary dark:hover:text-white'
+                                ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105'
+                                : 'bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-secondary dark:hover:text-white'
                                 }`}
                         >
                             {cat.name}

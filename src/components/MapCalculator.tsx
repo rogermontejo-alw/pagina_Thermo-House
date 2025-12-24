@@ -679,6 +679,7 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                             onClick={locateUser}
                             className="p-3 bg-white dark:bg-slate-800 text-secondary dark:text-white rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-border dark:border-slate-700"
                             title="Mi Ubicación"
+                            aria-label="Usar mi ubicación actual"
                         >
                             <Crosshair className="w-5 h-5" />
                         </button>
@@ -686,6 +687,7 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                             onClick={clearMap}
                             className="p-3 bg-white dark:bg-slate-800 text-red-500 rounded-lg shadow-lg hover:bg-red-50 dark:hover:bg-slate-700 transition-colors border border-border dark:border-slate-700"
                             title="Limpiar Mapa"
+                            aria-label="Limpiar dibujos del mapa"
                         >
                             <RotateCcw className="w-5 h-5" />
                         </button>

@@ -59,6 +59,7 @@ export default function ThemeToggle({ minimal = false, hideLabels = false }: The
             {/* Light Option */}
             <button
                 onClick={() => toggleTheme('light')}
+                aria-label="Cambiar a modo claro"
                 className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 h-full transition-all duration-300 ${theme === 'light' ? 'text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-primary'
                     }`}
             >
@@ -69,6 +70,7 @@ export default function ThemeToggle({ minimal = false, hideLabels = false }: The
             {/* Dark Option */}
             <button
                 onClick={() => toggleTheme('dark')}
+                aria-label="Cambiar a modo oscuro"
                 className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 h-full transition-all duration-300 ${theme === 'dark' ? 'text-white font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-primary'
                     }`}
             >
