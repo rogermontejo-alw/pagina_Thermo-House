@@ -18,18 +18,18 @@ export const metadata: Metadata = {
     default: "Thermohouse México | Impermeabilización y Aislamiento Térmico",
     template: "%s | Thermohouse México"
   },
-  description: "Protege tu hogar del calor y la lluvia con Thermohouse. Expertos en sistemas de impermeabilización con poliuretano en México. ¡Cotiza hoy mismo desde $79/m²!",
+  description: "Líderes en impermeabilización y aislamiento térmico en todo México. Expertos en sistemas de poliuretano de alta densidad para el clima de Mérida y la Península de Yucatán. ¡Cotiza hoy desde $79/m²!",
   keywords: [
-    "impermeabilización tradicional",
-    "impermeabilización con poliuretano",
-    "aislamiento térmico",
+    "impermeabilización México",
+    "impermeabilizante Mérida",
+    "impermeabilización Yucatán",
+    "aislamiento térmico Mérida",
     "poliuretano espreado",
-    "mantenimiento de techos Yucatán",
-    "eliminación de filtraciones",
+    "Thermo House México",
     "ahorro de energía",
-    "impermeabilizantes acrílicos",
-    "Thermo House Mérida",
-    "protección de techos"
+    "mejor impermeabilizante para calor",
+    "impermeabilización Cancún",
+    "protección de techos Sureste"
   ],
   authors: [{ name: "Thermo House" }],
   creator: "Thermo House",
