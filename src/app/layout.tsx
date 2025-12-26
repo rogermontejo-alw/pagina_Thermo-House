@@ -185,27 +185,33 @@ export default function RootLayout({
               "hasPart": [
                 {
                   "@type": "WebPage",
-                  "name": "Cotización Personalizada",
+                  "name": "Cotizador Digital en Linea",
                   "url": "https://thermohouse.mx/#cotizador",
-                  "description": "Obtén un presupuesto exacto para proteger tu techo en segundos."
+                  "description": "Cotiza la impermeabilización de tu casa en menos de 2 minutos."
                 },
                 {
                   "@type": "WebPage",
-                  "name": "Sistemas de Impermeabilización",
+                  "name": "Sistemas TH FIX, LIGHT y FORTE",
                   "url": "https://thermohouse.mx/#sistemas",
-                  "description": "Conoce TH FIX, TH LIGHT y TH FORTE. Soluciones para cada necesidad."
+                  "description": "Aislamiento térmico y sellado de cubetas con poliuretano de alta densidad."
                 },
                 {
                   "@type": "WebPage",
-                  "name": "Blog de Especialistas",
+                  "name": "Garantía de por Vida",
+                  "url": "https://thermohouse.mx/#metodo",
+                  "description": "Información sobre nuestra exclusiva garantía de protección permanente."
+                },
+                {
+                  "@type": "WebPage",
+                  "name": "Blog y Consejos Técnicos",
                   "url": "https://thermohouse.mx/blog",
-                  "description": "Consejos y guías técnicas sobre aislamiento térmico."
+                  "description": "Aprende a proteger tu techo y ahorrar energía."
                 },
                 {
                   "@type": "WebPage",
                   "name": "Contacto y Sucursales",
                   "url": "https://thermohouse.mx/#contacto",
-                  "description": "Nuestras ubicaciones en Mérida, Chihuahua y más."
+                  "description": "Nuestras oficinas en Mérida, Chihuahua y soporte nacional."
                 }
               ]
             })
