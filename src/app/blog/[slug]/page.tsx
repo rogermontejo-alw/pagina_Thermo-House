@@ -150,7 +150,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 </article>
             </div>
 
-            <Footer />
+            <div className="max-w-5xl mx-auto px-4 mt-auto">
+                <Footer />
+            </div>
         </main>
     );
 }

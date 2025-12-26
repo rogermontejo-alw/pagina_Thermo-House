@@ -33,8 +33,8 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
     return (
         <div className="space-y-12">
             {/* Filters & Search */}
-            <div className="flex flex-col lg:flex-row gap-6 items-center justify-between bg-white dark:bg-slate-900/50 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm backdrop-blur-sm">
-                <div className="flex flex-wrap items-center gap-2 justify-center lg:justify-start">
+            <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-6 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm backdrop-blur-sm">
+                <div className="flex flex-wrap items-center gap-2 justify-start">
                     {categories.map((cat) => (
                         <button
                             key={cat.id}
@@ -42,7 +42,7 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
                             aria-label={`Filtrar por ${cat.name}`}
                             className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id
                                 ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105'
-                                : 'bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-secondary dark:hover:text-white'
+                                : 'bg-slate-200/50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-secondary dark:hover:text-white'
                                 }`}
                         >
                             {cat.name}
@@ -57,7 +57,7 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
                         placeholder="Buscar por tema..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-800/50 border-none pl-12 pr-4 py-3 rounded-2xl text-sm focus:ring-2 ring-primary transition-all"
+                        className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-transparent pl-12 pr-4 py-3 rounded-2xl text-sm focus:ring-2 ring-primary transition-all text-secondary dark:text-white"
                     />
                 </div>
             </div>
