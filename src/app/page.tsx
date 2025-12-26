@@ -52,10 +52,10 @@ export default function Home() {
           <BlogPreviewSection />
         </SectionWrapper>
 
-        {/* Final Call to Action */}
-        <CTASection />
-
-        <Footer />
+        <div className="max-w-5xl mx-auto px-4">
+          <CTASection />
+          <Footer />
+        </div>
       </div>
     </main>
   );

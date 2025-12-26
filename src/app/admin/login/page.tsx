@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { loginAdmin } from '@/app/actions/admin-auth';
-import { Clock, ShieldCheck, Lock } from 'lucide-react';
+import { Clock, ShieldCheck, Lock, Loader2 } from 'lucide-react';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function AdminLoginPage() {
     const [email, setEmail] = useState('');
@@ -34,14 +35,23 @@ export default function AdminLoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4 font-sans transition-colors duration-500">
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 dark:shadow-black/50 border border-slate-100 dark:border-slate-800 w-full max-w-md relative overflow-hidden transition-all duration-300">
-                {/* Decorative background element */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4 font-sans transition-colors duration-500 relative">
+            {/* Theme Toggle in top right with high z-index */}
+            <div className="absolute top-6 right-6 z-50">
+                <ThemeToggle minimal />
+            </div>
 
-                <div className="text-center mb-10 relative">
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 dark:shadow-black/50 border border-slate-100 dark:border-slate-800 w-full max-w-md relative overflow-hidden transition-all duration-300 z-10">
+                {/* Decorative background element */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl z-0"></div>
+
+                <div className="text-center mb-10 relative z-10">
                     <div className="flex justify-center mb-8">
-                        <img src="/logo.png" alt="Thermo House Logo" className="h-16 w-auto filter brightness-110 drop-shadow-2xl dark:invert dark:brightness-200" />
+                        <img
+                            src="/logo.png"
+                            alt="Thermo House Logo"
+                            className="h-16 w-auto drop-shadow-2xl"
+                        />
                     </div>
                     <h1 className="text-3xl font-black text-secondary dark:text-white uppercase tracking-tight mb-2">Acceso Seguro</h1>
                     <p className="text-slate-400 dark:text-slate-300 text-sm font-medium tracking-wide">PANEL DE CONTROL THERMO HOUSE</p>
@@ -83,7 +93,12 @@ export default function AdminLoginPage() {
                         disabled={loading}
                         className="w-full bg-secondary dark:bg-primary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-primary/90 hover:scale-[1.02] transition-all shadow-xl shadow-secondary/20 dark:shadow-primary/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 group border border-transparent dark:border-primary/20 backdrop-blur-sm"
                     >
-                        {loading ? 'Verificando...' : (
+                        {loading ? (
+                            <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                Verificando...
+                            </>
+                        ) : (
                             <>
                                 Entrar al Dashboard
                                 <ShieldCheck className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

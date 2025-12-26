@@ -4,26 +4,21 @@ const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
-    domains: ['ewysxryaqwdscqecyomi.supabase.co'],
     remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ewysxryaqwdscqecyomi.supabase.co',
+      },
       {
         protocol: 'https',
         hostname: '*.supabase.co',
       },
     ],
   },
-  async headers() {
-    return [
-      {
-        source: '/:all*(svg|jpg|png|webp|avif|css|js)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-    ];
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '1mb',
+    },
   },
 };
 

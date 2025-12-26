@@ -23,7 +23,7 @@ export default function Footer() {
     }, []);
 
     return (
-        <footer className="bg-slate-950 py-20 border-t border-white/5 font-sans rounded-t-[1.5rem] md:rounded-t-[4rem] scroll-snap-align-end text-white relative overflow-hidden">
+        <footer className="bg-slate-950 py-20 border-t border-white/5 font-sans rounded-[2rem] md:rounded-t-[4rem] md:rounded-b-none w-full mb-8 md:mb-0 scroll-snap-align-end text-white relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
 
             <div className="max-w-5xl mx-auto px-6">

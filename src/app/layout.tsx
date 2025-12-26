@@ -168,6 +168,10 @@ export default function RootLayout({
             })
           }}
         />
+        <link rel="preconnect" href="https://ewysxryaqwdscqecyomi.supabase.co" />
+        <link rel="dns-prefetch" href="https://ewysxryaqwdscqecyomi.supabase.co" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <script
           dangerouslySetInnerHTML={{
             __html: `

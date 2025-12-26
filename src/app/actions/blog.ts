@@ -195,8 +195,8 @@ export async function uploadBlogImage(formData: FormData) {
             });
 
         if (error) {
-            console.error('Error uploading to storage:', error);
-            return { success: false, error: error.message };
+            console.error('SERVER ACTION ERROR: Error uploading to storage bucket "blog-images":', error);
+            return { success: false, error: `Error en almacenamiento: ${error.message}` };
         }
 
         const { data: { publicUrl } } = supabaseAdmin.storage
