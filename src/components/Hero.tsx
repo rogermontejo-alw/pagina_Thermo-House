@@ -13,8 +13,21 @@ export default function Hero() {
     return (
         <div id="inicio" className="relative min-h-screen flex flex-col justify-center overflow-hidden border-b border-slate-200 dark:border-white/5 transition-colors duration-500 bg-slate-50 dark:bg-[#020617]">
             <div className="absolute inset-0 z-0">
-                {/* Adaptive background */}
-                <div className="absolute inset-0 bg-slate-50 dark:bg-gradient-to-b dark:from-black dark:via-[#020617] dark:to-[#0f172a]" />
+                {/* Background Video (Only loads if file exists in /public/videos/hero-bg.mp4) */}
+                <video
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    poster="/images/hero-poster.jpg"
+                    className="absolute inset-0 w-full h-full object-cover opacity-30 dark:opacity-40"
+                    onCanPlayThrough={(e) => (e.currentTarget.style.opacity = "0.4")}
+                >
+                    <source src="/videos/hero-bg.mp4" type="video/mp4" />
+                </video>
+
+                {/* Adaptive background overlay */}
+                <div className="absolute inset-0 bg-slate-50/80 dark:bg-gradient-to-b dark:from-black/80 dark:via-[#020617]/90 dark:to-[#0f172a]" />
 
                 {/* Light mode specific accents */}
                 <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[600px] h-[600px] bg-primary/5 dark:bg-primary/10 rounded-full blur-[120px]" />
