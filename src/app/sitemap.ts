@@ -1,13 +1,45 @@
 import { MetadataRoute } from 'next'
+import { getPublishedPosts } from './actions/blog'
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+    const baseUrl = 'https://thermohouse.mx';
+
+    // Fetch blog posts
+    const res = await getPublishedPosts();
+    const blogPosts = res.success ? res.data || [] : [];
+
+    const blogEntries: MetadataRoute.Sitemap = blogPosts.map((post) => ({
+        url: `${baseUrl}/blog/${post.slug}`,
+        lastModified: new Date(post.updated_at || post.published_at || new Date()),
+        changeFrequency: 'weekly',
+        priority: 0.7,
+    }));
+
     return [
         {
-            url: 'https://thermohouse.mx',
+            url: baseUrl,
             lastModified: new Date(),
             changeFrequency: 'monthly',
             priority: 1,
         },
-        // Add other routes here if you have them, e.g., /admin if you want it indexed (usually not)
+        {
+            url: `${baseUrl}/blog`,
+            lastModified: new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.8,
+        },
+        ...blogEntries,
+        {
+            url: `${baseUrl}/privacidad`,
+            lastModified: new Date(),
+            changeFrequency: 'yearly',
+            priority: 0.3,
+        },
+        {
+            url: `${baseUrl}/terminos`,
+            lastModified: new Date(),
+            changeFrequency: 'yearly',
+            priority: 0.3,
+        }
     ]
 }

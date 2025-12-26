@@ -168,6 +168,49 @@ export default function RootLayout({
             })
           }}
         />
+        {/* Additional Schema for Sitelinks */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "Thermo House",
+              "url": "https://thermohouse.mx",
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://thermohouse.mx/blog?q={search_term_string}",
+                "query-input": "required name=search_term_string"
+              },
+              "hasPart": [
+                {
+                  "@type": "WebPage",
+                  "name": "Cotización Personalizada",
+                  "url": "https://thermohouse.mx/#cotizador",
+                  "description": "Obtén un presupuesto exacto para proteger tu techo en segundos."
+                },
+                {
+                  "@type": "WebPage",
+                  "name": "Sistemas de Impermeabilización",
+                  "url": "https://thermohouse.mx/#sistemas",
+                  "description": "Conoce TH FIX, TH LIGHT y TH FORTE. Soluciones para cada necesidad."
+                },
+                {
+                  "@type": "WebPage",
+                  "name": "Blog de Especialistas",
+                  "url": "https://thermohouse.mx/blog",
+                  "description": "Consejos y guías técnicas sobre aislamiento térmico."
+                },
+                {
+                  "@type": "WebPage",
+                  "name": "Contacto y Sucursales",
+                  "url": "https://thermohouse.mx/#contacto",
+                  "description": "Nuestras ubicaciones en Mérida, Chihuahua y más."
+                }
+              ]
+            })
+          }}
+        />
         <link rel="preconnect" href="https://ewysxryaqwdscqecyomi.supabase.co" />
         <link rel="dns-prefetch" href="https://ewysxryaqwdscqecyomi.supabase.co" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
