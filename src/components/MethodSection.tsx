@@ -42,12 +42,12 @@ export default function MethodSection() {
                     </p>
                 </div>
 
-                <div className="space-y-24 md:space-y-32">
+                <div className="space-y-24 md:space-y-32 lg:space-y-48">
                     {steps.map((step, index) => (
-                        <div key={step.id} className={`flex flex-col lg:flex-row items-center gap-12 md:gap-20 ${index % 2 !== 0 ? 'lg:flex-row-reverse' : ''}`}>
-                            {/* Video/Image Area */}
-                            <div className="w-full lg:w-1/2">
-                                <div className={`aspect-video rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-slate-800 relative overflow-hidden ${step.imageColor} dark:opacity-90 group`}>
+                        <div key={step.id} className={`flex flex-col lg:flex-row items-center gap-12 md:gap-16 lg:gap-24 ${index % 2 !== 0 ? 'lg:flex-row-reverse' : ''}`}>
+                            {/* Video/Image Area (40% width on Desktop, Capped on Tablet) */}
+                            <div className="w-full max-w-sm md:max-w-md mx-auto lg:max-w-none lg:w-[42%]">
+                                <div className={`aspect-[4/5] rounded-[2.5rem] md:rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800/50 relative overflow-hidden ${step.imageColor} dark:opacity-90 group transition-all duration-500 hover:shadow-primary/10`}>
                                     {step.videoUrl ? (
                                         <video
                                             autoPlay
@@ -55,29 +55,34 @@ export default function MethodSection() {
                                             loop
                                             playsInline
                                             poster={step.posterUrl}
-                                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                                         >
                                             <source src={step.videoUrl} type="video/mp4" />
                                         </video>
                                     ) : (
-                                        <div className="absolute inset-0 flex items-center justify-center text-slate-300 dark:text-slate-700 font-black text-4xl italic">
-                                            TH-0{step.id}
+                                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-transparent to-slate-200/20 dark:to-white/5">
+                                            <span className="text-slate-300 dark:text-slate-700 font-black text-5xl md:text-6xl italic tracking-tighter opacity-50">
+                                                TH-0{step.id}
+                                            </span>
                                         </div>
                                     )}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60 pointer-events-none" />
                                 </div>
                             </div>
 
-                            {/* Text Content */}
-                            <div className="w-full lg:w-1/2 relative">
-                                {/* Step Number Badge */}
-                                <div className="absolute -top-12 left-0 lg:-left-20 w-16 h-16 bg-primary text-white rounded-2xl flex items-center justify-center font-black text-2xl shadow-xl shadow-primary/20 z-10 rotate-3">
+                            {/* Text Content (60% width on Desktop) */}
+                            <div className="w-full lg:w-[58%] relative">
+                                {/* Step Number Badge (Floating) */}
+                                <div className="absolute -top-12 md:-top-16 left-0 lg:-left-24 w-16 h-16 md:w-20 md:h-20 bg-white dark:bg-slate-900 border-2 border-primary/20 rounded-2xl md:rounded-[2rem] flex items-center justify-center font-black text-2xl md:text-3xl text-primary shadow-2xl z-10 -rotate-6 backdrop-blur-xl">
                                     {step.id}
                                 </div>
 
-                                <div className="pt-8 lg:pl-10">
-                                    <h3 className="text-2xl md:text-3xl font-black text-secondary dark:text-white mb-6 uppercase tracking-tight">{step.title}</h3>
-                                    <p className="text-lg text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                                <div className="pt-8 md:pt-10 lg:pl-12 text-center lg:text-left">
+                                    <h3 className="text-2xl md:text-3xl lg:text-4xl font-black text-secondary dark:text-white mb-4 md:mb-8 bg-gradient-to-r from-secondary to-secondary/70 dark:from-white dark:to-white/60 bg-clip-text uppercase tracking-tight">
+                                        {step.title}
+                                    </h3>
+                                    <div className="h-1 w-12 bg-primary mb-6 md:mb-8 rounded-full mx-auto lg:mx-0" />
+                                    <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
                                         {step.description}
                                     </p>
                                 </div>

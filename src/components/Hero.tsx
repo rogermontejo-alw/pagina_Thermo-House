@@ -13,18 +13,24 @@ export default function Hero() {
     return (
         <div id="inicio" className="relative min-h-screen flex flex-col justify-center overflow-hidden border-b border-slate-200 dark:border-white/5 transition-colors duration-500 bg-slate-50 dark:bg-[#020617]">
             <div className="absolute inset-0 z-0">
-                {/* Background Video (Only loads if file exists in /public/videos/hero-bg.mp4) */}
+                {/* Desktop Background Video (md+ only) */}
                 <video
                     autoPlay
                     muted
                     loop
                     playsInline
                     poster="/images/hero-poster.jpg"
-                    className="absolute inset-0 w-full h-full object-cover opacity-30 dark:opacity-40"
+                    className="hidden md:block absolute inset-0 w-full h-full object-cover opacity-30 dark:opacity-40"
                     onCanPlayThrough={(e) => (e.currentTarget.style.opacity = "0.4")}
                 >
                     <source src="/videos/hero-bg.mp4" type="video/mp4" />
                 </video>
+
+                {/* Mobile Static Background (Fast & Clean) */}
+                <div
+                    className="md:hidden absolute inset-0 bg-cover bg-center opacity-30 dark:opacity-40"
+                    style={{ backgroundImage: "url('/images/hero-poster.jpg')" }}
+                />
 
                 {/* Adaptive background overlay */}
                 <div className="absolute inset-0 bg-slate-50/80 dark:bg-gradient-to-b dark:from-black/80 dark:via-[#020617]/90 dark:to-[#0f172a]" />
