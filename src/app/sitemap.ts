@@ -1,6 +1,8 @@
 import { MetadataRoute } from 'next'
 import { getPublishedPosts } from './actions/blog'
 
+export const revalidate = 3600; // Revalidar cada hora
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const baseUrl = 'https://thermohouse.mx';
 
