@@ -25,15 +25,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 1,
         },
         {
-            url: `${baseUrl}/#cotizador`,
+            url: `${baseUrl}/sistemas`,
             lastModified: new Date(),
             changeFrequency: 'monthly',
             priority: 0.9,
         },
         {
-            url: `${baseUrl}/#metodo`, // Vinculado a Garantía
+            url: `${baseUrl}/garantia`,
             lastModified: new Date(),
             changeFrequency: 'monthly',
+            priority: 0.9,
+        },
+        {
+            url: `${baseUrl}/sucursales`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.8,
+        },
+        {
+            url: `${baseUrl}/cotizador`,
+            lastModified: new Date(),
+            changeFrequency: 'weekly',
             priority: 0.9,
         },
         {
