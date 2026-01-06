@@ -22,6 +22,16 @@ export default function Footer() {
         fetchBranches();
     }, []);
 
+    const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+        e.preventDefault();
+        const targetId = href.replace('/', '');
+        const elem = document.getElementById(targetId);
+        if (elem) {
+            window.history.pushState(null, '', href);
+            elem.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
     return (
         <footer className="bg-slate-950 py-20 border-t border-white/5 font-sans rounded-[2rem] md:rounded-t-[4rem] md:rounded-b-none w-full mb-8 md:mb-0 scroll-snap-align-end text-white relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
@@ -47,11 +57,11 @@ export default function Footer() {
                     <div className="space-y-6">
                         <h2 className="text-xs font-black uppercase tracking-[0.3em] text-primary">Navegación</h2>
                         <ul className="space-y-3 text-slate-400 text-sm font-bold uppercase tracking-widest">
-                            <li><Link href="/#sistemas" className="hover:text-primary transition-colors">Sistemas</Link></li>
+                            <li><Link href="/sistemas" onClick={(e) => scrollToSection(e, '/sistemas')} className="hover:text-primary transition-colors">Sistemas</Link></li>
                             <li><Link href="/blog" className="hover:text-primary transition-colors">Blog</Link></li>
-                            <li><Link href="/#garantia" className="hover:text-primary transition-colors">Garantía</Link></li>
-                            <li><Link href="/#sucursales" className="hover:text-primary transition-colors">Sucursales</Link></li>
-                            <li><Link href="/#cotizador" className="hover:text-primary transition-colors">Cotizador</Link></li>
+                            <li><Link href="/garantia" onClick={(e) => scrollToSection(e, '/garantia')} className="hover:text-primary transition-colors">Garantía</Link></li>
+                            <li><Link href="/sucursales" onClick={(e) => scrollToSection(e, '/sucursales')} className="hover:text-primary transition-colors">Sucursales</Link></li>
+                            <li><Link href="/cotizador" onClick={(e) => scrollToSection(e, '/cotizador')} className="hover:text-primary transition-colors">Cotizador</Link></li>
                         </ul>
                     </div>
 
@@ -60,16 +70,16 @@ export default function Footer() {
                         <div className="space-y-3 text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em]">
                             {branches.length > 0 ? (
                                 branches.map(branch => (
-                                    <Link key={branch.id} href="/#sucursales" className="block hover:text-primary transition-colors">
+                                    <Link key={branch.id} href="/sucursales" onClick={(e) => scrollToSection(e, '/sucursales')} className="block hover:text-primary transition-colors">
                                         {branch.ciudad}, {branch.estado}
                                     </Link>
                                 ))
                             ) : (
                                 <div className="space-y-3">
-                                    <Link href="/#sucursales" className="block hover:text-primary transition-colors">Mérida, Yucatán</Link>
-                                    <Link href="/#sucursales" className="block hover:text-primary transition-colors">Cancún, Q. Roo</Link>
-                                    <Link href="/#sucursales" className="block hover:text-primary transition-colors">Playa del Carmen, Q. Roo</Link>
-                                    <Link href="/#sucursales" className="block hover:text-primary transition-colors">Tulum, Q. Roo</Link>
+                                    <Link href="/sucursales" onClick={(e) => scrollToSection(e, '/sucursales')} className="block hover:text-primary transition-colors">Mérida, Yucatán</Link>
+                                    <Link href="/sucursales" onClick={(e) => scrollToSection(e, '/sucursales')} className="block hover:text-primary transition-colors">Cancún, Q. Roo</Link>
+                                    <Link href="/sucursales" onClick={(e) => scrollToSection(e, '/sucursales')} className="block hover:text-primary transition-colors">Playa del Carmen, Q. Roo</Link>
+                                    <Link href="/sucursales" onClick={(e) => scrollToSection(e, '/sucursales')} className="block hover:text-primary transition-colors">Tulum, Q. Roo</Link>
                                 </div>
                             )}
                         </div>

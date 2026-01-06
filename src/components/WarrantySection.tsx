@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ShieldCheck, Droplets, Sun, ChevronDown } from 'lucide-react';
 import { getLocations } from '@/app/actions/admin-locations';
@@ -40,13 +41,18 @@ export default function WarrantySection() {
                         <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
                             En Thermo House, respaldamos nuestro trabajo con una garantía de por vida inigualable, asegurando que su hogar permanezca protegido y su tranquilidad garantizada por años.
                         </p>
-                        <button
-                            onClick={() => document.getElementById('cotizador')?.scrollIntoView({ behavior: 'smooth' })}
-                            className="w-full sm:w-auto bg-secondary dark:bg-slate-700 text-white px-6 py-3 rounded-lg font-semibold"
+                        <Link
+                            href="/cotizador"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                window.history.pushState(null, '', '/cotizador');
+                                document.getElementById('cotizador')?.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                            className="w-full sm:w-auto bg-secondary dark:bg-slate-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center"
                             aria-label="Contactar para recibir más información sobre la garantía"
                         >
                             Contáctenos para Más Información
-                        </button>
+                        </Link>
                     </div>
                     <div className="flex-1 flex justify-center order-first lg:order-last">
                         <div className="w-48 h-48 md:w-64 md:h-64 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center border border-slate-300 dark:border-white/5">
