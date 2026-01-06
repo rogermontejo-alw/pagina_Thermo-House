@@ -101,6 +101,10 @@ export async function createBlogPost(post: Omit<BlogPost, 'id' | 'created_at' | 
 
         revalidatePath('/blog');
         revalidatePath('/');
+        revalidatePath('/sistemas');
+        revalidatePath('/garantia');
+        revalidatePath('/sucursales');
+        revalidatePath('/cotizador');
         return { success: true, data: data as BlogPost };
     } catch (err: any) {
         return { success: false, error: err.message };
@@ -138,6 +142,10 @@ export async function updateBlogPost(id: string, updates: Partial<BlogPost>) {
         revalidatePath('/blog');
         revalidatePath(`/blog/${data.slug}`);
         revalidatePath('/');
+        revalidatePath('/sistemas');
+        revalidatePath('/garantia');
+        revalidatePath('/sucursales');
+        revalidatePath('/cotizador');
         return { success: true, data: data as BlogPost };
     } catch (err: any) {
         return { success: false, error: err.message };
@@ -164,6 +172,10 @@ export async function deleteBlogPost(id: string) {
 
         revalidatePath('/blog');
         revalidatePath('/');
+        revalidatePath('/sistemas');
+        revalidatePath('/garantia');
+        revalidatePath('/sucursales');
+        revalidatePath('/cotizador');
         return { success: true };
     } catch (err: any) {
         return { success: false, error: err.message };

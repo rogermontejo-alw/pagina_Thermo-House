@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAdminSession } from './admin-auth';
+import { revalidatePath } from 'next/cache';
 
 export async function getProducts(cityFilter?: string) {
     try {
@@ -37,6 +38,10 @@ export async function updateProduct(id: string, updates: any) {
             .eq('id', id);
 
         if (error) throw error;
+
+        revalidatePath('/');
+        revalidatePath('/sistemas');
+        revalidatePath('/cotizador');
         return { success: true };
     } catch (err: any) {
         return { success: false, message: err.message };
@@ -59,6 +64,10 @@ export async function cloneProductToCity(product: any, newCity: string) {
             });
 
         if (error) throw error;
+
+        revalidatePath('/');
+        revalidatePath('/sistemas');
+        revalidatePath('/cotizador');
         return { success: true };
     } catch (err: any) {
         return { success: false, message: err.message || 'Error al clonar producto.' };
@@ -77,6 +86,10 @@ export async function createProduct(productData: any) {
             .insert(productData);
 
         if (error) throw error;
+
+        revalidatePath('/');
+        revalidatePath('/sistemas');
+        revalidatePath('/cotizador');
         return { success: true };
     } catch (err: any) {
         return { success: false, message: err.message || 'Error al crear producto.' };
@@ -96,6 +109,10 @@ export async function deleteProduct(id: string) {
             .eq('id', id);
 
         if (error) throw error;
+
+        revalidatePath('/');
+        revalidatePath('/sistemas');
+        revalidatePath('/cotizador');
         return { success: true };
     } catch (err: any) {
         return { success: false, message: err.message };
@@ -134,6 +151,10 @@ export async function createMasterProduct(productData: any) {
             .insert(productData);
 
         if (error) throw error;
+
+        revalidatePath('/');
+        revalidatePath('/sistemas');
+        revalidatePath('/cotizador');
         return { success: true };
     } catch (err: any) {
         return { success: false, message: err.message };
@@ -172,6 +193,9 @@ export async function updateMasterProduct(id: string, updates: any) {
                 .eq('producto_id', id);
         }
 
+        revalidatePath('/');
+        revalidatePath('/sistemas');
+        revalidatePath('/cotizador');
         return { success: true };
     } catch (err: any) {
         return { success: false, message: err.message };
@@ -191,6 +215,10 @@ export async function deleteMasterProduct(id: string) {
             .eq('id', id);
 
         if (error) throw error;
+
+        revalidatePath('/');
+        revalidatePath('/sistemas');
+        revalidatePath('/cotizador');
         return { success: true };
     } catch (err: any) {
         return { success: false, message: err.message };

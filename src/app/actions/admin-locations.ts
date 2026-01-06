@@ -3,6 +3,7 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAdminSession } from './admin-auth';
 import { Location } from '@/types';
+import { revalidatePath } from 'next/cache';
 
 export async function getLocations() {
     try {
@@ -44,6 +45,12 @@ export async function createLocation(locationData: Partial<Location>) {
             .insert(locationData);
 
         if (error) throw error;
+
+        revalidatePath('/');
+        revalidatePath('/sucursales');
+        revalidatePath('/sistemas');
+        revalidatePath('/garantia');
+        revalidatePath('/cotizador');
         return { success: true };
     } catch (err: any) {
         return { success: false, message: err.message || 'Error al crear ubicación.' };
@@ -63,6 +70,12 @@ export async function updateLocation(id: string, locationData: Partial<Location>
             .eq('id', id);
 
         if (error) throw error;
+
+        revalidatePath('/');
+        revalidatePath('/sucursales');
+        revalidatePath('/sistemas');
+        revalidatePath('/garantia');
+        revalidatePath('/cotizador');
         return { success: true };
     } catch (err: any) {
         return { success: false, message: err.message || 'Error al actualizar ubicación.' };
@@ -82,6 +95,12 @@ export async function deleteLocation(id: string) {
             .eq('id', id);
 
         if (error) throw error;
+
+        revalidatePath('/');
+        revalidatePath('/sucursales');
+        revalidatePath('/sistemas');
+        revalidatePath('/garantia');
+        revalidatePath('/cotizador');
         return { success: true };
     } catch (err: any) {
         return { success: false, message: err.message };
