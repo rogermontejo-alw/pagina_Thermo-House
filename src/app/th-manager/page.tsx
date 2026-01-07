@@ -228,7 +228,7 @@ export default function AdminDashboard() {
         const init = async () => {
             const userSession = await getAdminSession();
             if (!userSession) {
-                router.push('/admin/login');
+                router.push('/th-manager/login');
                 return;
             }
             setSession(userSession);
@@ -743,7 +743,7 @@ export default function AdminDashboard() {
 
     const handleLogout = async () => {
         await logoutAdmin();
-        router.push('/admin/login');
+        router.push('/th-manager/login');
     };
 
     const toggleLeadSelection = (id: string) => {

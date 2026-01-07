@@ -22,7 +22,7 @@ export default function AdminLoginPage() {
             const res = await loginAdmin(email, password);
 
             if (res.success) {
-                router.push('/admin');
+                router.push('/th-manager');
                 router.refresh();
             } else {
                 setError(res.message || 'Error al iniciar sesión');

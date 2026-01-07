@@ -60,7 +60,7 @@ export async function updateCotizacionStatus(id: string, status: string) {
         .eq('id', id);
 
     if (error) throw new Error(error.message);
-    revalidatePath('/admin');
+    revalidatePath('/th-manager');
 }
 
 export async function getPrecios() {
@@ -85,5 +85,5 @@ export async function updatePrecio(id: string, precio_contado_m2: number) {
         .eq('id', id);
 
     if (error) throw new Error(error.message);
-    revalidatePath('/admin');
+    revalidatePath('/th-manager');
 }
