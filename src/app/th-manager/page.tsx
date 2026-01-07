@@ -21,6 +21,7 @@ import { getAppConfig, updateAppConfig } from '@/app/actions/get-config';
 import { MEXICAN_CITIES_BY_STATE } from '@/lib/mexico-data';
 import ThemeToggle from '@/components/ThemeToggle';
 import BlogManager from '@/components/BlogManager';
+import Toast, { ToastType } from '@/components/Toast';
 
 // Helper to format dates in Mexico City timezone
 const formatDateCDMX = (dateStr: string | Date, options: Intl.DateTimeFormatOptions = {}) => {
@@ -220,9 +221,37 @@ export default function AdminDashboard() {
         factura: false
     });
 
+    const [toast, setToast] = useState<{ visible: boolean; message: string; type: ToastType }>({
+        visible: false,
+        message: '',
+        type: 'success'
+    });
+
+    const showToast = (message: string, type: ToastType = 'success') => {
+        setToast({ visible: true, message, type });
+    };
+
     const MEXICAN_STATES = [
         'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche', 'Chiapas', 'Chihuahua', 'Coahuila', 'Colima', 'Ciudad de México', 'Durango', 'Guanajuato', 'Guerrero', 'Hidalgo', 'Jalisco', 'México', 'Michoacán', 'Morelos', 'Nayarit', 'Nuevo León', 'Oaxaca', 'Puebla', 'Querétaro', 'Quintana Roo', 'San Luis Potosí', 'Sinaloa', 'Sonora', 'Tabasco', 'Tamaulipas', 'Tlaxcala', 'Veracruz', 'Yucatán', 'Zacatecas'
     ];
+
+    // Merge DB locations with Mexico Data for full coverage
+    const activeRegions = useMemo(() => {
+        const merged: Record<string, string[]> = { ...MEXICAN_CITIES_BY_STATE };
+        if (locations && locations.length > 0) {
+            locations.forEach(loc => {
+                if (!merged[loc.estado]) merged[loc.estado] = [];
+                // Standardize comparison
+                const cityExists = merged[loc.estado].some(c => c.toLowerCase() === loc.ciudad.toLowerCase());
+                if (!cityExists) {
+                    merged[loc.estado].push(loc.ciudad);
+                }
+            });
+        }
+        // Ensure cities are sorted
+        Object.keys(merged).forEach(k => merged[k].sort());
+        return merged;
+    }, [locations]);
 
     useEffect(() => {
         const init = async () => {
@@ -365,13 +394,14 @@ export default function AdminDashboard() {
         setSelectedLeadForDetail(newLead);
     };
 
+
+
     const handleSaveLeadDetail = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedLeadForDetail) return;
         setIsSavingDetail(true);
 
-        const updates = {
-            status: selectedLeadForDetail.status,
+        const payload: any = {
             solution_id: selectedLeadForDetail.solution_id,
             area: Number(selectedLeadForDetail.area),
             precio_total_contado: Number(selectedLeadForDetail.precio_total_contado),
@@ -385,21 +415,69 @@ export default function AdminDashboard() {
             address: selectedLeadForDetail.address,
             ciudad: selectedLeadForDetail.ciudad,
             estado: selectedLeadForDetail.estado,
+            postal_code: selectedLeadForDetail.postal_code,
             contact_info: selectedLeadForDetail.contact_info,
             manual_unit_price: selectedLeadForDetail.manual_unit_price,
-            // If lead doesn't have an advisor yet, assign the current one
-            created_by: selectedLeadForDetail.created_by || session.id
+            assigned_to: selectedLeadForDetail.assigned_to
         };
 
-        const res = await updateQuote(selectedLeadForDetail.id, updates);
+        let res;
+
+        if (selectedLeadForDetail.id === 'new') {
+            if (!payload.contact_info.name || !payload.contact_info.phone || !payload.ciudad || !payload.solution_id || !payload.address) {
+                showToast('Por favor completa: Nombre, Teléfono, Ciudad, Sistema y Dirección.', 'error');
+                setIsSavingDetail(false);
+                return;
+            }
+            payload.status = 'Nuevo';
+            payload.created_by = session?.id;
+            payload.assigned_to = session?.role === 'editor' ? session.id : (payload.assigned_to || null);
+            payload.is_out_of_zone = !products.some(p => p.ciudad === payload.ciudad);
+            res = await createQuote(payload);
+        } else {
+            payload.status = selectedLeadForDetail.status;
+            payload.created_by = selectedLeadForDetail.created_by || session.id;
+            res = await updateQuote(selectedLeadForDetail.id, payload);
+        }
+
         if (res.success) {
             await fetchData(session);
             setSelectedLeadForDetail(null);
+            showToast(selectedLeadForDetail.id === 'new' ? '¡Lead creado exitosamente!' : 'Cambios guardados correctamente.');
         } else {
-            alert('Error: ' + res.message);
+            showToast('Error: ' + res.message, 'error');
         }
         setIsSavingDetail(false);
     };
+
+
+
+    const initiateNewLead = () => {
+        const defaultSolution = products.find(p => p.ciudad === session.ciudad) || products[0];
+
+        setSelectedLeadForDetail({
+            id: 'new',
+            status: 'Nuevo',
+            contact_info: { name: '', phone: '', email: '' },
+            address: '',
+            ciudad: session.ciudad || locations[0]?.ciudad || 'Mérida',
+            estado: 'Yucatán',
+            postal_code: '',
+            area: 0,
+            solution_id: defaultSolution?.id || '',
+            costo_logistico: 0,
+            precio_total_contado: 0,
+            precio_total_msi: 0,
+            pricing_type: 'contado',
+            factura: false,
+            is_manual: true,
+            is_out_of_zone: false,
+            created_at: new Date().toISOString(),
+            soluciones_precios: defaultSolution ? { title: defaultSolution.title } : { title: 'Seleccionar' }
+        });
+    };
+
+
 
     const handleAssignLead = async (leadId: string, userId: string) => {
         const res = await updateQuote(leadId, { assigned_to: userId || null });
@@ -677,14 +755,14 @@ export default function AdminDashboard() {
 
         // Basic required check
         if (!manualLeadData.name || !manualLeadData.area || !manualLeadData.solution_id || !manualLeadData.ciudad || !manualLeadData.phone || !manualLeadData.estado || !manualLeadData.postal_code || !manualLeadData.address) {
-            alert('Por favor completa los campos obligatorios: Nombre, Teléfono, Estado, Ciudad, CP, Dirección, Área y Sistema.');
+            showToast('Por favor completa los campos obligatorios.', 'error');
             return;
         }
 
         // Phone validation (10 digits)
         const phoneDigits = manualLeadData.phone.replace(/\D/g, '');
         if (phoneDigits.length !== 10) {
-            alert('El número de teléfono debe ser exactamente de 10 dígitos.');
+            showToast('El teléfono debe tener 10 dígitos', 'error');
             return;
         }
 
@@ -1391,11 +1469,11 @@ export default function AdminDashboard() {
                                 {/* 1. Nuevo Lead Manual */}
                                 <div className="flex flex-wrap gap-2">
                                     <button
-                                        onClick={() => setManualLeadModal(true)}
+                                        onClick={initiateNewLead}
                                         className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-secondary dark:bg-primary text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg min-w-[200px]"
                                     >
                                         <Plus className="w-4 h-4" />
-                                        Nuevo Lead Manual
+                                        Nuevo Cliente
                                     </button>
                                     {selectedLeads.size > 0 && (
                                         <button
@@ -1589,9 +1667,13 @@ export default function AdminDashboard() {
 
                                                     {/* Column 4: Estado y Acciones */}
                                                     <div className="flex flex-col md:items-end justify-center space-y-4">
-                                                        <select value={q.status} onChange={e => handleUpdateQuoteStatus(q.id, e.target.value)} disabled={!canEditQuote(q)} className="w-full md:w-36 text-[11px] font-black uppercase tracking-wider px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 dark:text-white border border-slate-100 dark:border-slate-700 outline-none hover:border-primary transition-all cursor-pointer">
-                                                            {['Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado'].map(s => <option key={s} value={s}>{s}</option>)}
-                                                        </select>
+                                                        <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-center md:w-36 ${q.status === 'Nuevo' ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' :
+                                                            q.status === 'Contactado' ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400' :
+                                                                q.status === 'Visita Técnica' ? 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400' :
+                                                                    'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400'
+                                                            }`}>
+                                                            {q.status}
+                                                        </div>
 
                                                         <div className="flex md:justify-end items-center gap-2">
                                                             <button
@@ -2290,9 +2372,11 @@ export default function AdminDashboard() {
                                 <div>
                                     <h3 className="text-2xl font-black text-secondary dark:text-white uppercase tracking-tight flex items-center gap-3">
                                         <UserCircle className="w-7 h-7 text-primary" />
-                                        Ficha del Cliente
+                                        {selectedLeadForDetail.id === 'new' ? 'Nuevo Cliente' : 'Ficha del Cliente'}
                                     </h3>
-                                    <p className="text-slate-400 dark:text-slate-300 text-sm font-medium">Folio: {getFolio(selectedLeadForDetail)}</p>
+                                    <p className="text-slate-400 dark:text-slate-300 text-sm font-medium">
+                                        {selectedLeadForDetail.id === 'new' ? 'Captura Inicial' : `Folio: ${getFolio(selectedLeadForDetail)}`}
+                                    </p>
                                 </div>
                                 <button onClick={() => setSelectedLeadForDetail(null)} className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all text-slate-400 dark:text-slate-300">
                                     <X className="w-5 h-5" />
@@ -2366,36 +2450,6 @@ export default function AdminDashboard() {
                                             onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, fecha_nacimiento: e.target.value })}
                                         />
                                     </div>
-                                    <div className="space-y-1 md:col-span-2">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Dirección de Obra / Proyecto</label>
-                                        <input
-                                            type="text"
-                                            className={`w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-4 focus:ring-primary/10 transition-all ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 dark:bg-slate-900' : ''}`}
-                                            value={selectedLeadForDetail.address}
-                                            readOnly={!canEditQuote(selectedLeadForDetail)}
-                                            onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, address: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Ciudad</label>
-                                        <input
-                                            type="text"
-                                            className={`w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-4 focus:ring-primary/10 transition-all ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 dark:bg-slate-900' : ''}`}
-                                            value={selectedLeadForDetail.ciudad}
-                                            readOnly={!canEditQuote(selectedLeadForDetail)}
-                                            onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, ciudad: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Estado</label>
-                                        <input
-                                            type="text"
-                                            className={`w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-4 focus:ring-primary/10 transition-all ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 dark:bg-slate-900' : ''}`}
-                                            value={selectedLeadForDetail.estado}
-                                            readOnly={!canEditQuote(selectedLeadForDetail)}
-                                            onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, estado: e.target.value })}
-                                        />
-                                    </div>
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Código Postal</label>
                                         <input
@@ -2406,6 +2460,79 @@ export default function AdminDashboard() {
                                             maxLength={5}
                                             readOnly={!canEditQuote(selectedLeadForDetail)}
                                             onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, postal_code: e.target.value.replace(/\D/g, '').slice(0, 5) })}
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Estado</label>
+                                        <select
+                                            className={`w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 dark:bg-slate-900' : ''}`}
+                                            value={Object.keys(activeRegions).includes(selectedLeadForDetail.estado) ? selectedLeadForDetail.estado : (selectedLeadForDetail.estado ? 'Otro' : '')}
+                                            disabled={!canEditQuote(selectedLeadForDetail)}
+                                            onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, estado: e.target.value, ciudad: '' })}
+                                        >
+                                            <option value="">Seleccione Estado</option>
+                                            {Object.keys(activeRegions).sort().map(state => (
+                                                <option key={state} value={state}>{state}</option>
+                                            ))}
+                                            <option value="Otro">Otro (Especificar)</option>
+                                        </select>
+                                        {canEditQuote(selectedLeadForDetail) && (!Object.keys(activeRegions).includes(selectedLeadForDetail.estado) && selectedLeadForDetail.estado) && (
+                                            <input
+                                                type="text"
+                                                placeholder="Nombre del Estado..."
+                                                className="mt-2 w-full px-4 py-3 bg-white dark:bg-slate-800 border border-primary/30 text-sm font-bold text-primary rounded-xl outline-none animate-in fade-in slide-in-from-top-1"
+                                                value={selectedLeadForDetail.estado === 'Otro' ? '' : selectedLeadForDetail.estado}
+                                                onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, estado: e.target.value || 'Otro' })}
+                                                autoFocus
+                                            />
+                                        )}
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Ciudad</label>
+                                        {(!Object.keys(activeRegions).includes(selectedLeadForDetail.estado) && selectedLeadForDetail.estado) ? (
+                                            <input
+                                                type="text"
+                                                className={`w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-4 focus:ring-primary/10 transition-all ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 dark:bg-slate-900' : ''}`}
+                                                value={selectedLeadForDetail.ciudad}
+                                                readOnly={!canEditQuote(selectedLeadForDetail)}
+                                                onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, ciudad: e.target.value })}
+                                                placeholder="Escribe la ciudad..."
+                                            />
+                                        ) : (
+                                            <>
+                                                <select
+                                                    className={`w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 dark:bg-slate-900' : ''}`}
+                                                    value={(activeRegions[selectedLeadForDetail.estado]?.includes(selectedLeadForDetail.ciudad)) ? selectedLeadForDetail.ciudad : (selectedLeadForDetail.ciudad ? 'Otro' : '')}
+                                                    disabled={!canEditQuote(selectedLeadForDetail) || !selectedLeadForDetail.estado}
+                                                    onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, ciudad: e.target.value })}
+                                                >
+                                                    <option value="">Seleccione Ciudad</option>
+                                                    {(activeRegions[selectedLeadForDetail.estado] || []).map(city => (
+                                                        <option key={city} value={city}>{city}</option>
+                                                    ))}
+                                                    <option value="Otro">Otro (Especificar)</option>
+                                                </select>
+                                                {canEditQuote(selectedLeadForDetail) && selectedLeadForDetail.estado && (!activeRegions[selectedLeadForDetail.estado]?.includes(selectedLeadForDetail.ciudad) && selectedLeadForDetail.ciudad) && (
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Nombre de la Ciudad..."
+                                                        className="mt-2 w-full px-4 py-3 bg-white dark:bg-slate-800 border border-primary/30 text-sm font-bold text-primary rounded-xl outline-none animate-in fade-in slide-in-from-top-1"
+                                                        value={selectedLeadForDetail.ciudad === 'Otro' ? '' : selectedLeadForDetail.ciudad}
+                                                        onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, ciudad: e.target.value || 'Otro' })}
+                                                        autoFocus
+                                                    />
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1 md:col-span-2">
+                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Dirección de Obra / Proyecto</label>
+                                        <input
+                                            type="text"
+                                            className={`w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-4 focus:ring-primary/10 transition-all ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 dark:bg-slate-900' : ''}`}
+                                            value={selectedLeadForDetail.address}
+                                            readOnly={!canEditQuote(selectedLeadForDetail)}
+                                            onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, address: e.target.value })}
                                         />
                                     </div>
                                     <div className="space-y-1 flex flex-col justify-end pb-1 ml-1">
@@ -2440,6 +2567,7 @@ export default function AdminDashboard() {
                                                 className={`w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-4 focus:ring-primary/10 ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 dark:bg-slate-900' : ''}`}
                                                 value={selectedLeadForDetail.area}
                                                 readOnly={!canEditQuote(selectedLeadForDetail)}
+                                                onFocus={(e) => e.target.select()}
                                                 onChange={e => updateLeadWithRecalculation({ area: Number(e.target.value) })}
                                             />
                                         </div>
@@ -3687,6 +3815,13 @@ export default function AdminDashboard() {
                     </div>
                 </div>
             )}
+
+            <Toast
+                visible={toast.visible}
+                message={toast.message}
+                type={toast.type}
+                onClose={() => setToast({ ...toast, visible: false })}
+            />
         </div >
     );
 }
