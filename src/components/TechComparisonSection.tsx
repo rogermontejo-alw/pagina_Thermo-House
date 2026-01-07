@@ -45,15 +45,15 @@ export default function TechComparisonSection() {
 
                 <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                     {/* Desktop Header */}
-                    <div className="hidden md:grid grid-cols-12 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 uppercase tracking-widest text-[10px] font-black text-slate-400 dark:text-slate-500">
+                    <div className="hidden md:grid grid-cols-11 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 uppercase tracking-widest text-[10px] font-black text-slate-400 dark:text-slate-500">
                         <div className="p-6 col-span-3">Característica</div>
                         <div className="p-6 col-span-4 border-l border-slate-100 dark:border-slate-700 bg-secondary dark:bg-primary text-white">Thermo House (Propuesta)</div>
-                        <div className="p-6 col-span-5 border-l border-slate-100 dark:border-slate-700">Sistemas Tradicionales</div>
+                        <div className="p-6 col-span-4 border-l border-slate-100 dark:border-slate-700">Sistemas Tradicionales</div>
                     </div>
 
                     <div className="divide-y divide-slate-100 dark:divide-slate-800">
                         {comparisons.map((item, idx) => (
-                            <div key={idx} className="flex flex-col md:grid md:grid-cols-12 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                            <div key={idx} className="flex flex-col md:grid md:grid-cols-11 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                                 {/* Feature Title - Mobile Header */}
                                 <div className="p-4 md:p-6 md:col-span-3 font-bold text-secondary dark:text-white bg-slate-50 dark:bg-slate-800/50 md:bg-transparent flex items-center gap-3">
                                     <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs md:hidden">
@@ -63,7 +63,7 @@ export default function TechComparisonSection() {
                                 </div>
 
                                 {/* Thermo House Column */}
-                                <div className="p-5 md:p-6 md:col-span-4 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 flex items-start gap-4">
+                                <div className="p-5 md:p-6 md:col-span-4 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 flex items-start gap-4 bg-slate-100/80 dark:bg-slate-700/50">
                                     <div className="flex-shrink-0 mt-1">
                                         <CheckCircle2 className="w-5 h-5 text-green-500" />
                                     </div>
@@ -76,7 +76,7 @@ export default function TechComparisonSection() {
                                 </div>
 
                                 {/* Traditional Column */}
-                                <div className="p-5 md:p-6 md:col-span-5 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 flex items-start gap-4 bg-slate-50/30 dark:bg-slate-800/10 md:bg-transparent">
+                                <div className="p-5 md:p-6 md:col-span-4 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 flex items-start gap-4 bg-slate-50/30 dark:bg-slate-800/10 md:bg-transparent">
                                     <div className="flex-shrink-0 mt-1">
                                         <XCircle className="w-5 h-5 text-red-400/70" />
                                     </div>
@@ -101,7 +101,7 @@ export default function TechComparisonSection() {
                         Obtenga una Consulta Gratuita
                     </button>
                 </div>
-            </div>
-        </section>
+            </div >
+        </section >
     );
 }

@@ -231,9 +231,11 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                             className="overflow-hidden"
                                         >
                                             <div className="p-6 md:p-8 rounded-2xl border border-border dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 mb-8 transition-colors duration-500">
-                                                <h3 id="roof-type-selector" className="text-lg font-bold text-secondary dark:text-white mb-6 flex items-center gap-2 scroll-mt-32">
-                                                    <div className="w-2 h-6 bg-primary rounded-full" />
-                                                    PRÓXIMO PASO: TIPO DE TECHO
+                                                <h3 id="roof-type-selector" className="text-xl font-bold text-secondary dark:text-white mb-6 flex items-center gap-2 scroll-mt-32">
+                                                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm shadow-sm shrink-0">
+                                                        2
+                                                    </div>
+                                                    Elige tu tipo de techo
                                                 </h3>
                                                 <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-6">
                                                     <button onClick={() => {
@@ -282,9 +284,11 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
 
                         {roofType && (
                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                                <h3 id="systems-title" className="text-lg font-bold text-secondary dark:text-white flex items-center gap-2">
-                                    <div className="w-2 h-6 bg-primary rounded-full" />
-                                    ELITE SYSTEMS: SELECCIONA TU NIVEL DE PROTECCIÓN
+                                <h3 id="systems-title" className="text-xl font-bold text-secondary dark:text-white flex items-center gap-2 mb-6">
+                                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm shadow-sm shrink-0">
+                                        3
+                                    </div>
+                                    Selecciona tu sistema de impermeabilización
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     {currentSolutions.map((sol) => {
@@ -468,25 +472,20 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                         animate={{ opacity: 1, scale: 1 }}
                         className="space-y-8 py-8 md:py-12"
                     >
-                        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-10 border border-slate-100 dark:border-slate-800 shadow-xl relative overflow-hidden text-center transition-colors duration-500">
+                        <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 md:p-8 border border-slate-100 dark:border-slate-800 shadow-xl relative overflow-hidden text-center transition-colors duration-500">
                             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-orange-400 to-amber-300" />
-                            <div className="flex justify-center mb-6">
-                                <img src="/logo.png" alt="Thermo House" className="h-10 md:h-14 w-auto filter brightness-110 drop-shadow-md" />
-                            </div>
-                            <div className="inline-flex items-center gap-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold mb-3 md:mb-4 border border-green-100 dark:border-green-800/50 uppercase tracking-widest">
-                                <Check className="w-3.5 h-3.5" /> Cotización Generada
-                            </div>
-                            <h4 className="text-2xl md:text-5xl font-black text-secondary dark:text-white tracking-tighter">¡Todo Listo, {leadName.split(' ')[0] || 'Cliente'}!</h4>
-                            <p className="text-slate-500 dark:text-slate-200 text-xs md:text-xl mt-2">Tu proyecto de <strong>{initialArea}m²</strong> en <strong>{city || address || 'tu ubicación'}</strong></p>
 
-                            <div className="mt-8 mb-4 space-y-4">
-                                <div className="bg-primary/10 dark:bg-primary/5 border-2 border-primary/30 rounded-2xl p-6 md:p-8 animate-pulse shadow-lg">
-                                    <h4 className="text-xl md:text-3xl font-black text-primary uppercase tracking-tighter mb-2">¡ELIGE TU FORMA DE PAGO!</h4>
-                                    <p className="text-secondary dark:text-slate-300 font-bold text-xs md:text-lg">
-                                        Selecciona la opción que más te convenga y recibe tu presupuesto oficial al instante.
+                            <h4 className="text-2xl md:text-4xl font-black text-secondary dark:text-white tracking-tighter mt-2">¡Casi terminamos, {leadName.split(' ')[0] || 'Cliente'}!</h4>
+                            <p className="text-slate-500 dark:text-slate-200 text-sm md:text-lg mt-1 mb-4">Tu proyecto de <strong>{initialArea}m²</strong> en <strong>{city || address || 'tu ubicación'}</strong></p>
+
+                            <div className="mt-4 mb-2 space-y-3">
+                                <div className="bg-primary/10 dark:bg-primary/5 border-2 border-primary/30 rounded-xl p-4 md:p-6 animate-pulse shadow-sm">
+                                    <h4 className="text-lg md:text-2xl font-black text-primary uppercase tracking-tighter mb-1">¡SOLO UN PASO MÁS PARA TU COTIZACIÓN!</h4>
+                                    <p className="text-secondary dark:text-slate-300 font-bold text-xs md:text-base leading-tight">
+                                        Dinos cuál te parece más atractivo y te mandamos toda la información a tu WhatsApp
                                     </p>
                                 </div>
-                                <p className="text-slate-500 dark:text-slate-300 font-bold text-[10px] md:text-sm uppercase tracking-widest">Desplaza hacia abajo para ver las opciones:</p>
+                                <p className="text-slate-500 dark:text-slate-300 font-bold text-[10px] md:text-xs uppercase tracking-widest">HAZ CLIC EN TU OPCIÓN PREFERIDA:</p>
                             </div>
 
                             {isOutOfZone && (

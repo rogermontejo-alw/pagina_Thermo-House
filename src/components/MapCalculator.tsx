@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Script from 'next/script';
-import { Search, Map as MapIcon, RotateCcw, Crosshair, PencilRuler, Keyboard, ArrowRight } from 'lucide-react';
+import { Search, Map as MapIcon, RotateCcw, Crosshair, PencilRuler, Keyboard, ArrowRight, MousePointer2 } from 'lucide-react';
 import { MEXICAN_CITIES_BY_STATE } from '@/lib/mexico-data';
 
 import { getAppConfig } from '@/app/actions/get-config';
@@ -52,6 +52,7 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
     const [activePolygon, setActivePolygon] = useState<google.maps.Polygon | null>(null);
     const [showInstructions, setShowInstructions] = useState(true);
     const [showAddressPrompt, setShowAddressPrompt] = useState(false);
+    const [showGuide, setShowGuide] = useState(false);
     const [searchText, setSearchText] = useState('');
 
     // Manual Location State
@@ -130,25 +131,25 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                 zoom: 19,
                 mapTypeId: 'satellite',
                 tilt: 0,
-                mapTypeControl: true,
-                streetViewControl: false,
-                fullscreenControl: true,
+                disableDefaultUI: true, // Nukes all default controls (Zoom, MapType, StreetView, etc.)
+                gestureHandling: 'greedy', // Improves touch interaction
             });
 
             console.log("Map instance created.");
             setMapInstance(map);
 
+            // Listener to dismiss guide on interaction (click/touch)
+            map.addListener("mousedown", () => {
+                setShowGuide(false);
+            });
+
             const dm = new window.google.maps.drawing.DrawingManager({
                 drawingMode: window.google.maps.drawing.OverlayType.POLYGON,
-                drawingControl: true,
-                drawingControlOptions: {
-                    position: window.google.maps.ControlPosition.TOP_CENTER,
-                    drawingModes: [window.google.maps.drawing.OverlayType.POLYGON],
-                },
+                drawingControl: false,
                 polygonOptions: {
                     fillColor: '#f97316',
                     fillOpacity: 0.4,
-                    strokeWeight: 2,
+                    strokeWeight: 4,
                     strokeColor: '#ea580c',
                     clickable: true,
                     editable: true,
@@ -216,6 +217,8 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                         map.setZoom(20);
                         const mapContainer = document.getElementById('map-viewport-container');
                         mapContainer?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // Trigger Visual Guide
+                        setShowGuide(true);
                     }, 300);
                 });
             }
@@ -310,6 +313,7 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
             updateArea(); // Calculate immediately on completion
 
             if (showInstructions) setShowInstructions(false);
+            if (showGuide) setShowGuide(false);
         });
 
         const modeListener = window.google.maps.event.addListener(drawingManager, 'drawingmode_changed', () => {
@@ -332,7 +336,9 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
         setArea(0);
         onAreaCalculated(0);
         if (drawingManager) drawingManager.setDrawingMode(window.google.maps.drawing.OverlayType.POLYGON);
+        if (drawingManager) drawingManager.setDrawingMode(window.google.maps.drawing.OverlayType.POLYGON);
         setShowInstructions(true);
+        setShowGuide(false);
     };
 
     const locateUser = () => {
@@ -665,7 +671,133 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                                 </div>
                             </motion.div>
                         )}
+
                     </AnimatePresence>
+
+                    {/* VISUAL GUIDE (Toast + Hand) */}
+                    <AnimatePresence>
+                        {showGuide && (
+                            <>
+                                {/* Toast Notification */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: -20, x: '-50%' }}
+                                    animate={{ opacity: 1, y: 0, x: '-50%' }}
+                                    exit={{ opacity: 0, y: -20, x: '-50%' }}
+                                    className="absolute top-4 left-1/2 z-30 pointer-events-none w-full flex justify-center px-4"
+                                >
+                                    <div className="bg-slate-900/90 backdrop-blur-md text-white px-5 py-3 rounded-full shadow-lg border border-white/10 flex items-center gap-3 max-w-full">
+                                        <div className="w-2 h-2 bg-primary rounded-full animate-pulse shrink-0" />
+                                        <p className="text-xs md:text-sm font-bold tracking-wide text-center leading-tight">
+                                            📍 Toca las esquinas para dibujar tu techo
+                                        </p>
+                                    </div>
+                                </motion.div>
+
+                                {/* Hand Animation Overlay & Lines */}
+                                <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden flex items-center justify-center">
+                                    {/* Simulated Lines (SVG) */}
+                                    <svg className="absolute w-[200px] h-[200px] overflow-visible opacity-80" viewBox="-100 -100 200 200">
+                                        <motion.path
+                                            d="M -60 -40 L -60 40 L 60 40 L 60 -40 Z" // Counter-clockwise rectangle
+                                            fill="rgba(249, 115, 22, 0.2)" // primary/20 fill
+                                            stroke="#f97316" // primary orange
+                                            strokeWidth="3"
+                                            strokeDasharray="10 5" // Dashed line to look like a "draft"
+                                            // Sequence: Draw (0->90%) -> Fade Out (90%->100%)
+                                            initial={{ pathLength: 0, opacity: 0 }}
+                                            animate={{
+                                                pathLength: [0, 0.2, 0.5, 0.7, 1, 1], // Draw linearly then hold
+                                                opacity: [1, 1, 1, 1, 1, 0] // Visible then fade out
+                                            }}
+                                            // Times scaled to 0->0.9 for drawing (Constant Speed)
+                                            // T1=0, T2=0.18, T3=0.45, T4=0.63, T5=0.90 (Complete), T6=1.0 (Fade)
+                                            transition={{
+                                                duration: 5,
+                                                times: [0, 0.18, 0.45, 0.63, 0.9, 1],
+                                                repeat: Infinity,
+                                                repeatDelay: 1,
+                                                ease: "linear"
+                                            }}
+                                        />
+                                        {/* Corner Dots */}
+                                        {[
+                                            { cx: -60, cy: -40, delay: 0 },
+                                            { cx: -60, cy: 40, delay: 0.9 }, // 5s * 0.18
+                                            { cx: 60, cy: 40, delay: 2.25 }, // 5s * 0.45
+                                            { cx: 60, cy: -40, delay: 3.15 }  // 5s * 0.63
+                                        ].map((dot, i) => (
+                                            <motion.circle
+                                                key={i}
+                                                cx={dot.cx}
+                                                cy={dot.cy}
+                                                r="4"
+                                                fill="white"
+                                                stroke="#f97316"
+                                                strokeWidth="2"
+                                                initial={{ scale: 0, opacity: 0 }}
+                                                animate={{ scale: [0, 1.2, 1], opacity: 1 }}
+                                                transition={{ delay: dot.delay, duration: 0.3 }} // Simple stagger
+                                            // Note: Perfect sync is hard in loop, keeping simple dots visible during cycle
+                                            // For loop reset we'd need complex keyframes, let's keep it simple: static markers appearing once
+                                            />
+                                        ))}
+                                    </svg>
+
+                                    {/* Hand Cursor */}
+                                    <motion.div
+                                        initial={{ opacity: 0, x: -36, y: -16 }}
+                                        animate={{
+                                            opacity: [0, 1, 1, 1, 1, 0], // Stay visible then fade
+                                            // 6 Coordinates to match 6 Time points (Last one holds position)
+                                            x: [-36, -36, 84, 84, -36, -36],
+                                            y: [-16, 64, 64, -16, -16, -16],
+                                        }}
+                                        transition={{
+                                            duration: 5, // Exact sync with Line (5s)
+                                            times: [0, 0.18, 0.45, 0.63, 0.9, 1],
+                                            repeat: Infinity,
+                                            repeatDelay: 1,
+                                            ease: "linear"
+                                        }}
+                                        className="absolute -ml-6 -mt-6 z-30"
+                                    >
+                                        {/* Clean Cursor - No effects */}
+                                        <div className="relative">
+                                            <MousePointer2 className="w-12 h-12 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] fill-black/20" strokeWidth={1.5} />
+                                        </div>
+                                    </motion.div>
+                                </div>
+                            </>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Dark Overlay for Instruction Focus */}
+                    <AnimatePresence>
+                        {showGuide && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={(e) => {
+                                    e.stopPropagation(); // Stop click from reaching map
+                                    setShowGuide(false);
+                                }}
+                                className="absolute inset-0 z-10 bg-black/40 cursor-pointer transition-opacity"
+                            />
+                        )}
+                    </AnimatePresence>
+
+                    {/* CSS Override for Map Cursor */}
+                    <style jsx global>{`
+                        /* Force default cursor on map canvas to override crosshair */
+                        .gm-style canvas, .gm-style, .gm-style div, .gm-style span, .gm-style iframe {
+                            cursor: default !important;
+                        }
+                        /* Restore pointer for controls/buttons */
+                        .gm-style button, .gm-style button img, .gm-style button span {
+                            cursor: pointer !important;
+                        }
+                    `}</style>
 
                     <div ref={mapRef} className="w-full h-full" />
 
@@ -674,22 +806,15 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                     </div>
 
                     {/* Map Controls */}
-                    <div className="absolute bottom-6 right-14 flex flex-col gap-2 z-20">
-                        <button
-                            onClick={locateUser}
-                            className="p-3 bg-white dark:bg-slate-800 text-secondary dark:text-white rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-border dark:border-slate-700"
-                            title="Mi Ubicación"
-                            aria-label="Usar mi ubicación actual"
-                        >
-                            <Crosshair className="w-5 h-5" />
-                        </button>
+                    <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-20">
+                        {/* Only Reset Button - Redesigned */}
                         <button
                             onClick={clearMap}
-                            className="p-3 bg-white dark:bg-slate-800 text-red-500 rounded-lg shadow-lg hover:bg-red-50 dark:hover:bg-slate-700 transition-colors border border-border dark:border-slate-700"
-                            title="Limpiar Mapa"
+                            className="w-14 h-14 bg-red-600 text-white rounded-full shadow-xl hover:bg-red-700 hover:scale-105 transition-all flex items-center justify-center border-2 border-white/20"
+                            title="Reiniciar Mapa"
                             aria-label="Limpiar dibujos del mapa"
                         >
-                            <RotateCcw className="w-5 h-5" />
+                            <RotateCcw className="w-7 h-7" />
                         </button>
                     </div>
                 </div>
