@@ -39,10 +39,12 @@ export default async function BlogPreviewSection() {
                     >
                         <div className="relative aspect-[16/10] overflow-hidden bg-slate-100 dark:bg-slate-800">
                             {post.image_url ? (
-                                <img
+                                <Image
                                     src={post.image_url}
                                     alt={post.title}
-                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                    fill
+                                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-slate-300 font-black text-2xl italic">TH</div>
