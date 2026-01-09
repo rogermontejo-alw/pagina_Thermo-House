@@ -46,7 +46,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             url: `${baseUrl}/cotizador`,
             lastModified: new Date(),
             changeFrequency: 'weekly',
-            priority: 0.9,
+            priority: 1,
         },
         {
             url: `${baseUrl}/blog`,

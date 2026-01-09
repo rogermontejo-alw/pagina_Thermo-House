@@ -30,27 +30,33 @@ export default function Hero() {
     return (
         <div id="inicio" className="relative min-h-screen flex flex-col justify-center overflow-hidden border-b border-slate-200 dark:border-white/5 transition-colors duration-500 bg-slate-50 dark:bg-[#020617]">
             <div className="absolute inset-0 z-0">
+                {/* Optimized Hero Background (Both Desktop and Mobile) */}
+                <div className="absolute inset-0">
+                    <Image
+                        src="/images/hero-poster.webp"
+                        alt="Thermo House Background"
+                        fill
+                        priority
+                        className={`object-cover transition-opacity duration-1000 ${pathname === '/' ? 'opacity-30 dark:opacity-20 md:opacity-0' : 'opacity-30 dark:opacity-20'}`}
+                        sizes="100vw"
+                        quality={85}
+                    />
+                </div>
+
                 {/* Desktop Background Video (md+ only) */}
                 <video
                     autoPlay
                     muted
                     loop
                     playsInline
-                    poster="/images/hero-poster.jpg"
-                    className="hidden md:block absolute inset-0 w-full h-full object-cover opacity-30 dark:opacity-40"
-                    onCanPlayThrough={(e) => (e.currentTarget.style.opacity = "0.4")}
+                    poster="/images/hero-poster.webp"
+                    className="hidden md:block absolute inset-0 w-full h-full object-cover opacity-[0.55] dark:opacity-50"
                 >
                     <source src="/videos/hero-bg.mp4" type="video/mp4" />
                 </video>
 
-                {/* Mobile Static Background (Fast & Clean) */}
-                <div
-                    className="md:hidden absolute inset-0 bg-cover bg-center opacity-30 dark:opacity-40"
-                    style={{ backgroundImage: "url('/images/hero-poster.jpg')" }}
-                />
-
                 {/* Adaptive background overlay */}
-                <div className="absolute inset-0 bg-slate-50/80 dark:bg-gradient-to-b dark:from-black/80 dark:via-[#020617]/90 dark:to-[#0f172a]" />
+                <div className="absolute inset-0 bg-slate-50/50 dark:bg-gradient-to-b dark:from-black/20 dark:via-[#020617]/40 dark:to-[#0f172a]/50" />
 
                 {/* Light mode specific accents */}
                 <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[600px] h-[600px] bg-primary/5 dark:bg-primary/10 rounded-full blur-[120px]" />
@@ -65,7 +71,7 @@ export default function Hero() {
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6 }}
-                            className="inline-block px-4 py-1.5 rounded-full bg-primary/5 dark:bg-primary/10 border border-primary/10 dark:border-primary/20 mb-6"
+                            className="inline-block px-4 py-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-primary/30 mb-6 shadow-sm"
                         >
                             <span className="text-primary text-[10px] md:text-xs font-black uppercase tracking-[0.3em]">
                                 Empresa 100% Mexicana
@@ -153,6 +159,6 @@ export default function Hero() {
                     </motion.div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

@@ -1,31 +1,53 @@
 import { Metadata } from 'next';
 import LandingPage from '@/components/LandingPage';
+import { getLocations } from '@/app/actions/admin-locations';
 
 export const metadata: Metadata = {
-    title: 'Nuestras Sucursales | Thermo House',
-    description: 'Visite nuestras sucursales en Mérida, Playa del Carmen, Cancún y Tulum. Cobertura peninsular para brindarle el mejor servicio.',
+    title: 'Sucursales de Impermeabilización | Cobertura Nacional Thermo House',
+    description: 'Encuentre su sucursal Thermo House más cercana. Mérida, Cancún, Playa del Carmen y más. Expertos en aislamiento térmico y poliuretano con presencia líder en México.',
     alternates: {
         canonical: 'https://thermohouse.mx/sucursales',
     },
 };
 
-export default function SucursalesPage() {
+export default async function SucursalesPage() {
+    const res = await getLocations();
+    const branches = res.success ? (res.data || []).filter(l => l.is_branch) : [];
+
+    // Generate dynamic Area Served and Schema
+    const cities = branches.map(b => b.ciudad).filter(Boolean);
+
     const jsonLd = {
         '@context': 'https://schema.org',
-        '@type': 'LocalBusiness',
-        'name': 'Thermo House',
-        'image': 'https://thermohouse.mx/logo.png',
-        'telephone': '+529992006267',
+        '@type': 'Organization',
+        'name': 'Thermo House México',
+        'url': 'https://thermohouse.mx',
+        'logo': 'https://thermohouse.mx/logo.png',
+        'description': 'Líderes en impermeabilización técnica y aislamiento térmico con poliuretano de alta densidad.',
         'address': {
             '@type': 'PostalAddress',
-            'streetAddress': 'Calle 20 x 15 y 17',
-            'addressLocality': 'Mérida',
-            'addressRegion': 'YUC',
-            'postalCode': '97130',
             'addressCountry': 'MX'
         },
-        'areaServed': ['Mérida', 'Cancún', 'Playa del Carmen', 'Tulum'],
-        'url': 'https://thermohouse.mx'
+        'contactPoint': branches.map(b => ({
+            '@type': 'ContactPoint',
+            'telephone': b.telefono,
+            'contactType': 'customer service',
+            'areaServed': b.ciudad,
+            'availableLanguage': 'Spanish'
+        })),
+        'department': branches.map(b => ({
+            '@type': 'LocalBusiness',
+            'name': `Thermo House ${b.ciudad}`,
+            'image': 'https://thermohouse.mx/images/hero-poster.webp',
+            'telephone': b.telefono,
+            'address': {
+                '@type': 'PostalAddress',
+                'streetAddress': b.direccion,
+                'addressLocality': b.ciudad,
+                'addressRegion': b.estado || 'México',
+                'addressCountry': 'MX'
+            }
+        }))
     };
 
     return (

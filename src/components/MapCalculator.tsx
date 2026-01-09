@@ -54,6 +54,20 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
     const [showAddressPrompt, setShowAddressPrompt] = useState(false);
     const [showGuide, setShowGuide] = useState(false);
     const [searchText, setSearchText] = useState('');
+    const [shouldLoadMaps, setShouldLoadMaps] = useState(false);
+
+    // Observer to load maps only when needed
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                setShouldLoadMaps(true);
+                observer.disconnect();
+            }
+        }, { rootMargin: '400px' });
+
+        if (mapRef.current) observer.observe(mapRef.current);
+        return () => observer.disconnect();
+    }, []);
 
     // Manual Location State
     const [manualLocation, setManualLocation] = useState({
@@ -363,14 +377,12 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
 
     return (
         <div className="w-full space-y-6 p-6 bg-white dark:bg-slate-900 transition-colors duration-500">
-            {GOOGLE_MAPS_API_KEY ? (
+            {GOOGLE_MAPS_API_KEY && shouldLoadMaps && (
                 <Script
                     src={`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=drawing,geometry,places`}
                     onLoad={initMap}
-                    strategy="afterInteractive"
+                    strategy="lazyOnload"
                 />
-            ) : (
-                <div className="hidden">Loading Maps Key...</div>
             )}
 
             {/* Header / Mode Switcher */}

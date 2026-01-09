@@ -101,8 +101,15 @@ export default function SystemsSection() {
     };
 
     if (loading) return (
-        <section className="py-24 text-center">
-            <div className="animate-pulse text-muted-foreground">Cargando sistemas...</div>
+        <section className="py-24 transition-colors duration-500">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="h-10 w-64 bg-slate-200 dark:bg-slate-800 rounded-lg mx-auto mb-8 animate-pulse" />
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-[450px] bg-slate-100 dark:bg-slate-800/50 rounded-[2.5rem] animate-pulse border border-slate-200 dark:border-slate-700" />
+                    ))}
+                </div>
+            </div>
         </section>
     );
 

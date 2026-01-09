@@ -93,6 +93,8 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
+        {/* Preconnect to Supabase for faster media loading */}
+        <link rel="preconnect" href="https://ewysxryaqwdscqecyomi.supabase.co" crossOrigin="anonymous" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

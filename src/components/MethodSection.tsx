@@ -8,24 +8,24 @@ export default function MethodSection() {
             id: 1,
             title: "Preparación Meticulosa",
             description: "Nuestro proceso comienza con una limpieza profunda de la superficie, reparación de grietas e imprimación. Este primer paso crítico asegura una adhesión óptima para un sellado impecable y duradero.",
-            videoUrl: "", // URL de Supabase para el video 1
-            posterUrl: "", // URL de Supabase para la imagen fija 1
+            videoUrl: "https://ewysxryaqwdscqecyomi.supabase.co/storage/v1/object/public/site-assets/paso1.mp4",
+            posterUrl: "https://ewysxryaqwdscqecyomi.supabase.co/storage/v1/object/public/site-assets/paso1.webp",
             imageColor: "bg-blue-100"
         },
         {
             id: 2,
             title: "Aplicación de Poliuretano",
             description: "Utilizando equipos especializados, aplicamos una capa continua de espuma de poliuretano de alta densidad, creando una barrera monolítica que proporciona un aislamiento térmico y una impermeabilización excepcionales.",
-            videoUrl: "", // URL de Supabase para el video 2
-            posterUrl: "", // URL de Supabase para la imagen fija 2
+            videoUrl: "https://ewysxryaqwdscqecyomi.supabase.co/storage/v1/object/public/site-assets/paso2.mp4",
+            posterUrl: "https://ewysxryaqwdscqecyomi.supabase.co/storage/v1/object/public/site-assets/paso2.webp",
             imageColor: "bg-orange-100"
         },
         {
             id: 3,
             title: "Acabado Acrílico Protector",
             description: "Para completar el sistema, aplicamos una capa final acrílica resistente a los rayos UV e impermeable. Esta última capa protege el poliuretano y asegura la máxima durabilidad contra los elementos.",
-            videoUrl: "", // URL de Supabase para el video 3
-            posterUrl: "", // URL de Supabase para la imagen fija 3
+            videoUrl: "https://ewysxryaqwdscqecyomi.supabase.co/storage/v1/object/public/site-assets/paso3.mp4",
+            posterUrl: "https://ewysxryaqwdscqecyomi.supabase.co/storage/v1/object/public/site-assets/paso3.webp",
             imageColor: "bg-yellow-100"
         }
     ];
@@ -46,7 +46,12 @@ export default function MethodSection() {
                     {steps.map((step, index) => (
                         <div key={step.id} className={`flex flex-col lg:flex-row items-center gap-12 md:gap-16 lg:gap-24 ${index % 2 !== 0 ? 'lg:flex-row-reverse' : ''}`}>
                             {/* Video/Image Area (40% width on Desktop, Capped on Tablet) */}
-                            <div className="w-full max-w-sm md:max-w-md mx-auto lg:max-w-none lg:w-[42%]">
+                            <div className="w-full max-w-sm md:max-w-md mx-auto lg:max-w-none lg:w-[42%] relative">
+                                {/* Step Number Badge (Pinned to Image) */}
+                                <div className={`absolute -top-6 md:-top-10 ${index % 2 === 0 ? '-right-6 md:-right-10' : '-left-6 md:-left-10'} w-14 h-14 md:w-20 md:h-20 bg-white dark:bg-slate-900 border-2 border-primary/20 rounded-2xl md:rounded-[2rem] flex items-center justify-center font-black text-xl md:text-3xl text-primary shadow-2xl z-20 -rotate-6 backdrop-blur-xl`}>
+                                    {step.id}
+                                </div>
+
                                 <div className={`aspect-[4/5] rounded-[2.5rem] md:rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800/50 relative overflow-hidden ${step.imageColor} dark:opacity-90 group transition-all duration-500 hover:shadow-primary/10`}>
                                     {step.videoUrl ? (
                                         <video
@@ -71,13 +76,8 @@ export default function MethodSection() {
                             </div>
 
                             {/* Text Content (60% width on Desktop) */}
-                            <div className="w-full lg:w-[58%] relative">
-                                {/* Step Number Badge (Floating) */}
-                                <div className="absolute -top-12 md:-top-16 left-0 lg:-left-24 w-16 h-16 md:w-20 md:h-20 bg-white dark:bg-slate-900 border-2 border-primary/20 rounded-2xl md:rounded-[2rem] flex items-center justify-center font-black text-2xl md:text-3xl text-primary shadow-2xl z-10 -rotate-6 backdrop-blur-xl">
-                                    {step.id}
-                                </div>
-
-                                <div className="pt-8 md:pt-10 lg:pl-12 text-center lg:text-left">
+                            <div className="w-full lg:w-[58%]">
+                                <div className="text-center lg:text-left lg:pl-12">
                                     <h3 className="text-2xl md:text-3xl lg:text-4xl font-black text-secondary dark:text-white mb-4 md:mb-8 bg-gradient-to-r from-secondary to-secondary/70 dark:from-white dark:to-white/60 bg-clip-text uppercase tracking-tight">
                                         {step.title}
                                     </h3>
