@@ -186,19 +186,19 @@ export default function RootLayout({
                 {
                   "@type": "WebPage",
                   "name": "Cotizador Digital en Linea",
-                  "url": "https://thermohouse.mx/#cotizador",
+                  "url": "https://thermohouse.mx/cotizador",
                   "description": "Cotiza la impermeabilización de tu casa en menos de 2 minutos."
                 },
                 {
                   "@type": "WebPage",
                   "name": "Sistemas TH FIX, LIGHT y FORTE",
-                  "url": "https://thermohouse.mx/#sistemas",
+                  "url": "https://thermohouse.mx/sistemas",
                   "description": "Aislamiento térmico y sellado de cubetas con poliuretano de alta densidad."
                 },
                 {
                   "@type": "WebPage",
                   "name": "Garantía de por Vida",
-                  "url": "https://thermohouse.mx/#metodo",
+                  "url": "https://thermohouse.mx/garantia",
                   "description": "Información sobre nuestra exclusiva garantía de protección permanente."
                 },
                 {
@@ -210,8 +210,8 @@ export default function RootLayout({
                 {
                   "@type": "WebPage",
                   "name": "Contacto y Sucursales",
-                  "url": "https://thermohouse.mx/#contacto",
-                  "description": "Nuestras oficinas en Mérida, Chihuahua y soporte nacional."
+                  "url": "https://thermohouse.mx/sucursales",
+                  "description": "Nuestras oficinas en Mérida, Playa del Carmen y soporte en el sureste."
                 }
               ]
             })

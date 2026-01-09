@@ -2,11 +2,17 @@ import { Metadata } from 'next';
 import LandingPage from '@/components/LandingPage';
 
 export const metadata: Metadata = {
-    title: 'Cotizador Online | Thermo House',
-    description: 'Obtenga una cotización instantánea para la impermeabilización de su techo. Medición satelital y cálculo preciso en segundos.',
+    title: 'Cotizador de Impermeabilización Online | Thermo House México',
+    description: 'Calcula el costo de impermeabilizar tu techo en segundos con nuestra herramienta de medición satelital. Cotización gratuita e instantánea en México.',
     alternates: {
         canonical: 'https://thermohouse.mx/cotizador',
     },
+    openGraph: {
+        title: 'Cotizador de Impermeabilización Online | Thermo House México',
+        description: 'Calcula el costo de impermeabilizar tu techo en segundos con nuestra herramienta de medición satelital.',
+        url: 'https://thermohouse.mx/cotizador',
+        type: 'website',
+    }
 };
 
 export default function CotizadorPage() {
