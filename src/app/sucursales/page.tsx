@@ -4,6 +4,9 @@ import LandingPage from '@/components/LandingPage';
 export const metadata: Metadata = {
     title: 'Nuestras Sucursales | Thermo House',
     description: 'Visite nuestras sucursales en Mérida, Playa del Carmen, Cancún y Tulum. Cobertura peninsular para brindarle el mejor servicio.',
+    alternates: {
+        canonical: 'https://thermohouse.mx/sucursales',
+    },
 };
 
 export default function SucursalesPage() {

@@ -5,7 +5,10 @@ import BlogListing from '@/components/BlogListing';
 
 export const metadata = {
     title: 'Blog | Thermo House - Consejos de Impermeabilización',
-    description: 'Expertos compartiendo consejos sobre impermeabilización térmica, mantenimiento de techos y soluciones con poliuretano.'
+    description: 'Expertos compartiendo consejos sobre impermeabilización térmica, mantenimiento de techos y soluciones con poliuretano.',
+    alternates: {
+        canonical: 'https://thermohouse.mx/blog',
+    },
 };
 
 export default async function BlogPage() {

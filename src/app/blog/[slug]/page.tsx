@@ -15,6 +15,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return {
         title: `${post.title} | Blog Thermo House`,
         description: post.subtitle,
+        alternates: {
+            canonical: `https://thermohouse.mx/blog/${slug}`,
+        },
         openGraph: {
             title: post.title,
             description: post.subtitle,

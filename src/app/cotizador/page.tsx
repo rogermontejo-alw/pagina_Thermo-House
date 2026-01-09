@@ -4,6 +4,9 @@ import LandingPage from '@/components/LandingPage';
 export const metadata: Metadata = {
     title: 'Cotizador Online | Thermo House',
     description: 'Obtenga una cotización instantánea para la impermeabilización de su techo. Medición satelital y cálculo preciso en segundos.',
+    alternates: {
+        canonical: 'https://thermohouse.mx/cotizador',
+    },
 };
 
 export default function CotizadorPage() {

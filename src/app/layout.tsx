@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     telephone: true,
   },
   alternates: {
-    canonical: '/',
+    canonical: 'https://thermohouse.mx',
   },
   openGraph: {
     title: "Thermohouse México | Impermeabilización y Aislamiento Térmico",
