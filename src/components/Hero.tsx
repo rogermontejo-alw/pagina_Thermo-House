@@ -37,6 +37,8 @@ export default function Hero() {
                         alt="Thermo House Background"
                         fill
                         priority
+                        // @ts-ignore - fetchPriority is available in React 19/Next 15+
+                        fetchPriority="high"
                         className={`object-cover transition-opacity duration-1000 ${pathname === '/' ? 'opacity-30 dark:opacity-20 md:opacity-0' : 'opacity-30 dark:opacity-20'}`}
                         sizes="100vw"
                         quality={85}
