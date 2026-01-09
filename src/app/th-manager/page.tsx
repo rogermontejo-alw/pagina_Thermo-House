@@ -504,7 +504,7 @@ export default function AdminDashboard() {
     const handleCreateUser = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsCreatingUser(true);
-        const res = await createAdminUser(newUser);
+        const res = await createAdminUser(newUser as any);
         if (res.success) {
             await fetchData(session);
             setNewUser({
