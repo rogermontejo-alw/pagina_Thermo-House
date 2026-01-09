@@ -35,7 +35,12 @@ export async function getQuotes(cityFilter?: string) {
         // Editor sees: Leads assigned to them OR Leads in their city NOT assigned to anyone
         if (session.role === 'editor') {
             query = query.or(`assigned_to.eq.${session.id},and(assigned_to.is.null,ciudad.eq.${session.ciudad})`);
-        } else if (session.role !== 'admin' && session.role !== 'manager') {
+        } else if (session.role === 'manager') {
+            // Manager sees: All leads in their assigned city (or ALL if 'Todas')
+            if (session.ciudad && session.ciudad !== 'Todas') {
+                query = query.eq('ciudad', session.ciudad);
+            }
+        } else if (session.role !== 'admin') {
             return { success: false, message: 'Rol no admitido' };
         }
 
@@ -143,7 +148,15 @@ export async function updateQuote(id: string, updates: any) {
                     return { success: false, message: 'Esta cotización está cerrada para cambios comerciales mayores. Contacte a administración.' };
                 }
             }
-        } else if (session.role !== 'admin' && session.role !== 'manager') {
+        } else if (session.role === 'manager') {
+            // Manager verification: Can only edit if in their city (or Global)
+            if (session.ciudad && session.ciudad !== 'Todas') {
+                const { data: currentQuote } = await supabaseAdmin.from('cotizaciones').select('ciudad').eq('id', id).single();
+                if (!currentQuote || currentQuote.ciudad !== session.ciudad) {
+                    return { success: false, message: 'No tienes permisos para editar leads de otra plaza.' };
+                }
+            }
+        } else if (session.role !== 'admin') {
             return { success: false, message: 'No tienes permisos para realizar esta acción.' };
         }
 

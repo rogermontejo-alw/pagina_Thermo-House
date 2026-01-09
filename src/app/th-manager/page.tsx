@@ -14,7 +14,7 @@ import {
     Shield, Mail, UserCircle, Package, Edit3, Plus, Globe, Save, X, Key, Building2,
     Download, CheckSquare, Square, FileText, Cake, Receipt, FileSignature,
     LayoutGrid, ListOrdered, Navigation, Map, AlertTriangle, Printer, FileCheck, PencilRuler,
-    PieChart, BarChart3, ShieldAlert, Sun, Moon, Loader2
+    PieChart, BarChart3, ShieldAlert, Sun, Moon, Loader2, Power
 } from 'lucide-react';
 import { getLocations, createLocation, deleteLocation, updateLocation } from '@/app/actions/admin-locations';
 import { getAppConfig, updateAppConfig } from '@/app/actions/get-config';
@@ -135,8 +135,8 @@ export default function AdminDashboard() {
         apellido: '',
         email: '',
         password: '',
-        role: 'editor' as 'admin' | 'manager' | 'editor',
-        ciudad: '',
+        role: session?.role === 'manager' ? 'editor' : 'editor',
+        ciudad: session?.role === 'manager' && session?.ciudad !== 'Todas' ? session.ciudad : '',
         base: '',
         telefono: '',
         contacto_email: ''
@@ -212,7 +212,7 @@ export default function AdminDashboard() {
         email: '',
         area: '',
         address: '',
-        ciudad: '',
+        ciudad: session?.role === 'manager' && session.ciudad !== 'Todas' ? session.ciudad : '',
         estado: 'Yucatán',
         postal_code: '',
         solution_id: '',
@@ -509,7 +509,8 @@ export default function AdminDashboard() {
             await fetchData(session);
             setNewUser({
                 name: '', apellido: '', email: '', password: '',
-                role: 'editor', ciudad: locations[0]?.ciudad || 'Mérida',
+                role: (session.role === 'manager' ? 'editor' : 'editor') as 'admin' | 'manager' | 'editor',
+                ciudad: (session.role === 'manager' && session.ciudad !== 'Todas') ? session.ciudad : (locations[0]?.ciudad || 'Mérida'),
                 base: '', telefono: '', contacto_email: ''
             });
             alert('Usuario creado exitosamente');
@@ -519,15 +520,29 @@ export default function AdminDashboard() {
 
     const handleUpdateUser = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!userModal.data || !userModal.data.id) return;
-        setIsCreatingUser(true);
+        if (!userModal.data || !userModal.data.id) return; // Keep original check
+        setIsCreatingUser(true); // Keep original loading state
         const res = await updateAdminUser(userModal.data.id, userModal.data);
         if (res.success) {
             await fetchData(session);
-            alert('Perfil actualizado exitosamente');
-            setUserModal({ open: false, type: 'edit', data: null });
+            alert('Perfil actualizado exitosamente'); // Keep original alert
+            setUserModal({ open: false, type: 'edit', data: null }); // Keep original modal close
         } else alert('Error: ' + res.message);
         setIsCreatingUser(false);
+    };
+
+    const toggleUserActive = async (user: any) => {
+        const newStatus = user.active === false ? true : false; // Toggle
+        const actionName = newStatus ? 'ACTIVAR' : 'DESACTIVAR';
+        if (!confirm(`¿Estás seguro de que deseas ${actionName} a ${user.name}?`)) return;
+
+        const res = await updateAdminUser(user.id, { active: newStatus } as any);
+        if (res.success) {
+            await fetchData(session);
+            showToast(`Usuario ${newStatus ? 'activado' : 'desactivado'} exitosamente`);
+        } else {
+            alert('Error: ' + res.message);
+        }
     };
 
     const handleResetPassword = async (id: string, name: string) => {
@@ -1142,16 +1157,18 @@ export default function AdminDashboard() {
                                     </h3>
                                     <p className="text-slate-400 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest mt-1">Estado del embudo por cantidad e importe total</p>
                                 </div>
-                                <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Valor Total Pipeline:</span>
-                                    <span className="text-sm font-black text-primary">
-                                        ${Math.round(dashboardQuotes.reduce((sum, q) => {
-                                            const base = q.pricing_type === 'lista' ? (q.precio_total_msi || 0) : (q.precio_total_contado || 0);
-                                            const logistics = Number(q.costo_logistico || 0);
-                                            return sum + ((base + logistics) * (q.factura ? 1.16 : 1));
-                                        }, 0)).toLocaleString()}
-                                    </span>
-                                </div>
+                                {session.role === 'admin' && (
+                                    <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Valor Total Pipeline:</span>
+                                        <span className="text-sm font-black text-primary">
+                                            ${Math.round(dashboardQuotes.reduce((sum, q) => {
+                                                const base = q.pricing_type === 'lista' ? (q.precio_total_msi || 0) : (q.precio_total_contado || 0);
+                                                const logistics = Number(q.costo_logistico || 0);
+                                                return sum + ((base + logistics) * (q.factura ? 1.16 : 1));
+                                            }, 0)).toLocaleString()}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1184,7 +1201,7 @@ export default function AdminDashboard() {
                                                 <div className="text-xs font-black text-slate-400 group-hover:text-primary transition-colors">{quotes.length} Leads</div>
                                             </div>
                                             <div className="space-y-1">
-                                                <div className="text-xl font-black text-secondary dark:text-white">${Math.round(amount).toLocaleString()}</div>
+                                                {session.role === 'admin' && <div className="text-xl font-black text-secondary dark:text-white">${Math.round(amount).toLocaleString()}</div>}
                                                 <div className="w-full h-1 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                                                     <div className={`h-full ${colors[status as keyof typeof colors]} transition-all duration-1000`} style={{ width: `${dashboardQuotes.length > 0 ? (quotes.length / dashboardQuotes.length) * 100 : 0}%` }} />
                                                 </div>
@@ -1785,8 +1802,12 @@ export default function AdminDashboard() {
                                                 {(session.role === 'admin' || session.role === 'manager') && (
                                                     <>
                                                         <button onClick={() => setProductModal({ open: true, type: 'edit', data: p })} className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 border border-slate-100 dark:border-slate-700 rounded-lg hover:bg-white dark:hover:bg-slate-700 hover:text-secondary dark:hover:text-white transition-all"><Edit3 className="w-4 h-4" /></button>
-                                                        <button onClick={() => handleClone(p)} className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-400 dark:text-blue-400 border border-blue-100 dark:border-blue-800/50 rounded-lg hover:bg-white dark:hover:bg-blue-900/40 transition-all"><Plus className="w-4 h-4" /></button>
-                                                        <button onClick={() => handleDeleteProduct(p.id, p.title + ' en ' + p.ciudad)} className="p-2 bg-red-50 dark:bg-red-900/20 text-red-300 dark:text-red-400 border border-red-100 dark:border-red-900/30 rounded-lg hover:bg-white dark:hover:bg-red-900/40 transition-all"><Trash2 className="w-4 h-4" /></button>
+                                                        {session.role === 'admin' && (
+                                                            <>
+                                                                <button onClick={() => handleClone(p)} className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-400 dark:text-blue-400 border border-blue-100 dark:border-blue-800/50 rounded-lg hover:bg-white dark:hover:bg-blue-900/40 transition-all"><Plus className="w-4 h-4" /></button>
+                                                                <button onClick={() => handleDeleteProduct(p.id, p.title + ' en ' + p.ciudad)} className="p-2 bg-red-50 dark:bg-red-900/20 text-red-300 dark:text-red-400 border border-red-100 dark:border-red-900/30 rounded-lg hover:bg-white dark:hover:bg-red-900/40 transition-all"><Trash2 className="w-4 h-4" /></button>
+                                                            </>
+                                                        )}
                                                     </>
                                                 )}
                                             </div>
@@ -1848,7 +1869,7 @@ export default function AdminDashboard() {
                                                     </td>
                                                     <td className="px-8 py-5 text-right">
                                                         <div className="flex justify-end gap-1.5 p-1 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl border border-transparent group-hover:border-slate-100 dark:group-hover:border-slate-700 transition-all">
-                                                            {session.role === 'admin' && (
+                                                            {(session.role === 'admin' || session.role === 'manager') && (
                                                                 <>
                                                                     <button
                                                                         onClick={() => setProductModal({ open: true, type: 'edit', data: p })}
@@ -1857,20 +1878,24 @@ export default function AdminDashboard() {
                                                                     >
                                                                         <Edit3 className="w-3.5 h-3.5" />
                                                                     </button>
-                                                                    <button
-                                                                        onClick={() => handleClone(p)}
-                                                                        className="p-2 bg-white dark:bg-slate-800 text-blue-400 dark:text-blue-400 border border-slate-200 dark:border-slate-700 shadow-sm hover:text-blue-600 dark:hover:text-blue-300 rounded-lg transition-all"
-                                                                        title="Clonar esta tarifa para otra ciudad"
-                                                                    >
-                                                                        <Plus className="w-3.5 h-3.5" />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleDeleteProduct(p.id, p.title + ' en ' + p.ciudad)}
-                                                                        className="p-2 bg-white dark:bg-slate-800 text-red-300 dark:text-red-400 border border-slate-200 dark:border-slate-700 shadow-sm hover:text-red-600 dark:hover:text-red-300 rounded-lg transition-all"
-                                                                        title="Eliminar tarifa regional"
-                                                                    >
-                                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                                    </button>
+                                                                    {session.role === 'admin' && (
+                                                                        <>
+                                                                            <button
+                                                                                onClick={() => handleClone(p)}
+                                                                                className="p-2 bg-white dark:bg-slate-800 text-blue-400 dark:text-blue-400 border border-slate-200 dark:border-slate-700 shadow-sm hover:text-blue-600 dark:hover:text-blue-300 rounded-lg transition-all"
+                                                                                title="Clonar esta tarifa para otra ciudad"
+                                                                            >
+                                                                                <Plus className="w-3.5 h-3.5" />
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => handleDeleteProduct(p.id, p.title + ' en ' + p.ciudad)}
+                                                                                className="p-2 bg-white dark:bg-slate-800 text-red-300 dark:text-red-400 border border-slate-200 dark:border-slate-700 shadow-sm hover:text-red-600 dark:hover:text-red-300 rounded-lg transition-all"
+                                                                                title="Eliminar tarifa regional"
+                                                                            >
+                                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                                            </button>
+                                                                        </>
+                                                                    )}
                                                                 </>
                                                             )}
                                                         </div>
@@ -1888,7 +1913,7 @@ export default function AdminDashboard() {
                 {activeTab === 'users' && (
                     <div className="flex flex-col gap-8">
                         {/* Team Form */}
-                        {session.role === 'admin' && (
+                        {(session.role === 'admin' || session.role === 'manager') && (
                             <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-8">
                                 <div>
                                     <h2 className="text-2xl font-black text-secondary dark:text-white uppercase tracking-tight flex items-center gap-3">
@@ -1919,15 +1944,26 @@ export default function AdminDashboard() {
                                         <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Rol</label>
                                         <select className="w-full px-2 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white" value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value as any })}>
                                             <option value="editor">Editor / Asesor</option>
-                                            <option value="manager">Gerencia</option>
-                                            <option value="admin">Administrador</option>
+                                            {session.role === 'admin' && <option value="manager">Gerencia</option>}
+                                            {session.role === 'admin' && <option value="admin">Administrador</option>}
                                         </select>
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Ciudad Asignada</label>
-                                        <select className="w-full px-2 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white" value={newUser.ciudad} onChange={e => setNewUser({ ...newUser, ciudad: e.target.value })}>
-                                            {locations.map(l => <option key={l.id} value={l.ciudad}>{l.ciudad}</option>)}
-                                            {(newUser.role === 'admin' || newUser.role === 'manager') && <option value="Todas">Todas (Global)</option>}
+                                        <select
+                                            className="w-full px-2 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white disabled:opacity-50"
+                                            value={newUser.ciudad}
+                                            onChange={e => setNewUser({ ...newUser, ciudad: e.target.value })}
+                                            disabled={session.role === 'manager' && session.ciudad !== 'Todas'}
+                                        >
+                                            {session.role === 'manager' && session.ciudad !== 'Todas' ? (
+                                                <option value={session.ciudad}>{session.ciudad}</option>
+                                            ) : (
+                                                <>
+                                                    {locations.map(l => <option key={l.id} value={l.ciudad}>{l.ciudad}</option>)}
+                                                    {(session.role === 'admin' || newUser.role === 'manager') && <option value="Todas">Todas (Global)</option>}
+                                                </>
+                                            )}
                                         </select>
                                     </div>
                                     <div className="space-y-1">
@@ -1958,7 +1994,7 @@ export default function AdminDashboard() {
                                 Equipo Thermo House
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {users.map(u => (
+                                {users.filter(u => session.role === 'admin' || u.role !== 'admin').map(u => (
                                     <div key={u.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-start justify-between group hover:border-primary/20 dark:hover:border-primary/30 transition-all gap-4">
                                         <div className="flex gap-4">
                                             <div className="w-14 h-14 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center border border-slate-100 dark:border-slate-700 text-slate-400 dark:text-slate-300 group-hover:bg-primary/5 dark:group-hover:bg-primary/10 group-hover:text-primary transition-all flex-shrink-0">
@@ -1982,6 +2018,10 @@ export default function AdminDashboard() {
                                                 <button onClick={() => setUserModal({ open: true, type: 'edit', data: u })} className="flex-1 sm:flex-none p-3 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-white dark:hover:bg-slate-700 hover:text-primary transition-all flex items-center justify-center gap-2" title="Editar Perfil">
                                                     <Edit3 className="w-4 h-4" />
                                                     <span className="text-[8px] font-black uppercase sm:hidden">Editar</span>
+                                                </button>
+                                                <button onClick={() => toggleUserActive(u)} className={`flex-1 sm:flex-none p-3 border shadow-sm transition-all flex items-center justify-center gap-2 ${u.active !== false ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-100 dark:border-green-800' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'}`} title={u.active !== false ? 'Desactivar cuenta' : 'Activar cuenta'}>
+                                                    <Power className="w-4 h-4" />
+                                                    <span className="text-[8px] font-black uppercase sm:hidden">{u.active !== false ? 'Activo' : 'Inactivo'}</span>
                                                 </button>
                                                 <button onClick={() => handleResetPassword(u.id, u.name)} className="flex-1 sm:flex-none p-3 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-white dark:hover:bg-slate-700 hover:text-secondary dark:hover:text-white transition-all flex items-center justify-center gap-2" title="Clave">
                                                     <Key className="w-4 h-4" />
@@ -2535,21 +2575,7 @@ export default function AdminDashboard() {
                                             onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, address: e.target.value })}
                                         />
                                     </div>
-                                    <div className="space-y-1 flex flex-col justify-end pb-1 ml-1">
-                                        <label className={`flex items-center gap-3 group ${canEditQuote(selectedLeadForDetail) ? 'cursor-pointer' : 'cursor-default opacity-60'}`}>
-                                            <div className={`w-12 h-6 rounded-full transition-all relative ${selectedLeadForDetail.factura ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'}`}>
-                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${selectedLeadForDetail.factura ? 'left-7' : 'left-1'}`} />
-                                            </div>
-                                            <input
-                                                type="checkbox"
-                                                className="hidden"
-                                                checked={selectedLeadForDetail.factura || false}
-                                                disabled={!canEditQuote(selectedLeadForDetail)}
-                                                onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, factura: e.target.checked })}
-                                            />
-                                            <span className={`text-sm font-black text-secondary dark:text-white uppercase tracking-tight transition-colors ${(session.role === 'admin' || (session.role === 'editor' && selectedLeadForDetail.status === 'Nuevo')) ? 'group-hover:text-primary' : ''}`}>¿Requiere Factura? (IVA 16%)</span>
-                                        </label>
-                                    </div>
+                                    {/* Factura control hidden as per request */}
                                 </div>
 
                                 {/* Negotiation Section */}
@@ -3415,208 +3441,20 @@ export default function AdminDashboard() {
             }
 
             {/* Manual Lead Modal */}
-            {manualLeadModal && (
-                <div className="fixed inset-0 bg-secondary/80 dark:bg-slate-950/90 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl"
-                    >
-                        <div className="bg-slate-50 dark:bg-slate-800/50 px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                            <div>
-                                <h3 className="text-xl font-black text-secondary dark:text-white uppercase tracking-tight">Nuevo Lead Manual</h3>
-                                <p className="text-slate-400 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest mt-1">Captura directa de prospectos</p>
-                            </div>
-                            <button
-                                onClick={() => {
-                                    setManualLeadModal(false);
-                                    setManualLeadData({
-                                        name: '', phone: '', email: '', area: '', address: '',
-                                        ciudad: '', estado: 'Yucatán', postal_code: '', solution_id: '',
-                                        pricing_type: 'contado', costo_logistico: '0', factura: false
-                                    });
-                                }}
-                                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full text-slate-400 transition-all"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleCreateManualLead} className="p-8 space-y-6 overflow-y-auto max-h-[75vh]">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Basic Info */}
-                                <div className="space-y-4 md:col-span-2">
-                                    <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
-                                        <Users className="w-3 h-3" /> Información del Cliente
-                                    </h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Nombre Completo *</label>
-                                            <input
-                                                required
-                                                type="text"
-                                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
-                                                value={manualLeadData.name}
-                                                onChange={e => setManualLeadData({ ...manualLeadData, name: e.target.value })}
-                                            />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">WhatsApp / Teléfono *</label>
-                                            <input
-                                                required
-                                                type="tel"
-                                                placeholder="10 dígitos"
-                                                pattern="\d{10}"
-                                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
-                                                value={manualLeadData.phone}
-                                                onChange={e => {
-                                                    const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                                    setManualLeadData({ ...manualLeadData, phone: val });
-                                                }}
-                                            />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Correo Electrónico</label>
-                                            <input
-                                                type="email"
-                                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
-                                                value={manualLeadData.email}
-                                                onChange={e => setManualLeadData({ ...manualLeadData, email: e.target.value })}
-                                            />
-                                        </div>
-                                    </div>
+            {
+                manualLeadModal && (
+                    <div className="fixed inset-0 bg-secondary/80 dark:bg-slate-950/90 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl"
+                        >
+                            <div className="bg-slate-50 dark:bg-slate-800/50 px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-xl font-black text-secondary dark:text-white uppercase tracking-tight">Nuevo Lead Manual</h3>
+                                    <p className="text-slate-400 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest mt-1">Captura directa de prospectos</p>
                                 </div>
-
-                                {/* Project Details */}
-                                <div className="space-y-4 md:col-span-2 pt-4 border-t border-slate-100 dark:border-slate-800">
-                                    <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
-                                        <MapPin className="w-3 h-3" /> Ubicación y Dimensiones
-                                    </h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Estado *</label>
-                                            <select
-                                                required
-                                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
-                                                value={manualLeadData.estado}
-                                                onChange={e => setManualLeadData({ ...manualLeadData, estado: e.target.value, ciudad: '' })}
-                                            >
-                                                <option value="">Selecciona Estado</option>
-                                                {Object.keys(MEXICAN_CITIES_BY_STATE).sort().map(s => (
-                                                    <option key={s} value={s}>{s}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Ciudad *</label>
-                                            <select
-                                                required
-                                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
-                                                value={manualLeadData.ciudad}
-                                                onChange={e => setManualLeadData({ ...manualLeadData, ciudad: e.target.value })}
-                                                disabled={!manualLeadData.estado}
-                                            >
-                                                <option value="">Selecciona Ciudad</option>
-                                                {manualLeadData.estado && MEXICAN_CITIES_BY_STATE[manualLeadData.estado]?.sort().map(c => (
-                                                    <option key={c} value={c}>{c}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="space-y-1 md:col-span-1">
-                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Área Estimada (m²) *</label>
-                                            <input
-                                                required
-                                                type="number"
-                                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
-                                                value={manualLeadData.area}
-                                                onChange={e => setManualLeadData({ ...manualLeadData, area: e.target.value })}
-                                            />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Código Postal *</label>
-                                            <input
-                                                required
-                                                type="text"
-                                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
-                                                value={manualLeadData.postal_code}
-                                                onChange={e => setManualLeadData({ ...manualLeadData, postal_code: e.target.value })}
-                                            />
-                                        </div>
-                                        <div className="space-y-1 md:col-span-2 pt-2">
-                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Dirección del Proyecto *</label>
-                                            <input
-                                                required
-                                                type="text"
-                                                placeholder="Calle, colonia, referencia..."
-                                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
-                                                value={manualLeadData.address}
-                                                onChange={e => setManualLeadData({ ...manualLeadData, address: e.target.value })}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* System Selection */}
-                                <div className="space-y-4 md:col-span-2 pt-4 border-t border-slate-100 dark:border-slate-800">
-                                    <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
-                                        <Package className="w-3 h-3" /> Configuración Comercial
-                                    </h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Sistema a Cotizar *</label>
-                                            <select
-                                                required
-                                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
-                                                value={manualLeadData.solution_id}
-                                                onChange={e => setManualLeadData({ ...manualLeadData, solution_id: e.target.value })}
-                                            >
-                                                <option value="">Selecciona Sistema</option>
-                                                {(products.some(p => p.ciudad === manualLeadData.ciudad)
-                                                    ? products.filter(p => p.ciudad === manualLeadData.ciudad)
-                                                    : products.filter(p => p.ciudad === 'Mérida')
-                                                ).map(p => (
-                                                    <option key={p.id} value={p.id}>{p.title} {p.ciudad === 'Mérida' && manualLeadData.ciudad !== 'Mérida' ? '(Base Mérida)' : `(${p.ciudad})`}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Modalidad de Pago</label>
-                                            <select
-                                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
-                                                value={manualLeadData.pricing_type}
-                                                onChange={e => setManualLeadData({ ...manualLeadData, pricing_type: e.target.value })}
-                                            >
-                                                <option value="contado">Pago de Contado (-15% aprox)</option>
-                                                <option value="lista">Precio de Lista / 12 MSI</option>
-                                            </select>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Gastos Logísticos ($)</label>
-                                            <input
-                                                type="number"
-                                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
-                                                value={manualLeadData.costo_logistico}
-                                                onChange={e => setManualLeadData({ ...manualLeadData, costo_logistico: e.target.value })}
-                                                placeholder="0.00"
-                                            />
-                                        </div>
-                                        <div className="flex items-center gap-3 pt-6">
-                                            <button
-                                                type="button"
-                                                onClick={() => setManualLeadData({ ...manualLeadData, factura: !manualLeadData.factura })}
-                                                className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${manualLeadData.factura ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}
-                                            >
-                                                {manualLeadData.factura ? <CheckCircle2 className="w-4 h-4" /> : <Square className="w-4 h-4" />}
-                                                Requiere Factura
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="pt-6 flex gap-3">
                                 <button
-                                    type="button"
                                     onClick={() => {
                                         setManualLeadModal(false);
                                         setManualLeadData({
@@ -3625,23 +3463,204 @@ export default function AdminDashboard() {
                                             pricing_type: 'contado', costo_logistico: '0', factura: false
                                         });
                                     }}
-                                    className="flex-1 px-8 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-200 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-[10px]"
+                                    className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full text-slate-400 transition-all"
                                 >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSavingManualLead}
-                                    className="flex-[2] bg-primary text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 text-[10px]"
-                                >
-                                    {isSavingManualLead ? <Clock className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                    Registrar Lead Manualmente
+                                    <X className="w-5 h-5" />
                                 </button>
                             </div>
-                        </form>
-                    </motion.div>
-                </div>
-            )}
+
+                            <form onSubmit={handleCreateManualLead} className="p-8 space-y-6 overflow-y-auto max-h-[75vh]">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Basic Info */}
+                                    <div className="space-y-4 md:col-span-2">
+                                        <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
+                                            <Users className="w-3 h-3" /> Información del Cliente
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Nombre Completo *</label>
+                                                <input
+                                                    required
+                                                    type="text"
+                                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
+                                                    value={manualLeadData.name}
+                                                    onChange={e => setManualLeadData({ ...manualLeadData, name: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">WhatsApp / Teléfono *</label>
+                                                <input
+                                                    required
+                                                    type="tel"
+                                                    placeholder="10 dígitos"
+                                                    pattern="\d{10}"
+                                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
+                                                    value={manualLeadData.phone}
+                                                    onChange={e => {
+                                                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                        setManualLeadData({ ...manualLeadData, phone: val });
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Correo Electrónico</label>
+                                                <input
+                                                    type="email"
+                                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
+                                                    value={manualLeadData.email}
+                                                    onChange={e => setManualLeadData({ ...manualLeadData, email: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Project Details */}
+                                    <div className="space-y-4 md:col-span-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                        <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
+                                            <MapPin className="w-3 h-3" /> Ubicación y Dimensiones
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Estado *</label>
+                                                <select
+                                                    required
+                                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
+                                                    value={manualLeadData.estado}
+                                                    onChange={e => setManualLeadData({ ...manualLeadData, estado: e.target.value, ciudad: '' })}
+                                                >
+                                                    <option value="">Selecciona Estado</option>
+                                                    {Object.keys(MEXICAN_CITIES_BY_STATE).sort().map(s => (
+                                                        <option key={s} value={s}>{s}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Ciudad *</label>
+                                                <select
+                                                    required
+                                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
+                                                    value={manualLeadData.ciudad}
+                                                    onChange={e => setManualLeadData({ ...manualLeadData, ciudad: e.target.value })}
+                                                    disabled={!manualLeadData.estado}
+                                                >
+                                                    <option value="">Selecciona Ciudad</option>
+                                                    {manualLeadData.estado && MEXICAN_CITIES_BY_STATE[manualLeadData.estado]?.sort().map(c => (
+                                                        <option key={c} value={c}>{c}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="space-y-1 md:col-span-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Área Estimada (m²) *</label>
+                                                <input
+                                                    required
+                                                    type="number"
+                                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
+                                                    value={manualLeadData.area}
+                                                    onChange={e => setManualLeadData({ ...manualLeadData, area: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Código Postal *</label>
+                                                <input
+                                                    required
+                                                    type="text"
+                                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
+                                                    value={manualLeadData.postal_code}
+                                                    onChange={e => setManualLeadData({ ...manualLeadData, postal_code: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="space-y-1 md:col-span-2 pt-2">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Dirección del Proyecto *</label>
+                                                <input
+                                                    required
+                                                    type="text"
+                                                    placeholder="Calle, colonia, referencia..."
+                                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
+                                                    value={manualLeadData.address}
+                                                    onChange={e => setManualLeadData({ ...manualLeadData, address: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* System Selection */}
+                                    <div className="space-y-4 md:col-span-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                        <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
+                                            <Package className="w-3 h-3" /> Configuración Comercial
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Sistema a Cotizar *</label>
+                                                <select
+                                                    required
+                                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
+                                                    value={manualLeadData.solution_id}
+                                                    onChange={e => setManualLeadData({ ...manualLeadData, solution_id: e.target.value })}
+                                                >
+                                                    <option value="">Selecciona Sistema</option>
+                                                    {(products.some(p => p.ciudad === manualLeadData.ciudad)
+                                                        ? products.filter(p => p.ciudad === manualLeadData.ciudad)
+                                                        : products.filter(p => p.ciudad === 'Mérida')
+                                                    ).map(p => (
+                                                        <option key={p.id} value={p.id}>{p.title} {p.ciudad === 'Mérida' && manualLeadData.ciudad !== 'Mérida' ? '(Base Mérida)' : `(${p.ciudad})`}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Modalidad de Pago</label>
+                                                <select
+                                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
+                                                    value={manualLeadData.pricing_type}
+                                                    onChange={e => setManualLeadData({ ...manualLeadData, pricing_type: e.target.value })}
+                                                >
+                                                    <option value="contado">Pago de Contado (-15% aprox)</option>
+                                                    <option value="lista">Precio de Lista / 12 MSI</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Gastos Logísticos ($)</label>
+                                                <input
+                                                    type="number"
+                                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 dark:text-white"
+                                                    value={manualLeadData.costo_logistico}
+                                                    onChange={e => setManualLeadData({ ...manualLeadData, costo_logistico: e.target.value })}
+                                                    placeholder="0.00"
+                                                />
+                                            </div>
+                                            {/* Factura control hidden as per request */}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-6 flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setManualLeadModal(false);
+                                            setManualLeadData({
+                                                name: '', phone: '', email: '', area: '', address: '',
+                                                ciudad: '', estado: 'Yucatán', postal_code: '', solution_id: '',
+                                                pricing_type: 'contado', costo_logistico: '0', factura: false
+                                            });
+                                        }}
+                                        className="flex-1 px-8 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-200 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-[10px]"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isSavingManualLead}
+                                        className="flex-[2] bg-primary text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 text-[10px]"
+                                    >
+                                        {isSavingManualLead ? <Clock className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                        Registrar Lead Manualmente
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )
+            }
 
             {/* Print Styles */}
             <style jsx global>{`
@@ -3749,72 +3768,74 @@ export default function AdminDashboard() {
                 }
             `}</style>
             {/* Purge Modal */}
-            {showPurgeModal && (
-                <div className="fixed inset-0 bg-secondary/95 dark:bg-slate-950/98 backdrop-blur-md z-[300] flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-transparent dark:border-slate-800">
-                        <div className="bg-red-600 p-8 text-white text-center space-y-2">
-                            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-2">
-                                <AlertTriangle className="w-8 h-8 text-white" />
+            {
+                showPurgeModal && (
+                    <div className="fixed inset-0 bg-secondary/95 dark:bg-slate-950/98 backdrop-blur-md z-[300] flex items-center justify-center p-4">
+                        <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-transparent dark:border-slate-800">
+                            <div className="bg-red-600 p-8 text-white text-center space-y-2">
+                                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                                    <AlertTriangle className="w-8 h-8 text-white" />
+                                </div>
+                                <h3 className="text-2xl font-black uppercase tracking-tighter">Zona de Peligro</h3>
+                                <p className="text-[10px] font-bold uppercase opacity-80 tracking-widest">Esta acción es irreversible</p>
                             </div>
-                            <h3 className="text-2xl font-black uppercase tracking-tighter">Zona de Peligro</h3>
-                            <p className="text-[10px] font-bold uppercase opacity-80 tracking-widest">Esta acción es irreversible</p>
-                        </div>
-                        <div className="p-8 space-y-6">
-                            <p className="text-sm text-slate-600 dark:text-slate-200 font-medium text-center leading-relaxed">
-                                Se eliminarán <strong>TODOS</strong> los leads y cotizaciones registrados hasta el momento. Ingrese la contraseña de depuración para continuar.
-                            </p>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Contraseña de Depuración</label>
-                                <input
-                                    type="password"
-                                    className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-center font-black tracking-[0.5em] text-secondary dark:text-white focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/30 outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600"
-                                    placeholder="••••••••"
-                                    value={purgePasswordInput}
-                                    onChange={e => setPurgePasswordInput(e.target.value)}
-                                />
-                            </div>
-                            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-100 dark:border-red-900/50 flex items-start gap-3">
-                                <div className="mt-0.5">
+                            <div className="p-8 space-y-6">
+                                <p className="text-sm text-slate-600 dark:text-slate-200 font-medium text-center leading-relaxed">
+                                    Se eliminarán <strong>TODOS</strong> los leads y cotizaciones registrados hasta el momento. Ingrese la contraseña de depuración para continuar.
+                                </p>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Contraseña de Depuración</label>
                                     <input
-                                        type="checkbox"
-                                        id="confirmPurge"
-                                        className="w-4 h-4 rounded border-red-300 dark:border-red-900/50 text-red-600 focus:ring-red-500 dark:focus:ring-red-900/30 cursor-pointer bg-white dark:bg-slate-800"
-                                        checked={confirmPurge}
-                                        onChange={e => setConfirmPurge(e.target.checked)}
+                                        type="password"
+                                        className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-center font-black tracking-[0.5em] text-secondary dark:text-white focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/30 outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                                        placeholder="••••••••"
+                                        value={purgePasswordInput}
+                                        onChange={e => setPurgePasswordInput(e.target.value)}
                                     />
                                 </div>
-                                <label htmlFor="confirmPurge" className="text-[10px] font-bold text-red-700 dark:text-red-400 leading-tight cursor-pointer uppercase">
-                                    Confirmo que deseo ELIMINAR permanentemente todos los datos de esta sección.
-                                </label>
-                            </div>
+                                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-100 dark:border-red-900/50 flex items-start gap-3">
+                                    <div className="mt-0.5">
+                                        <input
+                                            type="checkbox"
+                                            id="confirmPurge"
+                                            className="w-4 h-4 rounded border-red-300 dark:border-red-900/50 text-red-600 focus:ring-red-500 dark:focus:ring-red-900/30 cursor-pointer bg-white dark:bg-slate-800"
+                                            checked={confirmPurge}
+                                            onChange={e => setConfirmPurge(e.target.checked)}
+                                        />
+                                    </div>
+                                    <label htmlFor="confirmPurge" className="text-[10px] font-bold text-red-700 dark:text-red-400 leading-tight cursor-pointer uppercase">
+                                        Confirmo que deseo ELIMINAR permanentemente todos los datos de esta sección.
+                                    </label>
+                                </div>
 
-                            <div className="flex gap-3 pt-2">
-                                <button
-                                    onClick={() => { setShowPurgeModal(false); setPurgePasswordInput(''); setConfirmPurge(false); }}
-                                    className="flex-1 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={handlePurgeLeads}
-                                    disabled={isPurging}
-                                    className={`flex-1 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 ${!purgePasswordInput || !confirmPurge
-                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                        : 'bg-red-600 text-white hover:bg-red-700 shadow-red-100'
-                                        }`}
-                                >
-                                    {isPurging ? (
-                                        <>
-                                            <Clock className="w-4 h-4 animate-spin" />
-                                            Borrando...
-                                        </>
-                                    ) : 'Borrar Todo'}
-                                </button>
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        onClick={() => { setShowPurgeModal(false); setPurgePasswordInput(''); setConfirmPurge(false); }}
+                                        className="flex-1 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handlePurgeLeads}
+                                        disabled={isPurging}
+                                        className={`flex-1 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 ${!purgePasswordInput || !confirmPurge
+                                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                            : 'bg-red-600 text-white hover:bg-red-700 shadow-red-100'
+                                            }`}
+                                    >
+                                        {isPurging ? (
+                                            <>
+                                                <Clock className="w-4 h-4 animate-spin" />
+                                                Borrando...
+                                            </>
+                                        ) : 'Borrar Todo'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             <Toast
                 visible={toast.visible}

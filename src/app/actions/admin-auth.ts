@@ -23,6 +23,11 @@ export async function loginAdmin(email: string, password: string) {
             return { success: false, message: `Error DB: ${error.message}` };
         }
 
+
+        if (user.active === false) {
+            return { success: false, message: 'Tu cuenta ha sido desactivada. Contacta a un administrador.' };
+        }
+
         if (user.locked_until && new Date(user.locked_until) > new Date()) {
             const minutesLeft = Math.ceil((new Date(user.locked_until).getTime() - new Date().getTime()) / 60000);
             return { success: false, message: `Cuenta bloqueada temporalmente. Intente de nuevo en ${minutesLeft} minutos.` };
@@ -98,6 +103,7 @@ export async function getAdminSession() {
             .single();
 
         if (error || !user) return null;
+        if (user.active === false) return null;
         return user;
     } catch (err) {
         return null;

@@ -10,7 +10,11 @@ export async function getProducts(cityFilter?: string) {
             .from('soluciones_precios')
             .select('*');
 
-        if (cityFilter && cityFilter !== 'Todas') {
+        const session = await getAdminSession();
+        // If manager, force filter to their city (unless Global)
+        if (session && session.role === 'manager' && session.ciudad && session.ciudad !== 'Todas') {
+            query = query.eq('ciudad', session.ciudad);
+        } else if (cityFilter && cityFilter !== 'Todas') {
             query = query.eq('ciudad', cityFilter);
         }
 
@@ -28,8 +32,16 @@ export async function getProducts(cityFilter?: string) {
 export async function updateProduct(id: string, updates: any) {
     try {
         const session = await getAdminSession();
-        if (!session || session.role !== 'admin') {
+        if (!session || (session.role !== 'admin' && session.role !== 'manager')) {
             return { success: false, message: 'No tienes permisos para cambiar precios.' };
+        }
+
+        // Validate manager scope
+        if (session.role === 'manager' && session.ciudad !== 'Todas') {
+            const { data: currentProduct } = await supabaseAdmin.from('soluciones_precios').select('ciudad').eq('id', id).single();
+            if (!currentProduct || currentProduct.ciudad !== session.ciudad) {
+                return { success: false, message: 'No puedes modificar precios de otra plaza.' };
+            }
         }
 
         const { error } = await supabaseAdmin
