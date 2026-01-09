@@ -1,6 +1,53 @@
 'use client';
 
 import { Play } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+
+const LazyVideo = ({ src, poster }: { src: string; poster: string }) => {
+    const [isIntersecting, setIsIntersecting] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    setIsIntersecting(true);
+                    observer.disconnect();
+                }
+            },
+            { rootMargin: '200px' } // Start loading 200px before view
+        );
+
+        if (containerRef.current) {
+            observer.observe(containerRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, []);
+
+    return (
+        <div ref={containerRef} className="absolute inset-0 w-full h-full">
+            {isIntersecting ? (
+                <video
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    poster={poster}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                >
+                    <source src={src} type="video/mp4" />
+                </video>
+            ) : (
+                <img
+                    src={poster}
+                    alt="Video preview"
+                    className="absolute inset-0 w-full h-full object-cover"
+                />
+            )}
+        </div>
+    );
+};
 
 export default function MethodSection() {
     const steps = [
@@ -54,16 +101,7 @@ export default function MethodSection() {
 
                                 <div className={`aspect-[4/5] rounded-[2.5rem] md:rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800/50 relative overflow-hidden ${step.imageColor} dark:opacity-90 group transition-all duration-500 hover:shadow-primary/10`}>
                                     {step.videoUrl ? (
-                                        <video
-                                            autoPlay
-                                            muted
-                                            loop
-                                            playsInline
-                                            poster={step.posterUrl}
-                                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                                        >
-                                            <source src={step.videoUrl} type="video/mp4" />
-                                        </video>
+                                        <LazyVideo src={step.videoUrl} poster={step.posterUrl} />
                                     ) : (
                                         <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-transparent to-slate-200/20 dark:to-white/5">
                                             <span className="text-slate-300 dark:text-slate-700 font-black text-5xl md:text-6xl italic tracking-tighter opacity-50">

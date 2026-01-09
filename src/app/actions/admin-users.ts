@@ -7,7 +7,7 @@ import { cookies } from 'next/headers';
 export async function getAdminUsers() {
     try {
         const session = await getAdminSession();
-        if (!session || (session.role !== 'admin' && session.role !== 'manager')) {
+        if (!session || (session.role !== 'admin' && session.role !== 'manager' && session.role !== 'direccion')) {
             return { success: false, message: 'No tienes permisos.' };
         }
 
@@ -19,14 +19,13 @@ export async function getAdminUsers() {
         if (session.role === 'manager') {
             // Manager sees: Editors in their city OR themselves
             if (session.ciudad && session.ciudad !== 'Todas') {
-                // Logic: (role='editor' AND city=my_city) OR id=my_id
                 query = query.or(`and(role.eq.editor,ciudad.eq.${session.ciudad}),id.eq.${session.id}`);
             } else {
-                // Global Manager: Sees all Editors + Themselves (but not other managers/admins ideally, 
-                // strictly per request "no editar gerencias", likely shouldn't see them to avoid confusion, 
-                // or just read-only. Let's restrict to Editors + Self for safety).
                 query = query.or(`role.eq.editor,id.eq.${session.id}`);
             }
+        } else if (session.role === 'direccion') {
+            // Director sees: Everyone EXCEPT admin
+            query = query.neq('role', 'admin');
         }
 
         const { data, error } = await query;
@@ -43,7 +42,7 @@ export async function createAdminUser(payload: {
     password: string;
     name: string;
     apellido?: string;
-    role: 'admin' | 'manager' | 'editor';
+    role: 'admin' | 'direccion' | 'manager' | 'editor';
     ciudad?: string;
     base?: string;
     telefono?: string;
@@ -51,11 +50,11 @@ export async function createAdminUser(payload: {
 }) {
     try {
         const session = await getAdminSession();
-        if (!session || (session.role !== 'admin' && session.role !== 'manager')) {
+        if (!session || (session.role !== 'admin' && session.role !== 'manager' && session.role !== 'direccion')) {
             return { success: false, message: 'No tienes permisos para crear usuarios.' };
         }
 
-        // Strict Manager Restrictions
+        // Strict Role Restrictions
         if (session.role === 'manager') {
             if (payload.role !== 'editor') {
                 return { success: false, message: 'Como Gerente, solo puedes crear cuentas de Asesor (Editor).' };
@@ -63,6 +62,16 @@ export async function createAdminUser(payload: {
             if (session.ciudad !== 'Todas' && payload.ciudad !== session.ciudad) {
                 return { success: false, message: `Solo puedes crear usuarios para tu zona: ${session.ciudad}.` };
             }
+        }
+
+        if (session.role === 'direccion') {
+            if (payload.role !== 'manager' && payload.role !== 'editor') {
+                return { success: false, message: 'Como Dirección, solo puedes crear cuentas de Gerente o Asesor.' };
+            }
+        }
+
+        if (payload.role === 'direccion' && session.role !== 'admin') {
+            return { success: false, message: 'Solo un Administrador puede crear cuentas de Dirección.' };
         }
 
         // Verificar correo único
@@ -95,7 +104,7 @@ export async function createAdminUser(payload: {
 export async function updateAdminUser(id: string, payload: Partial<{
     name: string;
     apellido: string;
-    role: 'admin' | 'manager' | 'editor';
+    role: 'admin' | 'direccion' | 'manager' | 'editor';
     ciudad: string;
     base: string;
     telefono: string;
@@ -105,15 +114,19 @@ export async function updateAdminUser(id: string, payload: Partial<{
 }>) {
     try {
         const session = await getAdminSession();
-        if (!session || (session.role !== 'admin' && session.role !== 'manager')) {
+        if (!session || (session.role !== 'admin' && session.role !== 'manager' && session.role !== 'direccion')) {
             return { success: false, message: 'No tienes permisos para modificar usuarios.' };
         }
 
-        if (session.role === 'manager') {
-            // Prevent promoting to admin
+        if (session.role === 'manager' || session.role === 'direccion') {
+            // Prevent promoting to admin/direccion if not authorized
             if (payload.role === 'admin') {
                 return { success: false, message: 'No puedes asignar el rol de administrador.' };
             }
+            if (payload.role === 'direccion' && session.role !== 'admin') {
+                return { success: false, message: 'No puedes asignar el rol de Dirección.' };
+            }
+
             // Prevent editing an admin
             const { data: target } = await supabaseAdmin.from('admin_users').select('role').eq('id', id).single();
             if (target?.role === 'admin') {
@@ -176,11 +189,11 @@ export async function updateAdminUser(id: string, payload: Partial<{
 export async function resetAdminPassword(id: string, newPassword: string) {
     try {
         const session = await getAdminSession();
-        if (!session || (session.role !== 'admin' && session.role !== 'manager')) {
+        if (!session || (session.role !== 'admin' && session.role !== 'manager' && session.role !== 'direccion')) {
             return { success: false, message: 'No tienes permisos para resetear contraseñas.' };
         }
 
-        if (session.role === 'manager') {
+        if (session.role === 'manager' || session.role === 'direccion') {
             const { data: target } = await supabaseAdmin.from('admin_users').select('role').eq('id', id).single();
             if (target?.role === 'admin') {
                 return { success: false, message: 'No puedes cambiar la contraseña de un administrador.' };
@@ -216,11 +229,11 @@ export async function resetAdminPassword(id: string, newPassword: string) {
 export async function deleteAdminUser(id: string) {
     try {
         const session = await getAdminSession();
-        if (!session || (session.role !== 'admin' && session.role !== 'manager')) {
+        if (!session || (session.role !== 'admin' && session.role !== 'manager' && session.role !== 'direccion')) {
             return { success: false, message: 'No tienes permisos para eliminar usuarios.' };
         }
 
-        if (session.role === 'manager') {
+        if (session.role === 'manager' || session.role === 'direccion') {
             const { data: target, error: targetError } = await supabaseAdmin.from('admin_users').select('role, ciudad').eq('id', id).single();
 
             if (targetError || !target) {
@@ -231,8 +244,11 @@ export async function deleteAdminUser(id: string) {
                 return { success: false, message: 'No puedes eliminar a un administrador.' };
             }
 
-            if (target.role !== 'editor') {
+            if (session.role === 'manager' && target.role !== 'editor') {
                 return { success: false, message: 'Solo puedes eliminar cuentas de Asesor.' };
+            }
+            if (session.role === 'direccion' && target.role !== 'manager' && target.role !== 'editor') {
+                return { success: false, message: 'Solo puedes eliminar cuentas de Gerente o Asesor.' };
             }
             if (session.ciudad !== 'Todas' && target.ciudad !== session.ciudad) {
                 return { success: false, message: 'No puedes eliminar usuarios de otra zona.' };

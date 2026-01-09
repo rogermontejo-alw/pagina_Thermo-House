@@ -32,7 +32,7 @@ export async function getProducts(cityFilter?: string) {
 export async function updateProduct(id: string, updates: any) {
     try {
         const session = await getAdminSession();
-        if (!session || (session.role !== 'admin' && session.role !== 'manager')) {
+        if (!session || (session.role !== 'admin' && session.role !== 'manager' && session.role !== 'direccion')) {
             return { success: false, message: 'No tienes permisos para cambiar precios.' };
         }
 
@@ -63,7 +63,7 @@ export async function updateProduct(id: string, updates: any) {
 export async function cloneProductToCity(product: any, newCity: string) {
     try {
         const session = await getAdminSession();
-        if (!session || session.role !== 'admin') {
+        if (!session || (session.role !== 'admin' && session.role !== 'direccion')) {
             return { success: false, message: 'No tienes permisos para clonar tarifas.' };
         }
 
@@ -89,7 +89,7 @@ export async function cloneProductToCity(product: any, newCity: string) {
 export async function createProduct(productData: any) {
     try {
         const session = await getAdminSession();
-        if (!session || session.role !== 'admin') {
+        if (!session || (session.role !== 'admin' && session.role !== 'direccion')) {
             return { success: false, message: 'No tienes permisos para crear productos.' };
         }
 
@@ -111,7 +111,7 @@ export async function createProduct(productData: any) {
 export async function deleteProduct(id: string) {
     try {
         const session = await getAdminSession();
-        if (!session || session.role !== 'admin') {
+        if (!session || (session.role !== 'admin' && session.role !== 'direccion')) {
             return { success: false, message: 'No tienes permisos para eliminar tarifas.' };
         }
 
@@ -154,7 +154,7 @@ export async function getMasterProducts() {
 export async function createMasterProduct(productData: any) {
     try {
         const session = await getAdminSession();
-        if (!session || session.role !== 'admin') {
+        if (!session || (session.role !== 'admin' && session.role !== 'direccion')) {
             return { success: false, message: 'No tienes permisos.' };
         }
 
@@ -176,7 +176,7 @@ export async function createMasterProduct(productData: any) {
 export async function updateMasterProduct(id: string, updates: any) {
     try {
         const session = await getAdminSession();
-        if (!session || session.role !== 'admin') {
+        if (!session || (session.role !== 'admin' && session.role !== 'direccion')) {
             return { success: false, message: 'No tienes permisos.' };
         }
 
@@ -217,7 +217,7 @@ export async function updateMasterProduct(id: string, updates: any) {
 export async function deleteMasterProduct(id: string) {
     try {
         const session = await getAdminSession();
-        if (!session || session.role !== 'admin') {
+        if (!session || (session.role !== 'admin' && session.role !== 'direccion')) {
             return { success: false, message: 'No tienes permisos.' };
         }
 

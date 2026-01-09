@@ -40,7 +40,7 @@ export async function getQuotes(cityFilter?: string) {
             if (session.ciudad && session.ciudad !== 'Todas') {
                 query = query.eq('ciudad', session.ciudad);
             }
-        } else if (session.role !== 'admin') {
+        } else if (session.role !== 'admin' && session.role !== 'direccion') {
             return { success: false, message: 'Rol no admitido' };
         }
 
@@ -156,7 +156,7 @@ export async function updateQuote(id: string, updates: any) {
                     return { success: false, message: 'No tienes permisos para editar leads de otra plaza.' };
                 }
             }
-        } else if (session.role !== 'admin') {
+        } else if (session.role !== 'admin' && session.role !== 'direccion') {
             return { success: false, message: 'No tienes permisos para realizar esta acción.' };
         }
 

@@ -1,5 +1,7 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
+
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -7,6 +9,19 @@ import { usePathname } from 'next/navigation';
 
 export default function Hero() {
     const pathname = usePathname();
+
+    // Only render video on desktop to save ~2MB on mobile
+    const [isDesktop, setIsDesktop] = React.useState(false);
+
+    React.useEffect(() => {
+        const checkDesktop = () => {
+            setIsDesktop(window.innerWidth >= 768);
+        };
+
+        checkDesktop();
+        window.addEventListener('resize', checkDesktop);
+        return () => window.removeEventListener('resize', checkDesktop);
+    }, []);
 
     const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
         const routeToId: Record<string, string> = {
@@ -45,17 +60,23 @@ export default function Hero() {
                     />
                 </div>
 
-                {/* Desktop Background Video (md+ only) */}
-                <video
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    poster="/images/hero-poster.webp"
-                    className="hidden md:block absolute inset-0 w-full h-full object-cover opacity-[0.55] dark:opacity-50"
-                >
-                    <source src="/videos/hero-bg.mp4" type="video/mp4" />
-                </video>
+
+
+                // ... inside return ...
+
+                {/* Desktop Background Video (md+ only) - Conditionally rendered */}
+                {isDesktop && (
+                    <video
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        poster="/images/hero-poster.webp"
+                        className="hidden md:block absolute inset-0 w-full h-full object-cover opacity-[0.55] dark:opacity-50"
+                    >
+                        <source src="/videos/hero-bg.mp4" type="video/mp4" />
+                    </video>
+                )}
 
                 {/* Adaptive background overlay */}
                 <div className="absolute inset-0 bg-slate-50/50 dark:bg-gradient-to-b dark:from-black/20 dark:via-[#020617]/40 dark:to-[#0f172a]/50" />
