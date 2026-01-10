@@ -42,18 +42,15 @@ export default function Hero() {
         }
     }, []);
 
-    const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    const handleNavigation = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
         const routeToId: Record<string, string> = {
             '/sistemas': 'sistemas',
             '/cotizador': 'cotizador'
         };
 
         const targetId = routeToId[href];
-        // We know Hero is only on Landing Pages, so we can assume we are on a valid source page.
-        // Just check if target is valid for scrolling.
-        if (targetId) {
+        if (pathname === '/' && targetId) {
             e.preventDefault();
-            window.history.pushState(null, '', href);
             const elem = document.getElementById(targetId);
             if (elem) {
                 elem.scrollIntoView({ behavior: 'smooth' });
@@ -161,7 +158,7 @@ export default function Hero() {
                         >
                             <Link
                                 href="/sistemas"
-                                onClick={(e) => scrollToSection(e, '/sistemas')}
+                                onClick={(e) => handleNavigation(e, '/sistemas')}
                                 className="w-full sm:w-auto min-w-[150px] bg-primary hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl text-sm font-black transition-all shadow-lg shadow-orange-500/25 hover:scale-[1.02] uppercase tracking-wider flex items-center justify-center"
                                 aria-label="Ver sistemas de impermeabilización"
                             >
@@ -170,7 +167,7 @@ export default function Hero() {
 
                             <Link
                                 href="/cotizador"
-                                onClick={(e) => scrollToSection(e, '/cotizador')}
+                                onClick={(e) => handleNavigation(e, '/cotizador')}
                                 className="w-full sm:w-auto min-w-[150px] px-5 py-2.5 rounded-xl text-sm font-bold text-secondary dark:text-white border-2 border-secondary/10 dark:border-white/20 hover:bg-secondary/5 dark:hover:bg-white/10 transition-all backdrop-blur-sm flex items-center justify-center"
                                 aria-label="Comenzar cotización"
                             >

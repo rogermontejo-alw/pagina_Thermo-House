@@ -1,6 +1,8 @@
 import { Metadata } from 'next';
-import LandingPage from '@/components/LandingPage';
-import { getLocations } from '@/app/actions/admin-locations';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import BranchesSection from '@/components/BranchesSection';
+import SectionWrapper from '@/components/SectionWrapper';
 
 export const metadata: Metadata = {
     title: 'Sucursales de Impermeabilización | Cobertura Nacional Thermo House',
@@ -10,53 +12,18 @@ export const metadata: Metadata = {
     },
 };
 
-export default async function SucursalesPage() {
-    const res = await getLocations();
-    const branches = res.success ? (res.data || []).filter(l => l.is_branch) : [];
-
-    // Generate dynamic Area Served and Schema
-    const cities = branches.map(b => b.ciudad).filter(Boolean);
-
-    const jsonLd = {
-        '@context': 'https://schema.org',
-        '@type': 'Organization',
-        'name': 'Thermo House México',
-        'url': 'https://thermohouse.mx',
-        'logo': 'https://thermohouse.mx/logo.png',
-        'description': 'Líderes en impermeabilización técnica y aislamiento térmico con poliuretano de alta densidad.',
-        'address': {
-            '@type': 'PostalAddress',
-            'addressCountry': 'MX'
-        },
-        'contactPoint': branches.map(b => ({
-            '@type': 'ContactPoint',
-            'telephone': b.telefono,
-            'contactType': 'customer service',
-            'areaServed': b.ciudad,
-            'availableLanguage': 'Spanish'
-        })),
-        'department': branches.map(b => ({
-            '@type': 'LocalBusiness',
-            'name': `Thermo House ${b.ciudad}`,
-            'image': 'https://thermohouse.mx/images/hero-poster.webp',
-            'telephone': b.telefono,
-            'address': {
-                '@type': 'PostalAddress',
-                'streetAddress': b.direccion,
-                'addressLocality': b.ciudad,
-                'addressRegion': b.estado || 'México',
-                'addressCountry': 'MX'
-            }
-        }))
-    };
-
+export default function SucursalesPage() {
     return (
-        <>
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-            />
-            <LandingPage />
-        </>
+        <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
+            <Navbar />
+            <div className="pt-24 space-y-0">
+                <SectionWrapper bg="white">
+                    <BranchesSection />
+                </SectionWrapper>
+            </div>
+            <div className="max-w-5xl mx-auto px-4 mt-12">
+                <Footer />
+            </div>
+        </main>
     );
 }

@@ -1,5 +1,7 @@
 import { Metadata } from 'next';
-import LandingPage from '@/components/LandingPage';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import CalculatorSection from '@/components/CalculatorSection';
 
 export const metadata: Metadata = {
     title: 'Cotizador de Impermeabilización en Línea | Cotización en Segundos',
@@ -16,27 +18,15 @@ export const metadata: Metadata = {
 };
 
 export default function CotizadorPage() {
-    const jsonLd = {
-        '@context': 'https://schema.org',
-        '@type': 'WebApplication',
-        'name': 'Cotizador de Impermeabilización Thermo House',
-        'description': 'Herramienta online para calcular costos de impermeabilización térmica midiendo su techo satelitalmente.',
-        'applicationCategory': 'BusinessApplication',
-        'operatingSystem': 'All',
-        'offers': {
-            '@type': 'Offer',
-            'price': '0',
-            'priceCurrency': 'MXN'
-        }
-    };
-
     return (
-        <>
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-            />
-            <LandingPage />
-        </>
+        <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
+            <Navbar />
+            <div className="pt-20">
+                <CalculatorSection />
+            </div>
+            <div className="max-w-5xl mx-auto px-4 mt-12">
+                <Footer />
+            </div>
+        </main>
     );
 }

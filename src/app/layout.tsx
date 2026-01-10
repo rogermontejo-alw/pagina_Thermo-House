@@ -39,9 +39,7 @@ export const metadata: Metadata = {
     address: true,
     telephone: true,
   },
-  alternates: {
-    canonical: 'https://thermohouse.mx',
-  },
+
   openGraph: {
     title: "Thermohouse México | Impermeabilización y Aislamiento Térmico",
     description: "Protege tu hogar del calor y la lluvia con Thermohouse. Expertos en sistemas de impermeabilización con poliuretano en México. ¡Cotiza hoy mismo desde $79/m²!",

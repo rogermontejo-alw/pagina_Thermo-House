@@ -1,5 +1,8 @@
 import { Metadata } from 'next';
-import LandingPage from '@/components/LandingPage';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import WarrantySection from '@/components/WarrantySection';
+import SectionWrapper from '@/components/SectionWrapper';
 
 export const metadata: Metadata = {
     title: 'Garantía de Por Vida | Thermo House',
@@ -10,37 +13,17 @@ export const metadata: Metadata = {
 };
 
 export default function GarantiaPage() {
-    const jsonLd = {
-        '@context': 'https://schema.org',
-        '@type': 'Service',
-        'name': 'Impermeabilización con Garantía de Por Vida',
-        'provider': {
-            '@type': 'Organization',
-            'name': 'Thermo House',
-            'url': 'https://thermohouse.mx'
-        },
-        'serviceType': 'Roofing',
-        'offers': {
-            '@type': 'Offer',
-            'warranty': {
-                '@type': 'WarrantyPromise',
-                'durationOfWarranty': {
-                    '@type': 'QuantitativeValue',
-                    'value': 99,
-                    'unitCode': 'ANN'
-                },
-                'warrantyScope': 'Lifetime Warranty covering leaks and material defects'
-            }
-        }
-    };
-
     return (
-        <>
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-            />
-            <LandingPage />
-        </>
+        <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
+            <Navbar />
+            <div className="pt-24 space-y-0">
+                <SectionWrapper bg="white">
+                    <WarrantySection />
+                </SectionWrapper>
+            </div>
+            <div className="max-w-5xl mx-auto px-4 mt-12">
+                <Footer />
+            </div>
+        </main>
     );
 }

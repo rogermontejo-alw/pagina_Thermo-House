@@ -113,15 +113,7 @@ export default function SystemsSection() {
         </section>
     );
 
-    const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-        e.preventDefault();
-        const targetId = 'cotizador';
-        const elem = document.getElementById(targetId);
-        if (elem) {
-            window.history.pushState(null, '', href);
-            elem.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
+
 
     return (
         <section id="sistemas" className="py-2 transition-colors duration-500">
@@ -245,7 +237,6 @@ export default function SystemsSection() {
 
                                     <Link
                                         href="/cotizador"
-                                        onClick={(e) => scrollToSection(e, '/cotizador')}
                                         className={`w-full py-4 md:py-3.5 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 text-center flex items-center justify-center ${isPremium ? 'bg-primary text-white hover:bg-orange-600' : 'bg-secondary dark:bg-slate-700 text-white hover:bg-slate-800'}`}
                                     >
                                         Cotizar este Sistema

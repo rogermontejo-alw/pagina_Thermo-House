@@ -42,38 +42,31 @@ export default function Navbar() {
 
     // ... (useEffect remains)
 
-    const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>, href: string) => {
-        // IDs map
+    const handleNavigation = (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>, href: string) => {
+        // IDs map for the landing page sections
         const routeToId: Record<string, string> = {
-            '/': 'inicio',
             '/sistemas': 'sistemas',
             '/garantia': 'garantia',
             '/cotizador': 'cotizador',
-            '/sucursales': 'sucursales'
+            '/sucursales': 'sucursales',
+            '/blog': 'blog'
         };
 
-        const targetPath = href.split('#')[0]; // Ensure we handle /#id if present, though we prefer clean paths
-        const targetId = routeToId[targetPath];
+        const targetId = routeToId[href];
 
-        // Define which current paths support scrolling (The "Mirror" Pages)
-        const landingPaths = ['/', '/sistemas', '/garantia', '/cotizador', '/sucursales'];
-        const isCurrentPageLanding = landingPaths.includes(pathname);
-        const isTargetLanding = !!targetId;
-
-        if (isCurrentPageLanding && isTargetLanding) {
-            e.preventDefault();
-            window.history.pushState(null, '', href);
-            setIsOpen(false);
+        // If we are already on the HOME page and the target is a section on the home page, scroll.
+        // Otherwise, let the normal navigation happen to the clean URL /cotizador, /sistemas, etc.
+        if (pathname === '/' && targetId) {
             const elem = document.getElementById(targetId);
             if (elem) {
+                e.preventDefault();
+                setIsOpen(false);
                 elem.scrollIntoView({ behavior: 'smooth' });
-                // Optional hooks for UI visibility
-                setIsVisible(true);
-                if (timeoutRef.current) clearTimeout(timeoutRef.current);
-                timeoutRef.current = setTimeout(() => setIsVisible(false), 1200);
+                // Update URL WITHOUT the hash for clean history if possible, or just stay as /
+                // window.history.pushState(null, '', href); 
             }
         } else {
-            // Default navigation (Next/Link handles this)
+            // Let the Link component handle the real navigation to /cotizador
             setIsOpen(false);
         }
     };
@@ -94,7 +87,7 @@ export default function Navbar() {
                 <div className="mx-auto px-4 sm:px-6">
                     <div className="flex items-center justify-between h-14 min-[890px]:h-14">
                         <div className={`flex-shrink-0 flex items-center justify-center h-full transition-opacity duration-300 ${isOpen ? 'opacity-0 min-[890px]:opacity-100' : 'opacity-100'}`}>
-                            <Link href="/" onClick={(e) => scrollToSection(e, '/')} className="flex items-center gap-2 group h-full">
+                            <Link href="/" onClick={(e) => handleNavigation(e, '/')} className="flex items-center gap-2 group h-full">
                                 <Image
                                     src="/logo.png"
                                     alt="Thermo House Logo"
@@ -115,7 +108,7 @@ export default function Navbar() {
                                     <Link
                                         key={item.name}
                                         href={item.href}
-                                        onClick={(e) => scrollToSection(e, item.href)}
+                                        onClick={(e) => handleNavigation(e, item.href)}
                                         className="text-slate-600 dark:text-slate-300 hover:text-white dark:hover:text-secondary-foreground hover:bg-secondary px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300"
                                     >
                                         {item.name}
@@ -128,7 +121,7 @@ export default function Navbar() {
                             <ThemeToggle minimal />
                             <Link
                                 href="/cotizador"
-                                onClick={(e) => scrollToSection(e, '/cotizador')}
+                                onClick={(e) => handleNavigation(e, '/cotizador')}
                                 className="bg-primary hover:bg-orange-600 text-white px-5 py-2 rounded-full font-black transition-all shadow-md hover:shadow-primary/20 active:scale-95 text-[10px] uppercase tracking-widest flex items-center justify-center"
                                 aria-label="Abrir cotizador"
                             >
@@ -193,7 +186,7 @@ export default function Navbar() {
                                         >
                                             <Link
                                                 href={item.href}
-                                                onClick={(e) => scrollToSection(e, item.href)}
+                                                onClick={(e) => handleNavigation(e, item.href)}
                                                 className="group flex items-end gap-3 text-white hover:text-primary transition-all"
                                             >
                                                 <span className="text-primary/40 font-black text-xs mb-1.5 font-mono">0{idx + 1}</span>
@@ -214,13 +207,14 @@ export default function Navbar() {
                                     transition={{ duration: 0.2 }}
                                     className="space-y-6 flex flex-col items-center"
                                 >
-                                    <button
-                                        onClick={(e) => scrollToSection(e, '/#cotizador')}
+                                    <Link
+                                        href="/cotizador"
+                                        onClick={(e) => handleNavigation(e, '/cotizador')}
                                         className="w-full max-w-[240px] bg-primary text-white p-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 text-sm flex items-center justify-center gap-3 active:scale-95 transition-transform"
                                     >
                                         Cotizar Proyecto
                                         <ArrowRight className="w-4 h-4" />
-                                    </button>
+                                    </Link>
 
                                     <div className="w-full flex flex-col gap-2 pt-6 border-t border-white/5">
                                         <div className="flex justify-between items-center text-[9px] text-white/60 font-bold uppercase tracking-[0.2em]">
