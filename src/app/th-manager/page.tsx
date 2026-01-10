@@ -95,6 +95,7 @@ export default function AdminDashboard() {
     const [confirmPurge, setConfirmPurge] = useState(false); // New state for modal-based confirmation
     const [showPurgeModal, setShowPurgeModal] = useState(false);
     const [isSavingPurgePassword, setIsSavingPurgePassword] = useState(false);
+    const [isUserFormOpen, setIsUserFormOpen] = useState(false);
 
     const dashboardQuotes = useMemo(() => {
         let filtered = [...quotes];
@@ -618,6 +619,20 @@ export default function AdminDashboard() {
         if (res.success) fetchData(session);
     };
 
+    const toggleMasterProductVisibility = async (id: string, newVisibility: boolean) => {
+        try {
+            const res = await updateMasterProduct(id, { visible_on_web: newVisibility });
+            if (res.success) {
+                setMasterProducts(prev => prev.map(p => p.id === id ? { ...p, visible_on_web: newVisibility } : p));
+                setToast({ visible: true, type: 'success', message: `Producto ${newVisibility ? 'visible' : 'oculto'} en web` });
+            } else {
+                setToast({ visible: true, type: 'error', message: res.message || 'Error al actualizar' });
+            }
+        } catch (error) {
+            setToast({ visible: true, type: 'error', message: 'Error de conexión' });
+        }
+    };
+
     const toggleMasterProductActive = async (id: string, current: boolean) => {
         const res = await updateMasterProduct(id, { activo: !current });
         if (res.success) fetchData(session);
@@ -670,7 +685,9 @@ export default function AdminDashboard() {
                     grosor: data.grosor,
                     beneficio_principal: data.beneficio_principal,
                     detalle_costo_beneficio: data.detalle_costo_beneficio,
-                    orden: Number(data.orden)
+                    orden: Number(data.orden),
+                    activo: data.activo !== false,
+                    visible_on_web: data.visible_on_web !== false
                 });
             } else {
                 res = await createMasterProduct({
@@ -680,7 +697,9 @@ export default function AdminDashboard() {
                     grosor: data.grosor,
                     beneficio_principal: data.beneficio_principal,
                     detalle_costo_beneficio: data.detalle_costo_beneficio,
-                    orden: Number(data.orden || 0)
+                    orden: Number(data.orden || 0),
+                    activo: data.activo !== false,
+                    visible_on_web: data.visible_on_web !== false
                 });
             }
         } else {
@@ -1063,7 +1082,7 @@ export default function AdminDashboard() {
                             <Users className="w-3.5 h-3.5" />
                             <span>Leads</span>
                         </button>
-                        {(session.role === 'admin' || session.role === 'direccion') && (
+                        {(session.role === 'admin' || session.role === 'direccion' || session.role === 'manager') && (
                             <button
                                 onClick={() => setActiveTab('products')}
                                 className={`flex items-center justify-center lg:justify-start gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'products' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
@@ -1081,7 +1100,7 @@ export default function AdminDashboard() {
                                 <span>Precios</span>
                             </button>
                         )}
-                        {(session.role === 'admin' || session.role === 'direccion') && (
+                        {(session.role === 'admin' || session.role === 'direccion' || session.role === 'manager') && (
                             <button
                                 onClick={() => setActiveTab('locations')}
                                 className={`flex items-center justify-center lg:justify-start gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'locations' ? 'bg-secondary dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-secondary dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
@@ -1754,7 +1773,7 @@ export default function AdminDashboard() {
                                     <Download className="w-3.5 h-3.5" />
                                     Exportar
                                 </button>
-                                {session.role === 'admin' && (
+                                {(session.role === 'admin' || session.role === 'manager') && (
                                     <button
                                         onClick={() => setProductModal({
                                             open: true,
@@ -1802,7 +1821,7 @@ export default function AdminDashboard() {
                                                 {(session.role === 'admin' || session.role === 'manager') && (
                                                     <>
                                                         <button onClick={() => setProductModal({ open: true, type: 'edit', data: p })} className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 border border-slate-100 dark:border-slate-700 rounded-lg hover:bg-white dark:hover:bg-slate-700 hover:text-secondary dark:hover:text-white transition-all"><Edit3 className="w-4 h-4" /></button>
-                                                        {session.role === 'admin' && (
+                                                        {(session.role === 'admin' || session.role === 'manager') && (
                                                             <>
                                                                 <button onClick={() => handleClone(p)} className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-400 dark:text-blue-400 border border-blue-100 dark:border-blue-800/50 rounded-lg hover:bg-white dark:hover:bg-blue-900/40 transition-all"><Plus className="w-4 h-4" /></button>
                                                                 <button onClick={() => handleDeleteProduct(p.id, p.title + ' en ' + p.ciudad)} className="p-2 bg-red-50 dark:bg-red-900/20 text-red-300 dark:text-red-400 border border-red-100 dark:border-red-900/30 rounded-lg hover:bg-white dark:hover:bg-red-900/40 transition-all"><Trash2 className="w-4 h-4" /></button>
@@ -1878,7 +1897,7 @@ export default function AdminDashboard() {
                                                                     >
                                                                         <Edit3 className="w-3.5 h-3.5" />
                                                                     </button>
-                                                                    {session.role === 'admin' && (
+                                                                    {(session.role === 'admin' || session.role === 'manager') && (
                                                                         <>
                                                                             <button
                                                                                 onClick={() => handleClone(p)}
@@ -1912,142 +1931,229 @@ export default function AdminDashboard() {
 
                 {activeTab === 'users' && (
                     <div className="flex flex-col gap-8">
-                        {/* Team Form */}
-                        {(session.role === 'admin' || session.role === 'manager') && (
-                            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-8">
+                        {/* Header & Toggle */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <Users className="w-8 h-8 text-primary" />
                                 <div>
-                                    <h2 className="text-2xl font-black text-secondary dark:text-white uppercase tracking-tight flex items-center gap-3">
-                                        <UserPlus className="w-6 h-6 text-primary" />
-                                        Dar de alta Asesor
+                                    <h2 className="text-2xl font-black text-secondary dark:text-white uppercase tracking-tight">
+                                        Equipo Thermo House
                                     </h2>
-                                    <p className="text-slate-400 dark:text-slate-300 text-xs mt-1">Completa el perfil del nuevo integrante</p>
+                                    <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">
+                                        Estructura Organizacional
+                                    </p>
                                 </div>
-
-                                <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Nombre</label>
-                                        <input type="text" required placeholder="Nombre" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-slate-300 dark:placeholder:text-slate-600" value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })} />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Apellido</label>
-                                        <input type="text" required placeholder="Apellido" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-slate-300 dark:placeholder:text-slate-600" value={newUser.apellido} onChange={e => setNewUser({ ...newUser, apellido: e.target.value })} />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Email Acceso</label>
-                                        <input type="email" required placeholder="correo@acceso.com" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-slate-300 dark:placeholder:text-slate-600" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Contraseña</label>
-                                        <input type="password" required placeholder="••••••••" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-slate-300 dark:placeholder:text-slate-600" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Rol</label>
-                                        <select className="w-full px-2 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white" value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value as any })}>
-                                            <option value="editor">Asesor / Editor</option>
-                                            {(session.role === 'admin' || session.role === 'direccion') && <option value="manager">Gerencia</option>}
-                                            {session.role === 'admin' && <option value="direccion">Dirección</option>}
-                                            {session.role === 'admin' && <option value="admin">Administrador</option>}
-                                        </select>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Ciudad Asignada</label>
-                                        <select
-                                            className="w-full px-2 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white disabled:opacity-50"
-                                            value={newUser.ciudad}
-                                            onChange={e => setNewUser({ ...newUser, ciudad: e.target.value })}
-                                            disabled={session.role === 'manager' && session.ciudad !== 'Todas'}
-                                        >
-                                            {session.role === 'manager' && session.ciudad !== 'Todas' ? (
-                                                <option value={session.ciudad}>{session.ciudad}</option>
-                                            ) : (
-                                                <>
-                                                    {locations.map(l => <option key={l.id} value={l.ciudad}>{l.ciudad}</option>)}
-                                                    {(session.role === 'admin' || newUser.role === 'manager') && <option value="Todas">Todas (Global)</option>}
-                                                </>
-                                            )}
-                                        </select>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Sede / Base</label>
-                                        <input type="text" placeholder="Ej: Matriz" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600" value={newUser.base} onChange={e => setNewUser({ ...newUser, base: e.target.value })} />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">WhatsApp Profesional</label>
-                                        <input type="text" placeholder="10 dígitos" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600" value={newUser.telefono} onChange={e => setNewUser({ ...newUser, telefono: e.target.value })} />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Email Público</label>
-                                        <input type="email" placeholder="ventas@..." className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600" value={newUser.contacto_email} onChange={e => setNewUser({ ...newUser, contacto_email: e.target.value })} />
-                                    </div>
-                                    <div className="md:col-span-1">
-                                        <button disabled={isCreatingUser} className="w-full bg-secondary dark:bg-primary text-white py-3 rounded-xl font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-primary/90 transition-all shadow-xl shadow-secondary/20 dark:shadow-primary/20 flex items-center justify-center gap-2">
-                                            {isCreatingUser ? 'Guardando...' : 'Registrar Perfil'}
-                                        </button>
-                                    </div>
-                                </form>
                             </div>
-                        )}
 
-                        {/* Team List */}
-                        <div className="space-y-6">
-                            <h2 className="text-2xl font-black text-secondary dark:text-white uppercase tracking-tight flex items-center gap-3 mb-6">
-                                <Users className="w-6 h-6 text-primary" />
-                                Equipo Thermo House
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {users.filter(u => {
-                                    if (session.role === 'admin') return true;
-                                    if (session.role === 'direccion') return u.role !== 'admin';
-                                    return u.role !== 'admin' && u.role !== 'direccion';
-                                }).map(u => (
-                                    <div key={u.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-start justify-between group hover:border-primary/20 dark:hover:border-primary/30 transition-all gap-4">
-                                        <div className="flex gap-4">
-                                            <div className="w-14 h-14 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center border border-slate-100 dark:border-slate-700 text-slate-400 dark:text-slate-300 group-hover:bg-primary/5 dark:group-hover:bg-primary/10 group-hover:text-primary transition-all flex-shrink-0">
-                                                <UserCircle className="w-8 h-8" />
-                                            </div>
-                                            <div>
-                                                <div className="font-black text-secondary dark:text-white uppercase tracking-tight">{u.name} {u.apellido}</div>
-                                                <div className="text-[9px] font-bold text-slate-400 dark:text-slate-300 uppercase tracking-widest flex items-center gap-1 mt-1"><Building2 className="w-3 h-3" /> {u.base || 'Gral'} • {u.ciudad}</div>
-                                                <div className="mt-3 flex gap-2">
-                                                    <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${u.role === 'admin' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-800' :
-                                                        u.role === 'direccion' ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800' :
-                                                            u.role === 'manager' ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border-orange-100 dark:border-orange-800' :
-                                                                'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800'
-                                                        }`}>
-                                                        {u.role === 'editor' ? 'Asesor' : u.role}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {(session.role === 'admin' || session.role === 'manager') && (
-                                            <div className="flex flex-row sm:flex-col gap-2 pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-50 dark:border-slate-800 sm:opacity-0 sm:group-hover:opacity-100 transition-all overflow-x-auto">
-                                                <button onClick={() => setUserModal({ open: true, type: 'edit', data: u })} className="flex-1 sm:flex-none p-3 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-white dark:hover:bg-slate-700 hover:text-primary transition-all flex items-center justify-center gap-2" title="Editar Perfil">
-                                                    <Edit3 className="w-4 h-4" />
-                                                    <span className="text-[8px] font-black uppercase sm:hidden">Editar</span>
-                                                </button>
-                                                <button onClick={() => toggleUserActive(u)} className={`flex-1 sm:flex-none p-3 border shadow-sm transition-all flex items-center justify-center gap-2 ${u.active !== false ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-100 dark:border-green-800' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'}`} title={u.active !== false ? 'Desactivar cuenta' : 'Activar cuenta'}>
-                                                    <Power className="w-4 h-4" />
-                                                    <span className="text-[8px] font-black uppercase sm:hidden">{u.active !== false ? 'Activo' : 'Inactivo'}</span>
-                                                </button>
-                                                <button onClick={() => handleResetPassword(u.id, u.name)} className="flex-1 sm:flex-none p-3 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-white dark:hover:bg-slate-700 hover:text-secondary dark:hover:text-white transition-all flex items-center justify-center gap-2" title="Clave">
-                                                    <Key className="w-4 h-4" />
-                                                    <span className="text-[8px] font-black uppercase sm:hidden">Clave</span>
-                                                </button>
-                                                <button onClick={() => handleDeleteUser(u.id, u.name)} className="flex-1 sm:flex-none p-3 bg-red-50 dark:bg-red-900/20 text-red-300 dark:text-red-400 border border-red-100 dark:border-red-900/50 shadow-sm hover:bg-white dark:hover:bg-red-500 hover:text-red-600 dark:hover:text-white rounded-xl transition-all flex items-center justify-center gap-2" title="Eliminar">
-                                                    <Trash2 className="w-4 h-4" />
-                                                    <span className="text-[8px] font-black uppercase sm:hidden">Eliminar</span>
-                                                </button>
-                                            </div>
-                                        )}
-                                        {session.role !== 'admin' && session.role !== 'manager' && (
-                                            <div className="px-3 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg text-[9px] font-black text-slate-300 dark:text-slate-200 uppercase italic self-start">Solo Lectura</div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
+                            {(session.role === 'admin' || session.role === 'direccion' || session.role === 'manager') && (
+                                <button
+                                    onClick={() => setIsUserFormOpen(!isUserFormOpen)}
+                                    className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs flex items-center gap-2 transition-all shadow-lg ${isUserFormOpen
+                                        ? 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
+                                        : 'bg-primary text-white hover:bg-primary/90 shadow-primary/20'
+                                        }`}
+                                >
+                                    {isUserFormOpen ? <X className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                                    {isUserFormOpen ? 'Cerrar Formulario' : 'Nuevo Miembro'}
+                                </button>
+                            )}
                         </div>
 
-                        {/* User Edit Modal */}
+                        {/* Collapsible Form */}
+                        <AnimatePresence>
+                            {isUserFormOpen && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm mb-6">
+                                        <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Nombre</label>
+                                                <input type="text" required placeholder="Nombre" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-slate-300 dark:placeholder:text-slate-600" value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Apellido</label>
+                                                <input type="text" required placeholder="Apellido" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-slate-300 dark:placeholder:text-slate-600" value={newUser.apellido} onChange={e => setNewUser({ ...newUser, apellido: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Email Acceso</label>
+                                                <input type="email" required placeholder="correo@acceso.com" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-slate-300 dark:placeholder:text-slate-600" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Contraseña</label>
+                                                <input type="password" required placeholder="••••••••" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-slate-300 dark:placeholder:text-slate-600" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Rol</label>
+                                                <select className="w-full px-2 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white" value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value as any })}>
+                                                    <option value="editor">Asesor / Editor</option>
+                                                    {(session.role === 'admin' || session.role === 'direccion') && <option value="manager">Gerencia</option>}
+                                                    {session.role === 'admin' && <option value="direccion">Dirección</option>}
+                                                    {session.role === 'admin' && <option value="admin">Administrador</option>}
+                                                </select>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Ciudad Asignada</label>
+                                                <select
+                                                    className="w-full px-2 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white disabled:opacity-50"
+                                                    value={newUser.ciudad}
+                                                    onChange={e => setNewUser({ ...newUser, ciudad: e.target.value })}
+                                                    disabled={session.role === 'manager' && session.ciudad !== 'Todas'}
+                                                >
+                                                    {session.role === 'manager' && session.ciudad !== 'Todas' ? (
+                                                        <option value={session.ciudad}>{session.ciudad}</option>
+                                                    ) : (
+                                                        <>
+                                                            {locations.map(l => <option key={l.id} value={l.ciudad}>{l.ciudad}</option>)}
+                                                            {(session.role === 'admin' || newUser.role === 'manager') && <option value="Todas">Todas (Global)</option>}
+                                                        </>
+                                                    )}
+                                                </select>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Sede / Base</label>
+                                                <input type="text" placeholder="Ej: Matriz" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600" value={newUser.base} onChange={e => setNewUser({ ...newUser, base: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">WhatsApp Profesional</label>
+                                                <input type="text" placeholder="10 dígitos" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600" value={newUser.telefono} onChange={e => setNewUser({ ...newUser, telefono: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Email Público</label>
+                                                <input type="email" placeholder="ventas@..." className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600" value={newUser.contacto_email} onChange={e => setNewUser({ ...newUser, contacto_email: e.target.value })} />
+                                            </div>
+                                            <div className="md:col-span-1">
+                                                <button disabled={isCreatingUser} className="w-full bg-secondary dark:bg-primary text-white py-3 rounded-xl font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-primary/90 transition-all shadow-xl shadow-secondary/20 dark:shadow-primary/20 flex items-center justify-center gap-2">
+                                                    {isCreatingUser ? 'Guardando...' : 'Registrar Perfil'}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Hierarchy View */}
+                        <div className="space-y-10">
+                            {[
+                                { title: 'Nivel Directivo', role: 'direccion', icon: Shield, color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+                                { title: 'Nivel Gerencial', role: 'manager', icon: Building2, color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' },
+                                { title: 'Fuerza de Ventas', role: 'editor', icon: Users, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20' }
+                            ].map((section) => {
+                                const sectionUsers = users.filter(u => u.role === section.role);
+                                if (sectionUsers.length === 0) return null;
+
+                                return (
+                                    <div key={section.role} className="space-y-5">
+                                        <div className="flex items-center gap-3 ml-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                                            <div className={`p-2 rounded-lg ${section.bg} ${section.color}`}>
+                                                <section.icon className="w-5 h-5" />
+                                            </div>
+                                            <h3 className="text-sm font-black text-secondary dark:text-white uppercase tracking-widest">{section.title}</h3>
+                                            <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">{sectionUsers.length}</span>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                            {sectionUsers.map(u => (
+                                                <div key={u.id} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-primary/20 dark:hover:border-primary/30 transition-all flex flex-col justify-between group gap-4 relative overflow-hidden">
+                                                    <div className="absolute top-0 right-0 p-3 opacity-10 font-black text-6xl text-slate-300 pointer-events-none select-none">
+                                                        {u.name.charAt(0)}
+                                                    </div>
+                                                    <div className="flex items-start gap-4">
+                                                        <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center border border-slate-100 dark:border-slate-700 text-slate-400 dark:text-slate-300 flex-shrink-0 z-10">
+                                                            <UserCircle className="w-6 h-6" />
+                                                        </div>
+                                                        <div className="z-10">
+                                                            <div className="font-black text-secondary dark:text-white uppercase text-sm leading-tight line-clamp-1" title={`${u.name} ${u.apellido}`}>{u.name} {u.apellido}</div>
+                                                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1 mt-1">
+                                                                <Building2 className="w-3 h-3" /> {u.ciudad} {u.active === false && <span className="text-red-400">(Inactivo)</span>}
+                                                            </div>
+                                                            {u.telefono && (
+                                                                <a href={`https://wa.me/52${u.telefono.replace(/\s+/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-[10px] text-green-500 font-bold flex items-center gap-1 mt-1 hover:underline">
+                                                                    <Phone className="w-3 h-3" /> WhatsApp
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Actions */}
+                                                    {/* Actions */}
+                                                    {(session.role === 'admin' || session.role === 'direccion' || session.role === 'manager') && (
+                                                        <div className="flex items-center gap-2 pt-3 border-t border-slate-50 dark:border-slate-800">
+                                                            {(() => {
+                                                                const RoleRanks: { [key: string]: number } = { admin: 4, direccion: 3, manager: 2, editor: 1 };
+                                                                const sRank = RoleRanks[session.role as string] || 0;
+                                                                const uRank = RoleRanks[u.role as string] || 0;
+                                                                const canEdit = sRank > uRank || u.id === session.id;
+
+                                                                return (
+                                                                    <>
+                                                                        <button
+                                                                            onClick={() => canEdit && setUserModal({ open: true, type: 'edit', data: u })}
+                                                                            disabled={!canEdit}
+                                                                            className={`flex-1 p-2 border rounded-lg transition-all flex items-center justify-center gap-2 group/btn ${canEdit
+                                                                                ? 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-primary hover:text-white hover:border-primary dark:hover:bg-primary'
+                                                                                : 'bg-slate-50 dark:bg-slate-800/50 text-slate-200 dark:text-slate-700 border-slate-100 dark:border-slate-800 cursor-not-allowed opacity-50'
+                                                                                }`}
+                                                                            title={canEdit ? "Editar Perfil" : "No tienes permisos para editar este usuario"}
+                                                                        >
+                                                                            <Edit3 className="w-4 h-4" />
+                                                                            <span className="text-[9px] font-black uppercase md:hidden">Editar</span>
+                                                                        </button>
+
+                                                                        <button
+                                                                            onClick={() => canEdit && toggleUserActive(u)}
+                                                                            disabled={!canEdit}
+                                                                            className={`flex-1 p-2 border rounded-lg transition-all flex items-center justify-center gap-2 ${canEdit
+                                                                                ? (u.active !== false ? 'bg-green-50 dark:bg-green-900/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800 hover:bg-green-100' : 'bg-red-50 dark:bg-red-900/10 text-red-500 border-red-200 hover:bg-red-100')
+                                                                                : 'bg-slate-50 dark:bg-slate-800/50 text-slate-200 dark:text-slate-700 border-slate-100 dark:border-slate-800 cursor-not-allowed opacity-50'
+                                                                                }`}
+                                                                            title={canEdit ? (u.active !== false ? 'Desactivar Cuenta' : 'Activar Cuenta') : "No tienes permisos"}
+                                                                        >
+                                                                            <Power className="w-4 h-4" />
+                                                                            <span className="text-[9px] font-black uppercase md:hidden">{u.active !== false ? 'Activo' : 'Offline'}</span>
+                                                                        </button>
+
+                                                                        <button
+                                                                            onClick={() => canEdit && handleResetPassword(u.id, u.name)}
+                                                                            disabled={!canEdit}
+                                                                            className={`flex-1 p-2 border rounded-lg transition-all flex items-center justify-center gap-2 ${canEdit
+                                                                                ? 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-yellow-400 hover:text-white hover:border-yellow-400'
+                                                                                : 'bg-slate-50 dark:bg-slate-800/50 text-slate-200 dark:text-slate-700 border-slate-100 dark:border-slate-800 cursor-not-allowed opacity-50'
+                                                                                }`}
+                                                                            title={canEdit ? "Cambiar Contraseña" : "No tienes permisos"}
+                                                                        >
+                                                                            <Key className="w-4 h-4" />
+                                                                            <span className="text-[9px] font-black uppercase md:hidden">Clave</span>
+                                                                        </button>
+
+                                                                        <button
+                                                                            onClick={() => canEdit && handleDeleteUser(u.id, u.name)}
+                                                                            disabled={!canEdit}
+                                                                            className={`flex-1 p-2 border rounded-lg transition-all flex items-center justify-center gap-2 ${canEdit
+                                                                                ? 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-red-500 hover:text-white hover:border-red-500'
+                                                                                : 'bg-slate-50 dark:bg-slate-800/50 text-slate-200 dark:text-slate-700 border-slate-100 dark:border-slate-800 cursor-not-allowed opacity-50'
+                                                                                }`}
+                                                                            title={canEdit ? "Eliminar Cuenta" : "No tienes permisos"}
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4" />
+                                                                            <span className="text-[9px] font-black uppercase md:hidden">Eliminar</span>
+                                                                        </button>
+                                                                    </>
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+
                         {userModal.open && (
                             <div className="fixed inset-0 bg-secondary/80 dark:bg-slate-950/90 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
                                 <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-800">
@@ -2117,12 +2223,12 @@ export default function AdminDashboard() {
                             <div>
                                 <h2 className="text-2xl font-black text-secondary dark:text-white uppercase tracking-tight flex items-center gap-3">
                                     <Map className="w-6 h-6 text-primary" />
-                                    {session.role === 'admin' ? 'Abrir Zona' : 'Zonas de Servicio'}
+                                    {session.role === 'admin' || session.role === 'manager' ? 'Abrir Zona' : 'Zonas de Servicio'}
                                 </h2>
-                                <p className="text-slate-400 dark:text-slate-300 text-xs mt-1">{session.role === 'admin' ? 'Registra nuevos centros de operación' : 'Regiones con cobertura'}</p>
+                                <p className="text-slate-400 dark:text-slate-300 text-xs mt-1">{session.role === 'admin' || session.role === 'manager' ? 'Registra nuevos centros de operación' : 'Regiones con cobertura'}</p>
                             </div>
 
-                            {session.role === 'admin' ? (
+                            {session.role === 'admin' || session.role === 'manager' ? (
                                 <form onSubmit={handleCreateLocation} className="space-y-4">
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Estado</label>
@@ -2158,7 +2264,7 @@ export default function AdminDashboard() {
                                 <div className="p-10 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-[2rem] flex flex-col items-center justify-center text-center space-y-4">
                                     <Shield className="w-10 h-10 text-slate-300 dark:text-slate-200" />
                                     <p className="text-[11px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest leading-relaxed">
-                                        Solo Administradores pueden gestionar zonas geográficas
+                                        Solo Administradores y Gerentes pueden gestionar zonas geográficas
                                     </p>
                                 </div>
                             )}
@@ -2186,7 +2292,7 @@ export default function AdminDashboard() {
                                             <div className="hidden md:block">
                                                 <span className="px-5 py-2 bg-white dark:bg-slate-800 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-sm">Sede Base</span>
                                             </div>
-                                            {session.role === 'admin' && (
+                                            {(session.role === 'admin' || session.role === 'manager') && (
                                                 <button
                                                     onClick={() => setLocationModal({ open: true, data: { ...l, redes_sociales: l.redes_sociales || { facebook: '', instagram: '', whatsapp: '' } } })}
                                                     className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-300 hover:text-primary rounded-xl shadow-sm transition-all active:scale-95"
@@ -2221,7 +2327,7 @@ export default function AdminDashboard() {
                                                             )}
                                                         </div>
                                                     </div>
-                                                    {session.role === 'admin' && (
+                                                    {(session.role === 'admin' || session.role === 'manager') && (
                                                         <div className="flex gap-2">
                                                             <button
                                                                 onClick={() => setLocationModal({ open: true, data: { ...l, redes_sociales: l.redes_sociales || { facebook: '', instagram: '', whatsapp: '' } } })}
@@ -2346,7 +2452,7 @@ export default function AdminDashboard() {
                                     </h2>
                                     <p className="text-slate-400 dark:text-slate-300 text-sm mt-1">Define las características técnicas de cada sistema termoaislante</p>
                                 </div>
-                                {session.role === 'admin' && (
+                                {(session.role === 'admin' || session.role === 'manager') && (
                                     <button
                                         onClick={() => setProductModal({ open: true, type: 'create', data: { title: '', internal_id: '', category: 'concrete' } })}
                                         className="bg-secondary dark:bg-primary text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-secondary/20 dark:shadow-primary/20 flex items-center gap-2"
@@ -2362,12 +2468,8 @@ export default function AdminDashboard() {
                                         <div className="flex justify-between items-start">
                                             <div className="flex items-center gap-2">
                                                 <span className="text-[9px] font-black bg-primary text-white px-2 py-0.5 rounded-full uppercase">{p?.category}</span>
-                                                <button
-                                                    onClick={() => toggleMasterProductActive(p.id, !(p.activo !== false))}
-                                                    className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase transition-all ${p.activo !== false ? 'bg-green-100 text-green-600' : 'bg-slate-200 text-slate-500'}`}
-                                                >
-                                                    {p.activo !== false ? '● Activo' : '○ Pausado'}
-                                                </button>
+                                                <div title={p.activo !== false ? 'Producto Activo' : 'Producto Pausado'} className={`w-3 h-3 rounded-full ${p.activo !== false ? 'bg-green-500' : 'bg-slate-400'}`} />
+                                                <div title={p.visible_on_web !== false ? 'Visible en Web' : 'Oculto en Web'} className={`w-3 h-3 rounded-full ${p.visible_on_web !== false ? 'bg-blue-500' : 'bg-slate-400'}`} />
                                             </div>
                                             <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">ORDEN #{p?.orden}</span>
                                         </div>
@@ -3241,6 +3343,28 @@ export default function AdminDashboard() {
                                                 onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, detalle_costo_beneficio: e.target.value } })}
                                             />
                                             <p className="text-[8px] text-slate-400 dark:text-slate-300 italic ml-1">* El texto se separará por guiones (-) o saltos de línea. El último elemento aparecerá en naranja.</p>
+                                        </div>
+
+                                        <div className="flex gap-6 pt-2">
+                                            <label className="flex items-center gap-3 cursor-pointer bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+                                                <input
+                                                    type="checkbox"
+                                                    className="w-4 h-4 rounded text-secondary"
+                                                    checked={productModal.data.activo !== false}
+                                                    onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, activo: e.target.checked } })}
+                                                />
+                                                <span className="text-[10px] font-black text-secondary dark:text-white uppercase tracking-widest">Producto Activo</span>
+                                            </label>
+
+                                            <label className="flex items-center gap-3 cursor-pointer bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+                                                <input
+                                                    type="checkbox"
+                                                    className="w-4 h-4 rounded text-blue-500"
+                                                    checked={productModal.data.visible_on_web !== false}
+                                                    onChange={e => setProductModal({ ...productModal, data: { ...productModal.data, visible_on_web: e.target.checked } })}
+                                                />
+                                                <span className="text-[10px] font-black text-secondary dark:text-white uppercase tracking-widest">Mostrar en Web</span>
+                                            </label>
                                         </div>
                                     </>
                                 ) : (

@@ -22,6 +22,7 @@ export async function getAllSolutions(cityFilter?: string) {
             .from('productos')
             .select('*')
             .eq('activo', true)
+            .eq('visible_on_web', true)
             .order('orden', { ascending: true });
 
         if (masterError) {

@@ -27,7 +27,7 @@ export async function getLocations() {
 export async function createLocation(locationData: Partial<Location>) {
     try {
         const session = await getAdminSession();
-        if (!session || (session.role !== 'admin' && session.role !== 'direccion')) {
+        if (!session || (session.role !== 'admin' && session.role !== 'direccion' && session.role !== 'manager')) {
             return { success: false, message: 'No tienes permisos para modificar ubicaciones.' };
         }
 
@@ -60,7 +60,7 @@ export async function createLocation(locationData: Partial<Location>) {
 export async function updateLocation(id: string, locationData: Partial<Location>) {
     try {
         const session = await getAdminSession();
-        if (!session || (session.role !== 'admin' && session.role !== 'direccion')) {
+        if (!session || (session.role !== 'admin' && session.role !== 'direccion' && session.role !== 'manager')) {
             return { success: false, message: 'No tienes permisos para modificar ubicaciones.' };
         }
 
@@ -85,7 +85,7 @@ export async function updateLocation(id: string, locationData: Partial<Location>
 export async function deleteLocation(id: string) {
     try {
         const session = await getAdminSession();
-        if (!session || (session.role !== 'admin' && session.role !== 'direccion')) {
+        if (!session || (session.role !== 'admin' && session.role !== 'direccion' && session.role !== 'manager')) {
             return { success: false, message: 'No tienes permisos para eliminar ubicaciones.' };
         }
 

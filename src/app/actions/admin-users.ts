@@ -17,15 +17,16 @@ export async function getAdminUsers() {
             .order('created_at', { ascending: false });
 
         if (session.role === 'manager') {
-            // Manager sees: Editors in their city OR themselves
-            if (session.ciudad && session.ciudad !== 'Todas') {
-                query = query.or(`and(role.eq.editor,ciudad.eq.${session.ciudad}),id.eq.${session.id}`);
-            } else {
-                query = query.or(`role.eq.editor,id.eq.${session.id}`);
-            }
-        } else if (session.role === 'direccion') {
-            // Director sees: Everyone EXCEPT admin
+            // Manager sees: Everyone EXCEPT admin (visualize full hierarchy)
             query = query.neq('role', 'admin');
+        } else if (session.role === 'direccion') {
+            // Director sees: Everyone EXCEPT admin (and implicitly themselves)
+            query = query.neq('role', 'admin');
+        } else if (session.role === 'admin') {
+            // Admin sees everyone
+        } else {
+            // Editors or others shouldn't be calling this, but safe fallback
+            return { success: false, message: 'No tienes permisos.' };
         }
 
         const { data, error } = await query;
@@ -118,49 +119,59 @@ export async function updateAdminUser(id: string, payload: Partial<{
             return { success: false, message: 'No tienes permisos para modificar usuarios.' };
         }
 
-        if (session.role === 'manager' || session.role === 'direccion') {
-            // Prevent promoting to admin/direccion if not authorized
-            if (payload.role === 'admin') {
-                return { success: false, message: 'No puedes asignar el rol de administrador.' };
-            }
-            if (payload.role === 'direccion' && session.role !== 'admin') {
-                return { success: false, message: 'No puedes asignar el rol de Dirección.' };
-            }
+        // Fetch target user to verify permissions
+        const { data: target } = await supabaseAdmin.from('admin_users').select('role, ciudad').eq('id', id).single();
+        if (!target) return { success: false, message: 'Usuario no encontrado.' };
 
-            // Prevent editing an admin
-            const { data: target } = await supabaseAdmin.from('admin_users').select('role').eq('id', id).single();
-            if (target?.role === 'admin') {
-                return { success: false, message: 'No puedes modificar a un administrador.' };
+        const isSelf = session.id === id;
+
+        // --- Permission Logic ---
+
+        // 1. Admin Protection: Only Admin can touch Admin
+        if (target.role === 'admin' && session.role !== 'admin') {
+            return { success: false, message: 'No puedes modificar a un administrador.' };
+        }
+
+        // 2. Same Rank Restriction (Strict Hierarchy)
+        // Peers cannot modify peers (except themselves)
+        if (session.role !== 'admin' && session.role === target.role && !isSelf) {
+            return { success: false, message: 'No puedes modificar a un usuario de tu mismo rango.' };
+        }
+
+        // 3. Manager/Director Specific Restrictions
+        if (session.role === 'manager' || session.role === 'direccion') {
+            // Can only create/promote up to their own level (handled in create) or below.
+            // But actually, Managers can only manage Editors. Directors can manage Managers & Editors.
+
+            // Prevent assigning roles higher or equal to self (unless self)
+            // Actually, Manager can only assign 'editor'. Director can assign 'manager', 'editor'.
+            if (payload.role) {
+                if (session.role === 'manager' && payload.role !== 'editor' && !isSelf) {
+                    return { success: false, message: 'Solo puedes asignar el rol de Asesor.' };
+                }
+                if (session.role === 'direccion' && (payload.role === 'admin' || payload.role === 'direccion') && !isSelf) {
+                    return { success: false, message: 'No tienes permisos para asignar ese rol.' };
+                }
             }
         }
 
         if (session.role === 'manager') {
-            // Check target user first
-            const { data: target } = await supabaseAdmin.from('admin_users').select('role, ciudad').eq('id', id).single();
-
-            if (!target) return { success: false, message: 'Usuario no encontrado.' };
-
-            // Allow modifying SELF (limited? usually profile updates are ok) OR Advisors in zone
-            const isSelf = session.id === id;
-            const isTargetAdvisor = target.role === 'editor';
+            // Zone restriction
             const isTargetInZone = session.ciudad === 'Todas' || target.ciudad === session.ciudad;
-
             if (!isSelf) {
-                if (!isTargetAdvisor) {
-                    return { success: false, message: 'Solo puedes modificar perfiles de Asesores.' };
+                if (target.role !== 'editor') {
+                    // Managers can strictly only touch Editors (and checked above Admin/SameRank protection)
+                    return { success: false, message: 'Solo puedes modificar cuentas de Asesor.' };
                 }
                 if (!isTargetInZone) {
                     return { success: false, message: 'No puedes modificar usuarios fuera de tu zona.' };
                 }
             }
+        }
 
-            // Prevent Manager from escalating privileges or changing restricted fields
-            if (payload.role && payload.role !== 'editor' && !isSelf) { // If editing other, must remain editor
-                return { success: false, message: 'No puedes asignar otros roles.' };
-            }
-            if (payload.role && isSelf && payload.role !== 'manager') { // Cannot change own role
-                return { success: false, message: 'No puedes cambiar tu propio rol.' };
-            }
+        // Director Restrictions
+        if (session.role === 'direccion') {
+            // Director has global access (no zone restriction), but checks on Admin/SameRank are already done.
         }
 
         // Verificar correo único si se está cambiando
@@ -193,24 +204,27 @@ export async function resetAdminPassword(id: string, newPassword: string) {
             return { success: false, message: 'No tienes permisos para resetear contraseñas.' };
         }
 
-        if (session.role === 'manager' || session.role === 'direccion') {
-            const { data: target } = await supabaseAdmin.from('admin_users').select('role').eq('id', id).single();
-            if (target?.role === 'admin') {
-                return { success: false, message: 'No puedes cambiar la contraseña de un administrador.' };
-            }
+        // Fetch target
+        const { data: target } = await supabaseAdmin.from('admin_users').select('role, ciudad').eq('id', id).single();
+        if (!target) return { success: false, message: 'Usuario no encontrado.' };
+
+        const isSelf = session.id === id;
+
+        // 1. Admin Protection
+        if (target.role === 'admin' && session.role !== 'admin') {
+            return { success: false, message: 'No puedes cambiar la contraseña de un administrador.' };
         }
 
-        if (session.role === 'manager') {
-            const { data: target } = await supabaseAdmin.from('admin_users').select('role, ciudad').eq('id', id).single();
+        // 2. Same Rank Restriction
+        if (session.role !== 'admin' && session.role === target.role && !isSelf) {
+            return { success: false, message: 'No puedes cambiar la contraseña de un usuario de tu mismo rango.' };
+        }
 
-            if (!target) return { success: false, message: 'Usuario no encontrado.' };
-
-            const isSelf = session.id === id;
-            const isTargetAdvisor = target.role === 'editor';
-            const isTargetInZone = session.ciudad === 'Todas' || target.ciudad === session.ciudad;
-
-            if (!isSelf && (!isTargetAdvisor || !isTargetInZone)) {
-                return { success: false, message: 'No puedes restablecer la contraseña de este usuario.' };
+        // 3. Manager Specifics
+        if (session.role === 'manager' && !isSelf) {
+            if (target.role !== 'editor') return { success: false, message: 'Solo puedes gestionar Asesores.' };
+            if (session.ciudad !== 'Todas' && target.ciudad !== session.ciudad) {
+                return { success: false, message: 'No puedes gestionar usuarios de otra zona.' };
             }
         }
 
@@ -233,25 +247,34 @@ export async function deleteAdminUser(id: string) {
             return { success: false, message: 'No tienes permisos para eliminar usuarios.' };
         }
 
-        if (session.role === 'manager' || session.role === 'direccion') {
-            const { data: target, error: targetError } = await supabaseAdmin.from('admin_users').select('role, ciudad').eq('id', id).single();
+        // Fetch target
+        const { data: target, error: targetError } = await supabaseAdmin.from('admin_users').select('role, ciudad').eq('id', id).single();
 
-            if (targetError || !target) {
-                return { success: false, message: 'Usuario no encontrado o error al verificar permisos.' };
-            }
+        if (targetError || !target) {
+            return { success: false, message: 'Usuario no encontrado o error al verificar permisos.' };
+        }
 
-            if (target.role === 'admin') {
-                return { success: false, message: 'No puedes eliminar a un administrador.' };
-            }
+        // 1. Admin Protection
+        if (target.role === 'admin') {
+            return { success: false, message: 'No puedes eliminar a un administrador.' };
+        }
 
-            if (session.role === 'manager' && target.role !== 'editor') {
-                return { success: false, message: 'Solo puedes eliminar cuentas de Asesor.' };
-            }
-            if (session.role === 'direccion' && target.role !== 'manager' && target.role !== 'editor') {
-                return { success: false, message: 'Solo puedes eliminar cuentas de Gerente o Asesor.' };
-            }
+        // 2. Same Rank Restriction
+        if (session.role !== 'admin' && session.role === target.role) {
+            return { success: false, message: 'No puedes eliminar a un usuario de tu mismo rango.' };
+        }
+
+        // 3. Manager/Director Logic
+        if (session.role === 'manager') {
+            if (target.role !== 'editor') return { success: false, message: 'Solo puedes eliminar cuentas de Asesor.' };
             if (session.ciudad !== 'Todas' && target.ciudad !== session.ciudad) {
                 return { success: false, message: 'No puedes eliminar usuarios de otra zona.' };
+            }
+        }
+
+        if (session.role === 'direccion') {
+            if (target.role !== 'manager' && target.role !== 'editor') {
+                return { success: false, message: 'Solo puedes eliminar cuentas de Gerente o Asesor.' };
             }
         }
 
