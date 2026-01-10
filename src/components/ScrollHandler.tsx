@@ -7,7 +7,19 @@ export default function ScrollHandler() {
     const pathname = usePathname();
 
     useEffect(() => {
-        // Map routes to section IDs
+        // LEGACY HASH REDIRECT: If someone enters via /#something, redirect to /something
+        if (pathname === '/' && window.location.hash) {
+            const hash = window.location.hash.replace('#', '');
+            const validRoutes = ['sistemas', 'garantia', 'sucursales', 'cotizador', 'blog'];
+
+            if (validRoutes.includes(hash)) {
+                // Remove hash and navigate to clean URL
+                window.location.replace(`/${hash}`);
+                return;
+            }
+        }
+
+        // Map routes to section IDs for internal scrolling (SPA feel)
         const routeMap: Record<string, string> = {
             '/sistemas': 'sistemas',
             '/garantia': 'garantia',
