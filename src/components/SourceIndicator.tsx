@@ -25,15 +25,20 @@ export default function SourceIndicator({ src, className = '' }: SourceIndicator
     };
 
     // Toggle this to true to see the source indicators
-    const DEBUG_INDICATORS = false;
+    const DEBUG_INDICATORS = true;
 
     if (!DEBUG_INDICATORS) return null;
 
     return (
         <div
-            className={`absolute z-50 w-2 h-2 rounded-full shadow-sm ${getColor()} ${className}`}
+            className={`absolute z-[99] w-4 h-4 rounded-full shadow-lg border-2 border-white ${getColor()} ${className}`}
             title={`Source: ${type} (${src})`}
-            style={{ top: '8px', right: '8px' }} // Slightly adjusted position
+            style={{
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                pointerEvents: 'none'
+            }}
         />
     );
 }

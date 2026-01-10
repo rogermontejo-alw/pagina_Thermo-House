@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Calendar, ChevronRight, Search, Tag } from 'lucide-react';
 import { BlogPost } from '@/types';
 import { optimizeCloudinaryUrl } from '@/lib/cloudinary-client';
+import SourceIndicator from './SourceIndicator';
 
 
 interface BlogListingProps {
@@ -75,13 +76,16 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
                         >
                             <div className="relative aspect-[16/10] overflow-hidden">
                                 {post.image_url ? (
-                                    <img
-                                        src={optimizeCloudinaryUrl(post.image_url)}
-                                        alt={post.title}
-                                        loading="lazy"
-                                        decoding="async"
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                    />
+                                    <>
+                                        <img
+                                            src={optimizeCloudinaryUrl(post.image_url)}
+                                            alt={post.title}
+                                            loading="lazy"
+                                            decoding="async"
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                        />
+                                        <SourceIndicator src={post.image_url} />
+                                    </>
                                 ) : (
                                     <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                                         <span className="text-slate-300 dark:text-slate-700 font-black text-4xl italic">TH</span>

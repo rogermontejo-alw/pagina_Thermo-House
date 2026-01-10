@@ -6,6 +6,7 @@ import { Calendar, ArrowLeft, Clock, Share2, Facebook, Twitter, LinkIcon, Tag } 
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { optimizeCloudinaryUrl } from '@/lib/cloudinary-client';
+import SourceIndicator from '@/components/SourceIndicator';
 
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -94,6 +95,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                                 alt={post.title}
                                 className="w-full h-full object-cover"
                             />
+                            <SourceIndicator src={post.image_url} />
                         </div>
                     )}
 
