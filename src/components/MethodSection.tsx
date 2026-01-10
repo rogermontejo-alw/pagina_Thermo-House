@@ -2,10 +2,23 @@
 
 import { Play } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import { getCloudinaryUrl, getCloudinaryVideoUrl } from '@/lib/cloudinary-client';
+import SourceIndicator from './SourceIndicator';
 
-const LazyVideo = ({ src, poster }: { src: string; poster: string }) => {
+const LazyVideo = ({ videoPublicId, folder, posterPublicId }: {
+    videoPublicId: string;
+    folder: string;
+    posterPublicId: string;
+}) => {
     const [isIntersecting, setIsIntersecting] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Initialize with Cloudinary ONLY - User requested removal of Supabase and no local fallback exists for these
+    const [videoSrc, setVideoSrc] = useState(getCloudinaryVideoUrl(videoPublicId, folder, undefined, { width: 800, crop: 'limit' }));
+    const [posterSrc, setPosterSrc] = useState(getCloudinaryUrl(posterPublicId, folder, undefined, { width: 800, crop: 'limit' }));
+
+    // Note: If Cloudinary fails here, there is NO fallback as requested (local files don't exist for these steps)
+    // We will just let it fail but show the Green dot if it tries to load Cloudinary.
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -15,7 +28,7 @@ const LazyVideo = ({ src, poster }: { src: string; poster: string }) => {
                     observer.disconnect();
                 }
             },
-            { rootMargin: '200px' } // Start loading 200px before view
+            { rootMargin: '200px' }
         );
 
         if (containerRef.current) {
@@ -28,19 +41,22 @@ const LazyVideo = ({ src, poster }: { src: string; poster: string }) => {
     return (
         <div ref={containerRef} className="absolute inset-0 w-full h-full">
             {isIntersecting ? (
-                <video
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    poster={poster}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                >
-                    <source src={src} type="video/mp4" />
-                </video>
+                <>
+                    <video
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        poster={posterSrc}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                    >
+                        <source src={videoSrc} type="video/mp4" />
+                    </video>
+                    <SourceIndicator src={videoSrc} />
+                </>
             ) : (
                 <img
-                    src={poster}
+                    src={posterSrc}
                     alt="Video preview"
                     className="absolute inset-0 w-full h-full object-cover"
                 />
@@ -55,24 +71,27 @@ export default function MethodSection() {
             id: 1,
             title: "Preparación Meticulosa",
             description: "Nuestro proceso comienza con una limpieza profunda de la superficie, reparación de grietas e imprimación. Este primer paso crítico asegura una adhesión óptima para un sellado impecable y duradero.",
-            videoUrl: "https://ewysxryaqwdscqecyomi.supabase.co/storage/v1/object/public/site-assets/paso1.mp4",
-            posterUrl: "https://ewysxryaqwdscqecyomi.supabase.co/storage/v1/object/public/site-assets/paso1.webp",
+            videoPublicId: "paso1_f5nssr",
+            posterPublicId: "paso1_dptq3n",
+            folder: "",
             imageColor: "bg-blue-100"
         },
         {
             id: 2,
             title: "Aplicación de Poliuretano",
             description: "Utilizando equipos especializados, aplicamos una capa continua de espuma de poliuretano de alta densidad, creando una barrera monolítica que proporciona un aislamiento térmico y una impermeabilización excepcionales.",
-            videoUrl: "https://ewysxryaqwdscqecyomi.supabase.co/storage/v1/object/public/site-assets/paso2.mp4",
-            posterUrl: "https://ewysxryaqwdscqecyomi.supabase.co/storage/v1/object/public/site-assets/paso2.webp",
+            videoPublicId: "paso2_rddtso",
+            posterPublicId: "paso2_hg2pps",
+            folder: "",
             imageColor: "bg-orange-100"
         },
         {
             id: 3,
             title: "Acabado Acrílico Protector",
             description: "Para completar el sistema, aplicamos una capa final acrílica resistente a los rayos UV e impermeable. Esta última capa protege el poliuretano y asegura la máxima durabilidad contra los elementos.",
-            videoUrl: "https://ewysxryaqwdscqecyomi.supabase.co/storage/v1/object/public/site-assets/paso3.mp4",
-            posterUrl: "https://ewysxryaqwdscqecyomi.supabase.co/storage/v1/object/public/site-assets/paso3.webp",
+            videoPublicId: "Paso3_h8k5qq",
+            posterPublicId: "paso3_aubpi7",
+            folder: "",
             imageColor: "bg-yellow-100"
         }
     ];
@@ -100,15 +119,11 @@ export default function MethodSection() {
                                 </div>
 
                                 <div className={`aspect-[4/5] rounded-[2.5rem] md:rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800/50 relative overflow-hidden ${step.imageColor} dark:opacity-90 group transition-all duration-500 hover:shadow-primary/10`}>
-                                    {step.videoUrl ? (
-                                        <LazyVideo src={step.videoUrl} poster={step.posterUrl} />
-                                    ) : (
-                                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-transparent to-slate-200/20 dark:to-white/5">
-                                            <span className="text-slate-300 dark:text-slate-700 font-black text-5xl md:text-6xl italic tracking-tighter opacity-50">
-                                                TH-0{step.id}
-                                            </span>
-                                        </div>
-                                    )}
+                                    <LazyVideo
+                                        videoPublicId={step.videoPublicId}
+                                        folder={step.folder}
+                                        posterPublicId={step.posterPublicId}
+                                    />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60 pointer-events-none" />
                                 </div>
                             </div>

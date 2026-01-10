@@ -6,12 +6,21 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { getCloudinaryUrl, getCloudinaryVideoUrl } from '@/lib/cloudinary-client';
+
+import SourceIndicator from './SourceIndicator';
 
 export default function Hero() {
     const pathname = usePathname();
 
     // Only render video on desktop to save ~2MB on mobile
     const [isDesktop, setIsDesktop] = React.useState(false);
+
+    // Fallback logic for Assets
+    // Initialize with Cloudinary URL (or local if env missing, handled by helper)
+    const [imgSrc, setImgSrc] = useState(getCloudinaryUrl('hero-poster_kvpfsm', '', '/images/hero-poster.webp', { width: 1920, crop: 'limit' }));
+    const [videoSrc, setVideoSrc] = useState(getCloudinaryVideoUrl('hero-bg_n0b52t', '', '/videos/hero-bg.mp4', { width: 1920, crop: 'limit' }));
+    const [videoPoster, setVideoPoster] = useState(getCloudinaryUrl('hero-poster_kvpfsm', '', '/images/hero-poster.webp', { width: 1920, crop: 'limit' }));
 
     React.useEffect(() => {
         const checkDesktop = () => {
@@ -21,6 +30,16 @@ export default function Hero() {
         checkDesktop();
         window.addEventListener('resize', checkDesktop);
         return () => window.removeEventListener('resize', checkDesktop);
+    }, []);
+
+    // DEBUG: Log Cloudinary Config status
+    useEffect(() => {
+        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+        if (!cloudName) {
+            console.error("DEBUG: NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is missing!");
+        } else {
+            console.log("DEBUG: Cloudinary Configured:", cloudName);
+        }
     }, []);
 
     const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -48,7 +67,7 @@ export default function Hero() {
                 {/* Optimized Hero Background (Both Desktop and Mobile) */}
                 <div className="absolute inset-0">
                     <Image
-                        src="/images/hero-poster.webp"
+                        src={imgSrc}
                         alt="Thermo House Background"
                         fill
                         priority
@@ -57,25 +76,37 @@ export default function Hero() {
                         className={`object-cover transition-opacity duration-1000 ${pathname === '/' ? 'opacity-30 dark:opacity-20 md:opacity-0' : 'opacity-30 dark:opacity-20'}`}
                         sizes="100vw"
                         quality={85}
+                        onError={() => setImgSrc('/images/hero-poster.webp')}
                     />
+                    <SourceIndicator src={imgSrc} />
                 </div>
 
 
 
-                // ... inside return ...
-
                 {/* Desktop Background Video (md+ only) - Conditionally rendered */}
                 {isDesktop && (
-                    <video
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        poster="/images/hero-poster.webp"
-                        className="hidden md:block absolute inset-0 w-full h-full object-cover opacity-[0.55] dark:opacity-50"
-                    >
-                        <source src="/videos/hero-bg.mp4" type="video/mp4" />
-                    </video>
+                    <div className="hidden md:block absolute inset-0 w-full h-full">
+                        <video
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            poster={videoPoster}
+                            className="absolute inset-0 w-full h-full object-cover opacity-[0.55] dark:opacity-50"
+                            onError={(e) => {
+                                // Video load failed
+                                const video = e.currentTarget;
+                                if (video.src !== '/videos/hero-bg.mp4') {
+                                    setVideoSrc('/videos/hero-bg.mp4');
+                                    setVideoPoster('/images/hero-poster.webp');
+                                    video.load(); // Reload with new source
+                                }
+                            }}
+                        >
+                            <source src={videoSrc} type="video/mp4" onError={() => setVideoSrc('/videos/hero-bg.mp4')} />
+                        </video>
+                        <SourceIndicator src={videoSrc} className="!top-20" />
+                    </div>
                 )}
 
                 {/* Adaptive background overlay */}

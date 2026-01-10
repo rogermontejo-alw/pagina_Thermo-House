@@ -6,9 +6,12 @@ import { motion } from 'framer-motion';
 import { ShieldCheck, Droplets, Sun, ChevronDown } from 'lucide-react';
 import { getLocations } from '@/app/actions/admin-locations';
 import { Location } from '@/types';
+import { getCloudinaryUrl } from '@/lib/cloudinary-client';
+import SourceIndicator from './SourceIndicator';
 
 export default function WarrantySection() {
     const [phoneNumber, setPhoneNumber] = useState("529992006267"); // Fallback
+    const [maintenanceImg, setMaintenanceImg] = useState(getCloudinaryUrl('maintenance-bg_jntbuz', '', '/images/maintenance-bg.webp', { width: 1200, crop: 'limit' }));
 
     useEffect(() => {
         const fetchPhone = async () => {
@@ -118,22 +121,23 @@ export default function WarrantySection() {
                     </div>
                     <div className="flex-1 w-full h-48 md:h-64 bg-slate-200 dark:bg-slate-800 rounded-3xl overflow-hidden relative border border-slate-300/50 dark:border-white/10 group/img shadow-inner">
                         <img
-                            src="/images/maintenance-bg.webp"
+                            src={maintenanceImg}
                             alt="Mantenimiento Preventivo Thermo House"
                             className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover/img:scale-110"
                             onError={(e) => {
-                                // Fallback while the image is missing
-                                e.currentTarget.style.display = 'none';
+                                if (maintenanceImg !== '/images/maintenance-bg.webp') {
+                                    setMaintenanceImg('/images/maintenance-bg.webp');
+                                } else {
+                                    // If fallback also fails, hide
+                                    e.currentTarget.style.display = 'none';
+                                }
                             }}
                         />
+                        <SourceIndicator src={maintenanceImg} />
                         {/* Subtle overlay to blend with the card */}
                         <div className="absolute inset-0 bg-teal-900/10 dark:bg-teal-900/20" />
 
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="bg-white/20 dark:bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30 text-[10px] font-black uppercase tracking-widest text-white opacity-0 group-hover/img:opacity-100 transition-opacity">
-                                Vista Preventiva
-                            </div>
-                        </div>
+
                     </div>
                 </div>
 

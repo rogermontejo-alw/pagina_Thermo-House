@@ -185,6 +185,9 @@ export async function deleteBlogPost(id: string) {
 /**
  * Admin: Uploads an image to storage.
  */
+/**
+ * Admin: Uploads an image to Cloudinary.
+ */
 export async function uploadBlogImage(formData: FormData) {
     try {
         const session = await getAdminSession();
@@ -194,28 +197,68 @@ export async function uploadBlogImage(formData: FormData) {
         if (!file) return { success: false, error: 'No se recibio ningún archivo' };
 
         const buffer = await file.arrayBuffer();
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `uploads/${fileName}`;
+        const bytes = Buffer.from(buffer);
 
-        // Use supabaseAdmin to bypass RLS policies on INSERT
-        const { data, error } = await supabaseAdmin.storage
-            .from('blog-images')
-            .upload(filePath, buffer, {
-                contentType: file.type,
-                upsert: true
-            });
+        // Upload to Cloudinary
+        // Note: We need to import cloudinary from our lib which is already configured
+        const { default: cloudinary } = await import('@/lib/cloudinary');
 
-        if (error) {
-            console.error('SERVER ACTION ERROR: Error uploading to storage bucket "blog-images":', error);
-            return { success: false, error: `Error en almacenamiento: ${error.message}` };
-        }
+        const result = await new Promise<any>((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    folder: 'blog',
+                    resource_type: 'auto', // Detects image/video/etc
+                    transformation: [
+                        { quality: 'auto', fetch_format: 'auto' }
+                    ]
+                },
+                (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result);
+                }
+            );
 
-        const { data: { publicUrl } } = supabaseAdmin.storage
-            .from('blog-images')
-            .getPublicUrl(filePath);
+            // Write buffer to stream
+            const Readable = require('stream').Readable;
+            const stream = new Readable();
+            stream.push(bytes);
+            stream.push(null);
+            stream.pipe(uploadStream);
+        });
 
-        return { success: true, url: publicUrl };
+        // The user wants specifically the optimized URL. 
+        // Cloudinary result.secure_url is usually the base one.
+        // But we applied transformation in upload, so the incoming URL might have it?
+        // Actually, 'transformation' in upload_stream applies to the *incoming* asset if 'eager' involved or creates derived.
+        // It's safer to just return the secure_url.
+        // However, the user said: "in supabase se suba solamente la liga".
+        // And "considera siempre optimizar esa liga".
+        // If I use `getCloudinaryUrl` helper here I could just return that.
+        // But result.secure_url is standard.
+        // Let's ensure we return the URL with f_auto,q_auto.
+        // Since we added transformation in options, the stored original might be okay, but the URL we want to USE is the dynamic one.
+        // Actually, keeping original as backup and using dynamic transformation on read is best practice.
+        // But here we are storing the URL string in the DB.
+
+        // Let's construct the optimized URL from the public_id to be sure.
+        // Cloudinary result returns `public_id`, `version`, `format`.
+
+        // Let's just return result.secure_url but inject f_auto,q_auto if not present?
+        // Actually, if we use the helper logic:
+        // https://res.cloudinary.com/<cloud>/image/upload/f_auto,q_auto/v<version>/<public_id>.<format>
+
+        // Simply returning the result from upload is safest if we want the "raw" reference, 
+        // but the prompt asked to store the optimized one or optimized it.
+        // "en supabase se suba solamente la liga... optimice con f-auto y q-auto"
+
+        // I will use cloudinary.url() helper to generate it.
+        const optimizedUrl = cloudinary.url(result.public_id, {
+            fetch_format: 'auto',
+            quality: 'auto',
+            secure: true
+        });
+
+        return { success: true, url: optimizedUrl };
     } catch (err: any) {
         console.error('Critical error in uploadBlogImage:', err);
         return { success: false, error: err.message };

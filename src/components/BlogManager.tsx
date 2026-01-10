@@ -327,7 +327,14 @@ export default function BlogManager() {
                                             <input
                                                 type="text"
                                                 value={currentPost?.image_url || ''}
-                                                onChange={e => setCurrentPost({ ...currentPost, image_url: e.target.value })}
+                                                onChange={e => {
+                                                    let val = e.target.value;
+                                                    // Auto-optimize Cloudinary URLs if missing params
+                                                    if (val.includes('cloudinary.com') && val.includes('/upload/') && !val.includes('f_auto')) {
+                                                        val = val.replace('/upload/', '/upload/f_auto,q_auto/');
+                                                    }
+                                                    setCurrentPost({ ...currentPost, image_url: val });
+                                                }}
                                                 className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl p-2 focus:ring-2 ring-primary text-[10px] font-mono"
                                                 placeholder="https://externa.com/imagen.jpg"
                                             />
