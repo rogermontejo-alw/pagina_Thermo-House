@@ -34,9 +34,9 @@ export default function ScrollHandler() {
             const timer = setTimeout(() => {
                 const element = document.getElementById(targetId);
                 if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' });
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
-            }, 100);
+            }, 500);
 
             return () => clearTimeout(timer);
         }

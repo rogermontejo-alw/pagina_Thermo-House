@@ -40,7 +40,8 @@ export const getCloudinaryUrl = (
         else if (options.width || options.height) transforms += ',c_limit'; // Default crop
     }
 
-    return `https://res.cloudinary.com/${cloudName}/image/upload/${transforms}/${cleanFolder}/${cleanId}`;
+    const path = cleanFolder ? `${cleanFolder}/${cleanId}` : cleanId;
+    return `https://res.cloudinary.com/${cloudName}/image/upload/${transforms}/${path}`;
 };
 
 export const getCloudinaryVideoUrl = (
@@ -59,7 +60,7 @@ export const getCloudinaryVideoUrl = (
     const cleanFolder = folder.replace(/^\/+|\/+$/g, '');
 
     // Build transformation string
-    let transforms = 'f_auto,q_auto';
+    let transforms = 'q_auto';
     if (options) {
         if (options.width) transforms += `,w_${options.width}`;
         if (options.height) transforms += `,h_${options.height}`;
@@ -67,5 +68,6 @@ export const getCloudinaryVideoUrl = (
         else if (options.width || options.height) transforms += ',c_limit'; // Default crop
     }
 
-    return `https://res.cloudinary.com/${cloudName}/video/upload/${transforms}/${cleanFolder}/${publicId}`;
+    const path = cleanFolder ? `${cleanFolder}/${publicId}` : publicId;
+    return `https://res.cloudinary.com/${cloudName}/video/upload/${transforms}/${path}.mp4`;
 }

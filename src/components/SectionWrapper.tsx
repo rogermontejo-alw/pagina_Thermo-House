@@ -20,13 +20,13 @@ export default function SectionWrapper({ children, className, bg = "white" }: { 
 }
 
 export function CTASection() {
-    const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-        e.preventDefault();
-        const targetId = 'cotizador';
-        const elem = document.getElementById(targetId);
-        if (elem) {
-            window.history.pushState(null, '', href);
-            elem.scrollIntoView({ behavior: 'smooth' });
+    const handleNavigation = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+        if (window.location.pathname === '/') {
+            e.preventDefault();
+            const elem = document.getElementById('cotizador');
+            if (elem) {
+                elem.scrollIntoView({ behavior: 'smooth' });
+            }
         }
     };
 
@@ -42,7 +42,7 @@ export function CTASection() {
                 <p className="text-sm md:text-xl text-slate-300 mb-10 opacity-90 leading-relaxed">Permita que Thermo House proteja su hogar contra el calor y las filtraciones de por vida.</p>
                 <Link
                     href="/cotizador"
-                    onClick={(e) => scrollToSection(e, '/cotizador')}
+                    onClick={(e) => handleNavigation(e, '/cotizador')}
                     className="w-full sm:w-auto bg-primary hover:bg-orange-600 text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest transition-all shadow-2xl active:scale-95 text-sm inline-block"
                     aria-label="Obtener cotización gratuita"
                 >

@@ -49,6 +49,7 @@ const LazyVideo = ({ videoPublicId, folder, posterPublicId }: {
                         playsInline
                         poster={posterSrc}
                         className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                        onError={(e) => console.error(`Video failed to load: ${videoSrc}`, e)}
                     >
                         <source src={videoSrc} type="video/mp4" />
                     </video>
@@ -89,7 +90,7 @@ export default function MethodSection() {
             id: 3,
             title: "Acabado Acrílico Protector",
             description: "Para completar el sistema, aplicamos una capa final acrílica resistente a los rayos UV e impermeable. Esta última capa protege el poliuretano y asegura la máxima durabilidad contra los elementos.",
-            videoPublicId: "Paso3_h8k5qq",
+            videoPublicId: "paso3_h8k5qq",
             posterPublicId: "paso3_aubpi7",
             folder: "",
             imageColor: "bg-yellow-100"

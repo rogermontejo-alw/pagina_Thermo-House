@@ -1,7 +1,5 @@
 import { Metadata } from 'next';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import CalculatorSection from '@/components/CalculatorSection';
+import LandingPage from '@/components/LandingPage';
 
 export const metadata: Metadata = {
     title: 'Cotizador de Impermeabilización en Línea | Cotización en Segundos',
@@ -18,15 +16,5 @@ export const metadata: Metadata = {
 };
 
 export default function CotizadorPage() {
-    return (
-        <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
-            <Navbar />
-            <div className="pt-20">
-                <CalculatorSection />
-            </div>
-            <div className="max-w-5xl mx-auto px-4 mt-12">
-                <Footer />
-            </div>
-        </main>
-    );
+    return <LandingPage />;
 }
