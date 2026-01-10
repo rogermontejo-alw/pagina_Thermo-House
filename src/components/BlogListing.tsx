@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Calendar, ChevronRight, Search, Tag } from 'lucide-react';
 import { BlogPost } from '@/types';
+import { optimizeCloudinaryUrl } from '@/lib/cloudinary-client';
+
 
 interface BlogListingProps {
     initialPosts: BlogPost[];
@@ -74,7 +76,7 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
                             <div className="relative aspect-[16/10] overflow-hidden">
                                 {post.image_url ? (
                                     <img
-                                        src={post.image_url}
+                                        src={optimizeCloudinaryUrl(post.image_url)}
                                         alt={post.title}
                                         loading="lazy"
                                         decoding="async"

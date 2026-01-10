@@ -60,7 +60,7 @@ export const getCloudinaryVideoUrl = (
     const cleanFolder = folder.replace(/^\/+|\/+$/g, '');
 
     // Build transformation string
-    let transforms = 'q_auto';
+    let transforms = 'f_auto,q_auto';
     if (options) {
         if (options.width) transforms += `,w_${options.width}`;
         if (options.height) transforms += `,h_${options.height}`;
@@ -69,5 +69,28 @@ export const getCloudinaryVideoUrl = (
     }
 
     const path = cleanFolder ? `${cleanFolder}/${publicId}` : publicId;
-    return `https://res.cloudinary.com/${cloudName}/video/upload/${transforms}/${path}.mp4`;
+    return `https://res.cloudinary.com/${cloudName}/video/upload/${transforms}/${path}`;
 }
+
+/**
+ * Ensures f_auto and q_auto are present in a full Cloudinary URL.
+ * Useful for URLs stored in the database.
+ */
+export const optimizeCloudinaryUrl = (url: string) => {
+    if (!url || !url.includes('cloudinary.com')) return url;
+    if (url.includes('f_auto') && url.includes('q_auto')) return url;
+
+    // Direct match for standard upload URLs
+    // https://res.cloudinary.com/cloud_name/image/upload/v12345/folder/id.jpg
+    const parts = url.split('/upload/');
+    if (parts.length === 2) {
+        // If there's an existing transformation chunk, we might need more complex logic,
+        // but for now let's handle the common case: no transformation or simple transformation.
+        if (!parts[1].includes(',')) {
+            // It might be just a version like v123/id
+            return `${parts[0]}/upload/f_auto,q_auto/${parts[1]}`;
+        }
+    }
+    return url;
+};
+

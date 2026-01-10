@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Calendar, ArrowLeft, Clock, Share2, Facebook, Twitter, LinkIcon, Tag } from 'lucide-react';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
+import { optimizeCloudinaryUrl } from '@/lib/cloudinary-client';
+
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
@@ -88,7 +90,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                     {post.image_url && (
                         <div className="relative aspect-[21/9] rounded-[3rem] overflow-hidden mb-16 border border-slate-100 dark:border-slate-800 shadow-2xl">
                             <img
-                                src={post.image_url}
+                                src={optimizeCloudinaryUrl(post.image_url)}
                                 alt={post.title}
                                 className="w-full h-full object-cover"
                             />

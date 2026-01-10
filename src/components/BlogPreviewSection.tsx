@@ -4,6 +4,8 @@ import { getPublishedPosts } from '@/app/actions/blog';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronRight, Calendar } from 'lucide-react';
+import { optimizeCloudinaryUrl } from '@/lib/cloudinary-client';
+
 
 export default async function BlogPreviewSection() {
     const res = await getPublishedPosts();
@@ -40,7 +42,7 @@ export default async function BlogPreviewSection() {
                         <div className="relative aspect-[16/10] overflow-hidden bg-slate-100 dark:bg-slate-800">
                             {post.image_url ? (
                                 <img
-                                    src={post.image_url}
+                                    src={optimizeCloudinaryUrl(post.image_url)}
                                     alt={post.title}
                                     loading="lazy"
                                     decoding="async"
