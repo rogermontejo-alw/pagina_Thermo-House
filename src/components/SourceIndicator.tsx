@@ -25,7 +25,7 @@ export default function SourceIndicator({ src, className = '' }: SourceIndicator
     };
 
     // Toggle this to true to see the source indicators
-    const DEBUG_INDICATORS = true;
+    const DEBUG_INDICATORS = false;
 
     if (!DEBUG_INDICATORS) return null;
 
