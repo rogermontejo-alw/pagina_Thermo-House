@@ -141,24 +141,28 @@ export async function saveQuote(prevState: any, formData: FormData) {
             const clientIp = headersList.get('x-forwarded-for')?.split(',')[0] || headersList.get('x-real-ip') || '';
             const userAgent = headersList.get('user-agent') || '';
 
-            // We only track "Lead" for both drafts and finals, but with different metadata if needed
-            trackFacebookEvent({
-                eventName: 'Lead',
-                eventSourceUrl: 'https://thermohouse.mx/cotizador',
-                userData: {
-                    email: rawData.email,
-                    phone: rawData.phone,
-                    clientIpAddress: clientIp,
-                    clientUserAgent: userAgent,
-                    externalId: finalId
-                },
-                customData: {
-                    value: finalTotalCash,
-                    currency: 'MXN',
-                    content_name: rawData.solutionId || 'Sistema Thermo House',
-                    status: lastStep === 'datos_contacto' ? 'Draft' : 'Finalized'
-                }
-            }).catch(e => console.error('CAPI Background Error:', e));
+            try {
+                // We await here to ensure Vercel/Serverless doesn't terminate before the fetch completes
+                await trackFacebookEvent({
+                    eventName: 'Lead',
+                    eventSourceUrl: 'https://thermohouse.mx/cotizador',
+                    userData: {
+                        email: rawData.email,
+                        phone: rawData.phone,
+                        clientIpAddress: clientIp,
+                        clientUserAgent: userAgent,
+                        externalId: finalId
+                    },
+                    customData: {
+                        value: finalTotalCash,
+                        currency: 'MXN',
+                        content_name: rawData.solutionId || 'Sistema Thermo House',
+                        status: lastStep === 'datos_contacto' ? 'Draft' : 'Finalized'
+                    }
+                });
+            } catch (e) {
+                console.error('CAPI Error:', e);
+            }
         }
 
         return {
