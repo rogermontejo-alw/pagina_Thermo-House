@@ -35,10 +35,10 @@ export default function Navbar() {
     const menuItems = [
         { name: 'Inicio', href: '/' },
         { name: 'Sistemas', href: '/sistemas' },
-        { name: 'Blog', href: '/blog' },
         { name: 'Garantía', href: '/garantia' },
         { name: 'Cotizar', href: '/cotizador' },
         { name: 'Sucursales', href: '/sucursales' },
+        { name: 'Blog', href: '/blog' },
     ];
 
     // ... (useEffect remains)
