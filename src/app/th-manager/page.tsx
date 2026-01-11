@@ -11,13 +11,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Users, TrendingUp, Calendar, MapPin, Phone, ExternalLink, Search, Filter,
     CheckCircle2, Clock, AlertCircle, ChevronRight, LogOut, UserPlus, Trash2,
-    Shield, Mail, UserCircle, Package, Edit3, Plus, Globe, Save, X, Key, Building2,
+    Shield, Mail, UserCircle, Package, Edit3, Plus, Globe, Save, X, Key, Building2, Facebook,
     Download, CheckSquare, Square, FileText, Cake, Receipt, FileSignature,
     LayoutGrid, ListOrdered, Navigation, Map, AlertTriangle, Printer, FileCheck, PencilRuler,
     PieChart, BarChart3, ShieldAlert, Sun, Moon, Loader2, Power
 } from 'lucide-react';
 import { getLocations, createLocation, deleteLocation, updateLocation } from '@/app/actions/admin-locations';
 import { getAppConfig, updateAppConfig } from '@/app/actions/get-config';
+import { getMarketingScripts, createMarketingScript, updateMarketingScript, deleteMarketingScript } from '@/app/actions/marketing-scripts';
 import { MEXICAN_CITIES_BY_STATE } from '@/lib/mexico-data';
 import ThemeToggle from '@/components/ThemeToggle';
 import BlogManager from '@/components/BlogManager';
@@ -96,6 +97,11 @@ export default function AdminDashboard() {
     const [showPurgeModal, setShowPurgeModal] = useState(false);
     const [isSavingPurgePassword, setIsSavingPurgePassword] = useState(false);
     const [isUserFormOpen, setIsUserFormOpen] = useState(false);
+    const [fbPixelId, setFbPixelId] = useState(''); // Legacy fallback compatibility
+    const [isSavingPixel, setIsSavingPixel] = useState(false);
+    const [marketingScripts, setMarketingScripts] = useState<any[]>([]);
+    const [isAddingScript, setIsAddingScript] = useState(false);
+    const [newScript, setNewScript] = useState({ platform: 'facebook', pixel_id: '', is_active: true });
 
     const dashboardQuotes = useMemo(() => {
         let filtered = [...quotes];
@@ -162,7 +168,7 @@ export default function AdminDashboard() {
     const [newPassword, setNewPassword] = useState('');
     const [deleteModal, setDeleteModal] = useState<{
         open: boolean,
-        type: 'user' | 'product' | 'location' | 'master',
+        type: 'user' | 'product' | 'location' | 'master' | 'marketing' | 'toggle',
         id: string | null,
         name: string,
         details?: string
@@ -338,13 +344,15 @@ export default function AdminDashboard() {
         setLoading(true);
         const cityFilter = (currSession.role === 'admin' || currSession.role === 'manager') ? 'Todas' : currSession.ciudad;
 
-        const [qRes, uRes, pRes, mRes, lRes, configKey] = await Promise.all([
+        const [qRes, uRes, pRes, mRes, lRes, configKey, pixelKey, scriptsRes] = await Promise.all([
             getQuotes(cityFilter),
             (currSession.role === 'admin' || currSession.role === 'manager') ? getAdminUsers() : Promise.resolve({ success: true, data: [] }),
             getProducts(cityFilter),
             getMasterProducts(),
             getLocations(),
-            currSession.role === 'admin' ? getAppConfig('GOOGLE_MAPS_KEY') : Promise.resolve(null)
+            currSession.role === 'admin' ? getAppConfig('GOOGLE_MAPS_KEY') : Promise.resolve(null),
+            currSession.role === 'admin' ? getAppConfig('facebook_pixel_id') : Promise.resolve(null),
+            currSession.role === 'admin' ? getMarketingScripts() : Promise.resolve({ success: true, data: [] })
         ]);
 
         if (qRes.success) setQuotes(qRes.data || []);
@@ -358,6 +366,8 @@ export default function AdminDashboard() {
             }
         }
         if (configKey) setMapsKey(configKey);
+        if (pixelKey) setFbPixelId(pixelKey);
+        if (scriptsRes.success) setMarketingScripts(scriptsRes.data || []);
 
         // Sales team (editor) view only their city's prices by default
         if (currSession.role === 'editor') {
@@ -498,7 +508,7 @@ export default function AdminDashboard() {
                 return q;
             }));
         } else {
-            alert('Error al asignar: ' + res.message);
+            showToast('Error al asignar: ' + res.message, 'error');
         }
     };
 
@@ -508,14 +518,10 @@ export default function AdminDashboard() {
         const res = await createAdminUser(newUser as any);
         if (res.success) {
             await fetchData(session);
-            setNewUser({
-                name: '', apellido: '', email: '', password: '',
-                role: (session.role === 'manager' ? 'editor' : 'editor') as 'admin' | 'direccion' | 'manager' | 'editor',
-                ciudad: (session.role === 'manager' && session.ciudad !== 'Todas') ? session.ciudad : (locations[0]?.ciudad || 'Mérida'),
-                base: '', telefono: '', contacto_email: ''
-            });
-            alert('Usuario creado exitosamente');
-        } else alert('Error: ' + res.message);
+            setNewUser({ name: '', apellido: '', email: '', password: '', role: 'editor', ciudad: '', base: '', telefono: '', contacto_email: '' });
+            setIsUserFormOpen(false);
+            showToast('Usuario creado exitosamente');
+        } else showToast('Error: ' + res.message, 'error');
         setIsCreatingUser(false);
     };
 
@@ -526,24 +532,23 @@ export default function AdminDashboard() {
         const res = await updateAdminUser(userModal.data.id, userModal.data);
         if (res.success) {
             await fetchData(session);
-            alert('Perfil actualizado exitosamente'); // Keep original alert
-            setUserModal({ open: false, type: 'edit', data: null }); // Keep original modal close
-        } else alert('Error: ' + res.message);
+            showToast('Perfil actualizado exitosamente');
+            setUserModal({ open: false, type: 'edit', data: null });
+        } else showToast('Error: ' + res.message, 'error');
         setIsCreatingUser(false);
     };
 
     const toggleUserActive = async (user: any) => {
         const newStatus = user.active === false ? true : false; // Toggle
         const actionName = newStatus ? 'ACTIVAR' : 'DESACTIVAR';
-        if (!confirm(`¿Estás seguro de que deseas ${actionName} a ${user.name}?`)) return;
 
-        const res = await updateAdminUser(user.id, { active: newStatus } as any);
-        if (res.success) {
-            await fetchData(session);
-            showToast(`Usuario ${newStatus ? 'activado' : 'desactivado'} exitosamente`);
-        } else {
-            alert('Error: ' + res.message);
-        }
+        setDeleteModal({
+            open: true,
+            type: 'toggle',
+            id: user.id,
+            name: `${actionName} A ${user.name.toUpperCase()}`,
+            details: `¿Estás seguro de que deseas ${actionName.toLowerCase()} a este usuario?`
+        });
     };
 
     const handleResetPassword = async (id: string, name: string) => {
@@ -557,9 +562,9 @@ export default function AdminDashboard() {
         const res = await resetAdminPassword(passwordModal.userId!, newPassword);
         if (res.success) {
             setPasswordModal({ open: false, userId: null, userName: '' });
-            alert('Contraseña actualizada correctamente para ' + passwordModal.userName);
+            showToast('Contraseña actualizada correctamente para ' + passwordModal.userName);
         } else {
-            alert(res.message);
+            showToast(res?.message || 'Error', 'error');
         }
         setIsCreatingUser(false);
     };
@@ -603,13 +608,25 @@ export default function AdminDashboard() {
             res = await deleteProduct(deleteModal.id!);
         } else if (deleteModal.type === 'location') {
             res = await deleteLocation(deleteModal.id!);
+        } else if (deleteModal.type === 'marketing') {
+            res = await deleteMarketingScript(deleteModal.id!);
+        } else if (deleteModal.type === 'toggle') {
+            // Finding the current user to toggle their status
+            const user = users.find(u => u.id === deleteModal.id);
+            if (user) {
+                const newStatus = user.active === false;
+                res = await updateAdminUser(user.id, { active: newStatus } as any);
+            }
         }
 
         if (res?.success) {
             setDeleteModal({ ...deleteModal, open: false });
             fetchData(session);
+            if (deleteModal.type === 'toggle') {
+                showToast('Estado del usuario actualizado');
+            }
         } else if (res) {
-            alert(res.message);
+            showToast(res?.message || 'Error', 'error');
         }
         setIsCreatingUser(false);
     };
@@ -646,8 +663,8 @@ export default function AdminDashboard() {
             await fetchData(session);
             const cityCreated = newLocation.ciudad;
             setNewLocation({ ciudad: '', estado: '' });
-            alert(`¡Ciudad Habilitada! 📍\n\nRecuerda que para que los clientes en ${cityCreated} puedan cotizar localmente (sin advertencia de zona foránea), debes agregar al menos un precio específico para esta ciudad en la pestaña de 'Tarifas'.`);
-        } else alert(res.message);
+            showToast('¡Ciudad Habilitada! 📍');
+        } else showToast(res?.message || 'Error', 'error');
         setIsSavingLocation(false);
     };
 
@@ -665,7 +682,7 @@ export default function AdminDashboard() {
             await fetchData(session);
             setLocationModal({ open: false, data: null });
         } else {
-            alert(res.message);
+            showToast(res?.message || 'Error', 'error');
         }
         setIsSavingLocation(false);
     };
@@ -719,17 +736,17 @@ export default function AdminDashboard() {
 
                 // Detailed Validation
                 if (!newData.internal_id) {
-                    alert('Error: Debes seleccionar un producto del catálogo.');
+                    showToast('Error: Debes seleccionar un producto del catálogo.', 'error');
                     setIsSavingProduct(false);
                     return;
                 }
                 if (!newData.ciudad) {
-                    alert('Error: Debes seleccionar una ciudad para asignar el precio.');
+                    showToast('Error: Debes seleccionar una ciudad para asignar el precio.', 'error');
                     setIsSavingProduct(false);
                     return;
                 }
                 if (!newData.precio_contado_m2 || isNaN(Number(newData.precio_contado_m2))) {
-                    alert('Error: El precio de contado debe ser un número válido.');
+                    showToast('Error: El precio de contado debe ser un número válido.', 'error');
                     setIsSavingProduct(false);
                     return;
                 }
@@ -759,7 +776,7 @@ export default function AdminDashboard() {
             setProductModal({ ...productModal, open: false });
         } else {
             console.error('Save Product Error:', res);
-            alert('No se pudo guardar: ' + (res?.message || 'Error desconocido del servidor'));
+            showToast('No se pudo guardar: ' + (res?.message || 'Error desconocido del servidor'), 'error');
         }
         setIsSavingProduct(false);
     };
@@ -777,11 +794,54 @@ export default function AdminDashboard() {
         setIsSavingKey(true);
         const res = await updateAppConfig('GOOGLE_MAPS_KEY', mapsKey);
         if (res.success) {
-            alert('API Key de Google Maps actualizada. Recargue la página principal para aplicar.');
+            showToast('API Key de Google Maps actualizada');
         } else {
-            alert(res.message);
+            showToast(res?.message || 'Error', 'error');
         }
         setIsSavingKey(false);
+    };
+
+    const handleUpdatePixelId = async () => {
+        setIsSavingPixel(true);
+        const res = await updateAppConfig('facebook_pixel_id', fbPixelId);
+        if (res.success) {
+            showToast('Facebook Pixel actualizado');
+        } else {
+            showToast(res?.message || 'Error', 'error');
+        }
+        setIsSavingPixel(false);
+    };
+
+    const handleAddMarketingScript = async () => {
+        if (!newScript.pixel_id) return;
+        setIsSavingPixel(true);
+        const res = await createMarketingScript(newScript);
+        if (res.success) {
+            setMarketingScripts(prev => [res.data, ...prev]);
+            setNewScript({ platform: 'facebook', pixel_id: '', is_active: true });
+            setIsAddingScript(false);
+            showToast('Conector de marketing añadido exitosamente');
+        } else {
+            showToast('Error: ' + res.message, 'error');
+        }
+        setIsSavingPixel(false);
+    };
+
+    const handleToggleScript = async (id: string, current: boolean) => {
+        const res = await updateMarketingScript(id, { is_active: !current });
+        if (res.success) {
+            setMarketingScripts(prev => prev.map(s => s.id === id ? { ...s, is_active: !current } : s));
+        }
+    };
+
+    const handleDeleteScript = async (id: string, platform: string) => {
+        setDeleteModal({
+            open: true,
+            type: 'marketing',
+            id: id,
+            name: platform.replace('_', ' ').toUpperCase(),
+            details: 'Este rastreador de marketing se eliminará permanentemente y dejará de funcionar en la web.'
+        });
     };
 
     const handleCreateManualLead = async (e: React.FormEvent) => {
@@ -845,10 +905,10 @@ export default function AdminDashboard() {
                 });
                 await fetchData(session);
             } else {
-                alert(res.message);
+                showToast(res?.message || 'Error', 'error');
             }
         } catch (err: any) {
-            alert('Error: ' + err.message);
+            showToast('Error: ' + err.message, 'error');
         }
         setIsSavingManualLead(false);
     };
@@ -867,12 +927,12 @@ export default function AdminDashboard() {
 
     const handlePurgeLeads = async () => {
         if (!purgePasswordInput) {
-            alert('Por favor ingrese la contraseña de depuración para continuar.');
+            showToast('Por favor ingrese la contraseña de depuración para continuar.', 'error');
             return;
         }
 
         if (!confirmPurge) {
-            alert('Por favor, marca la casilla de confirmación para autorizar el borrado permanente.');
+            showToast('Por favor, marca la casilla de confirmación para autorizar el borrado permanente.', 'error');
             return;
         }
 
@@ -880,16 +940,14 @@ export default function AdminDashboard() {
         try {
             const res = await purgeQuotes(purgePasswordInput);
             if (res.success) {
-                alert(res.message);
-                setShowPurgeModal(false);
-                setPurgePasswordInput('');
-                setConfirmPurge(false);
-                await fetchData(session);
+                setQuotes(prev => prev.filter(q => !selectedLeads.has(q.id)));
+                setSelectedLeads(new Set());
+                showToast('Leads eliminados exitosamente');
             } else {
-                alert(res.message);
+                showToast(res?.message || 'Error al eliminar leads', 'error');
             }
         } catch (err) {
-            alert('Ocurrió un error al intentar purgar los datos.');
+            showToast('Ocurrió un error al intentar purgar los datos.', 'error');
         } finally {
             setIsPurging(false);
         }
@@ -900,9 +958,9 @@ export default function AdminDashboard() {
         setIsSavingPurgePassword(true);
         const res = await updateAppConfig('PURGE_PASSWORD', purgePassword);
         if (res.success) {
-            alert('Contraseña de depuración actualizada.');
+            showToast('Contraseña de depuración actualizada');
         } else {
-            alert('Error: ' + res.message);
+            showToast('Error: ' + res.message, 'error');
         }
         setIsSavingPurgePassword(false);
     };
@@ -918,7 +976,7 @@ export default function AdminDashboard() {
     const exportToCSV = () => {
         const leadsToExport = quotes.filter(q => selectedLeads.has(q.id));
         if (leadsToExport.length === 0) {
-            alert('Por favor selecciona al menos un registro para exportar.');
+            showToast('Por favor selecciona al menos un registro para exportar.', 'error');
             return;
         }
 
@@ -962,7 +1020,7 @@ export default function AdminDashboard() {
         });
 
         if (filteredPrices.length === 0) {
-            alert('No hay precios para exportar con los filtros actuales.');
+            showToast('No hay precios para exportar con los filtros actuales.', 'error');
             return;
         }
 
@@ -2434,6 +2492,98 @@ export default function AdminDashboard() {
                                                 Purgar Datos
                                             </button>
                                         </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center">
+                                                <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-black uppercase tracking-tight text-secondary dark:text-white">Marketing Script Manager</h3>
+                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Píxeles y rastreadores activos</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => setIsAddingScript(!isAddingScript)}
+                                            className="p-2 bg-primary/10 text-primary rounded-lg hover:bg-primary hover:text-white transition-all"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                        </button>
+                                    </div>
+
+                                    {isAddingScript && (
+                                        <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 space-y-4">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Plataforma</label>
+                                                    <select
+                                                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-secondary dark:text-white outline-none"
+                                                        value={newScript.platform}
+                                                        onChange={e => setNewScript({ ...newScript, platform: e.target.value })}
+                                                    >
+                                                        <option value="facebook">Facebook Pixel</option>
+                                                        <option value="google_ads">Google Ads (G-Tag)</option>
+                                                        <option value="google_analytics">Google Analytics</option>
+                                                        <option value="tiktok">TikTok Pixel</option>
+                                                        <option value="custom">Código Custom</option>
+                                                    </select>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">ID del Pixel / Tracking</label>
+                                                    <input
+                                                        type="text"
+                                                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-secondary dark:text-white outline-none"
+                                                        placeholder="Ej: 123456789"
+                                                        value={newScript.pixel_id}
+                                                        onChange={e => setNewScript({ ...newScript, pixel_id: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={handleAddMarketingScript}
+                                                disabled={isSavingPixel || !newScript.pixel_id}
+                                                className="w-full bg-secondary dark:bg-primary text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all disabled:opacity-50"
+                                            >
+                                                Conectar Nueva Red
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-3">
+                                        {marketingScripts.length === 0 ? (
+                                            <p className="text-center py-8 text-slate-400 text-xs italic">No hay scripts configurados. Haz clic en el botón + para empezar.</p>
+                                        ) : (
+                                            marketingScripts.map((script) => (
+                                                <div key={script.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${script.is_active ? 'bg-primary/20 text-primary' : 'bg-slate-200 text-slate-400'}`}>
+                                                            {script.platform === 'facebook' ? <Facebook className="w-4 h-4" /> : script.platform.includes('google') ? <Globe className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="text-xs font-black uppercase tracking-tight text-secondary dark:text-white">{script.platform.replace('_', ' ')}</h4>
+                                                            <p className="text-[10px] font-mono text-slate-400">{script.pixel_id}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <button
+                                                            onClick={() => handleToggleScript(script.id, script.is_active)}
+                                                            className={`w-10 h-5 rounded-full relative transition-all ${script.is_active ? 'bg-green-500' : 'bg-slate-300'}`}
+                                                        >
+                                                            <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${script.is_active ? 'right-1' : 'left-1'}`} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteScript(script.id, script.platform)}
+                                                            className="p-2 text-slate-300 hover:text-red-500 transition-all"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
                                     </div>
                                 </div>
                             </div>

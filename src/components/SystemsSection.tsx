@@ -177,7 +177,7 @@ export default function SystemsSection() {
                                     <div className="absolute top-0 right-0 bg-primary dark:bg-orange-600 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-tight z-10">MAS VENDIDO</div>
                                 )}
                                 {isPremium && (
-                                    <div className="absolute top-0 right-0 bg-secondary dark:bg-blue-600 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-tight z-10">MEJORALO ¡¡¡</div>
+                                    <div className="absolute top-0 right-0 bg-secondary dark:bg-blue-600 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-tight z-10">SISTEMA ELITE ¡</div>
                                 )}
 
                                 <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
@@ -188,7 +188,15 @@ export default function SystemsSection() {
                                     </div>
 
                                     <h3 className="text-xl md:text-2xl font-black text-secondary dark:text-white mb-1 uppercase tracking-tighter">{sys.title}</h3>
-                                    <p className="text-[10px] font-black text-primary mb-4 md:mb-3 uppercase tracking-[0.2em] opacity-80">{sys.grosor || 'Espesor Estándar'}</p>
+                                    <p className="text-[10px] font-black text-primary mb-2 uppercase tracking-[0.2em] opacity-80">{sys.grosor || 'Espesor Estándar'}</p>
+
+                                    <div className="flex items-center gap-2 mb-4 md:mb-3">
+                                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">Desde</span>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-2xl font-black text-secondary dark:text-white">${sys.precio_contado_m2}</span>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">/m²</span>
+                                        </div>
+                                    </div>
 
                                     <div className="bg-slate-100/50 dark:bg-slate-900/50 rounded-2xl p-5 md:p-4 border border-slate-200 dark:border-slate-700 mb-6 md:mb-4 flex-grow">
                                         <ul className="space-y-3 md:space-y-2">

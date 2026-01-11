@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ScrollHandler from "@/components/ScrollHandler";
+import MarketingScripts from "@/components/MarketingScripts";
+import { getAppConfig } from "@/app/actions/get-config";
+import { getActiveScripts } from "@/app/actions/marketing-scripts";
+import CookieBanner from "@/components/CookieBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -84,11 +88,20 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Fetch Active Scripts from DB
+  const scriptsRes = await getActiveScripts();
+  const activeScripts = scriptsRes.success ? scriptsRes.data : [];
+
+  // Legacy fallback if no scripts in DB but present in env
+  if (activeScripts?.length === 0 && process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID) {
+    activeScripts?.push({ platform: 'facebook', pixel_id: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID });
+  }
+
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
@@ -243,6 +256,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground transition-colors duration-300`}
       >
+        <MarketingScripts scripts={activeScripts || []} />
+        <CookieBanner />
         <ScrollHandler />
         {children}
       </body>

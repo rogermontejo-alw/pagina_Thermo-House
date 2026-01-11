@@ -306,7 +306,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                                     <div className="absolute top-0 right-0 bg-primary dark:bg-orange-600 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-tight z-10">MAS VENDIDO</div>
                                                 )}
                                                 {isPremium && (
-                                                    <div className="absolute top-0 right-0 bg-secondary dark:bg-blue-600 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-tight z-10">MEJORALO ¡¡¡</div>
+                                                    <div className="absolute top-0 right-0 bg-secondary dark:bg-blue-600 text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl shadow-lg uppercase tracking-tight z-10">SISTEMA ELITE ¡</div>
                                                 )}
 
                                                 <div className={`mb-4 md:mb-3 w-12 h-12 md:w-11 md:h-11 rounded-2xl flex items-center justify-center transition-colors ${isSelected ? 'bg-primary text-white' : 'bg-slate-50 dark:bg-slate-900 text-primary group-hover:bg-primary group-hover:text-white'}`}>
