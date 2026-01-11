@@ -58,9 +58,9 @@ export async function trackFacebookEvent({
                     external_id: userData.externalId ? [hashData(userData.externalId)] : undefined,
                 },
                 custom_data: customData,
-                test_event_code: TEST_CODE || undefined,
             },
         ],
+        test_event_code: TEST_CODE || undefined,
     };
 
     try {
