@@ -31,17 +31,14 @@ export default function Navbar() {
         fetchBranches();
     }, []);
 
-
     const menuItems = [
         { name: 'Inicio', href: '/' },
         { name: 'Sistemas', href: '/sistemas' },
         { name: 'Garantía', href: '/garantia' },
         { name: 'Cotizar', href: '/cotizador' },
-        { name: 'Sucursales', href: '/sucursales' },
         { name: 'Blog', href: '/blog' },
+        { name: 'Sucursales', href: '/sucursales' },
     ];
-
-    // ... (useEffect remains)
 
     const handleNavigation = (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>, href: string) => {
         setIsOpen(false);
@@ -128,7 +125,6 @@ export default function Navbar() {
                         </div>
 
                         <div className="-mr-2 flex items-center gap-2 min-[890px]:hidden z-[60]">
-                            {/* ... keep mobile menu button ... */}
                             <ThemeToggle minimal />
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
@@ -150,7 +146,6 @@ export default function Navbar() {
                             transition={{ duration: 0.2, ease: "easeOut" }}
                             className="fixed inset-0 h-screen w-screen bg-secondary/98 dark:bg-slate-950/98 backdrop-blur-3xl z-[55] min-[890px]:hidden flex flex-col"
                         >
-                            {/* Header: Logo en cápsula de cristal */}
                             <div className="pt-12 pb-8 flex flex-col items-center">
                                 <motion.div
                                     initial={{ opacity: 0 }}
@@ -172,7 +167,6 @@ export default function Navbar() {
                                 </motion.div>
                             </div>
 
-                            {/* Enlaces: Diseño Editorial */}
                             <div className="flex-grow flex flex-col justify-center px-10">
                                 <nav className="space-y-6">
                                     {menuItems.map((item, idx) => (
@@ -197,7 +191,6 @@ export default function Navbar() {
                                 </nav>
                             </div>
 
-                            {/* Footer: Acción y Sedes */}
                             <div className="p-8 w-full mt-auto space-y-6">
                                 <motion.div
                                     initial={{ opacity: 0 }}

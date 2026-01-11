@@ -133,11 +133,10 @@ export default function SystemsSection() {
                             {/* Sliding Capsule */}
                             <motion.div
                                 className="absolute bg-secondary dark:bg-primary h-[calc(100%-12px)] rounded-full shadow-lg"
-                                layoutId="roofTypeCapsule"
+                                style={{ left: 6 }}
                                 initial={false}
                                 animate={{
                                     x: roofType === 'concrete' ? 0 : '100%',
-                                    left: roofType === 'concrete' ? 6 : -6,
                                     width: 'calc(50% - 6px)'
                                 }}
                                 transition={{

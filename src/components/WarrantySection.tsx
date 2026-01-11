@@ -2,16 +2,47 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldCheck, Droplets, Sun, ChevronDown } from 'lucide-react';
 import { getLocations } from '@/app/actions/admin-locations';
 import { Location } from '@/types';
 import { getCloudinaryUrl } from '@/lib/cloudinary-client';
 import SourceIndicator from './SourceIndicator';
 
+function FAQItem({ question, answer, isOpen, onClick }: { question: string, answer: string, isOpen: boolean, onClick: () => void }) {
+    return (
+        <div className="bg-white dark:bg-slate-900 p-3 md:p-4 rounded-xl border border-border dark:border-slate-800 transition-all hover:border-primary/50">
+            <button
+                onClick={onClick}
+                className="w-full flex justify-between items-center text-left"
+                aria-expanded={isOpen}
+            >
+                <span className="text-sm md:text-base font-medium text-secondary dark:text-slate-300 pr-4">{question}</span>
+                <ChevronDown className={`w-4 h-4 md:w-5 md:h-5 text-muted-foreground transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence initial={false}>
+                {isOpen && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                    >
+                        <div className="pt-4 text-xs md:text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed border-t border-slate-100 dark:border-white/5 mt-4">
+                            {answer}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
 export default function WarrantySection() {
     const [phoneNumber, setPhoneNumber] = useState("529992006267"); // Fallback
     const [maintenanceImg, setMaintenanceImg] = useState(getCloudinaryUrl('maintenance-bg_jntbuz', '', '/images/maintenance-bg.webp', { width: 1200, crop: 'limit' }));
+    const [openIndex, setOpenIndex] = useState<number | null>(null);
 
     useEffect(() => {
         const fetchPhone = async () => {
@@ -20,7 +51,6 @@ export default function WarrantySection() {
                 const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 const merida = res.data.find((l: Location) => norm(l.ciudad) === 'merida');
                 if (merida && merida.telefono) {
-                    // Clean and ensure 52 prefix for WhatsApp
                     const clean = merida.telefono.replace(/\D/g, '');
                     const finalPhone = clean.startsWith('52') ? clean : `52${clean}`;
                     setPhoneNumber(finalPhone);
@@ -29,6 +59,21 @@ export default function WarrantySection() {
         };
         fetchPhone();
     }, []);
+
+    const faqs = [
+        {
+            question: "¿La garantía es transferible si vendo mi casa?",
+            answer: "Totalmente. Dado que nuestro sistema de impermeabilización profesional se integra de forma permanente a la estructura, la protección permanece en el inmueble, añadiendo valor a la propiedad. Para formalizar la transferencia de la garantía al nuevo propietario, solo es necesario verificar que el historial de mantenimientos esté al día o bien, solicitar una revisión técnica formal para valorar el estado del sistema y cualquier costo de reactivación en caso de interrupciones en los mantenimientos."
+        },
+        {
+            question: "¿Qué implica el mantenimiento preventivo?",
+            answer: "Consiste en una inspección técnica programada que realizamos de forma coordinada con usted cada 2 o 3 años. Durante esta visita, nuestro equipo experto verifica la integridad de la capa protectora, supervisa el estado general de la superficie y asegura que el sistema siga operando con su máxima capacidad térmica e impermeable. Es un proceso preventivo diseñado para que usted no tenga que preocuparse por su techo nunca más."
+        },
+        {
+            question: "¿Qué pasa si olvido programar el mantenimiento?",
+            answer: "Nuestra prioridad es conservar la relación con usted y la salud de su techo, por lo que nunca le negaremos el apoyo. Si el periodo recomendado ha vencido, lo ideal es realizar una visita técnica de valoración para conocer el estatus actual del sistema. Aunque Thermo House realiza esfuerzos constantes de contacto para recordarle sus fechas próximas, es importante recordar que la vigencia de la garantía de por vida depende del cumplimiento de estos ciclos preventivos."
+        }
+    ];
 
     return (
         <section id="garantia" className="py-2 transition-colors duration-500">
@@ -48,7 +93,6 @@ export default function WarrantySection() {
                             href="/cotizador"
                             onClick={(e) => {
                                 e.preventDefault();
-                                window.history.pushState(null, '', '/cotizador');
                                 document.getElementById('cotizador')?.scrollIntoView({ behavior: 'smooth' });
                             }}
                             className="w-full sm:w-auto bg-secondary dark:bg-slate-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center"
@@ -85,8 +129,6 @@ export default function WarrantySection() {
 
                 {/* Maintenance Section (Active Warranty) */}
                 <div className="relative bg-teal-50/50 dark:bg-teal-950/30 rounded-[2.5rem] p-8 md:p-12 shadow-2xl shadow-accent/5 border border-accent/30 dark:border-white/40 flex flex-col lg:flex-row items-center gap-12 mb-16 overflow-hidden transition-all duration-500">
-                    {/* Background accent for the highlight */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
                     <div className="flex-1 space-y-4 md:space-y-6">
                         <h3 className="text-xl md:text-2xl font-bold text-secondary dark:text-white">Manteniendo Su Garantía Activa</h3>
                         <p className="text-sm md:text-base text-muted-foreground">
@@ -99,19 +141,6 @@ export default function WarrantySection() {
                             onClick={() => {
                                 const message = encodeURIComponent("Hola, me gustaría programar una revisión de mantenimiento preventivo para mi sistema Thermo House.");
                                 window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
-                            }}
-                            animate={{
-                                scale: [1, 1.05, 1],
-                                boxShadow: [
-                                    "0 0 0px rgba(20, 184, 166, 0)",
-                                    "0 0 20px rgba(20, 184, 166, 0.4)",
-                                    "0 0 0px rgba(20, 184, 166, 0)"
-                                ]
-                            }}
-                            transition={{
-                                duration: 3,
-                                repeat: Infinity,
-                                ease: "easeInOut"
                             }}
                             className="w-full sm:w-auto bg-accent hover:bg-teal-600 text-white px-8 py-3.5 rounded-xl font-black uppercase tracking-widest transition-colors shadow-xl relative z-10"
                             aria-label="Programar una visita de mantenimiento preventivo en WhatsApp"
@@ -128,28 +157,26 @@ export default function WarrantySection() {
                                 if (maintenanceImg !== '/images/maintenance-bg.webp') {
                                     setMaintenanceImg('/images/maintenance-bg.webp');
                                 } else {
-                                    // If fallback also fails, hide
                                     e.currentTarget.style.display = 'none';
                                 }
                             }}
                         />
                         <SourceIndicator src={maintenanceImg} />
-                        {/* Subtle overlay to blend with the card */}
-                        <div className="absolute inset-0 bg-teal-900/10 dark:bg-teal-900/20" />
-
-
                     </div>
                 </div>
 
-                {/* FAQ Accordion Placeholder */}
-                <div className="max-w-3xl mx-auto">
-                    <h3 className="text-xl md:text-2xl font-bold text-secondary dark:text-white text-center mb-6 md:mb-8">Preguntas Frecuentes</h3>
+                {/* FAQ Accordion */}
+                <div className="max-w-3xl mx-auto mb-12">
+                    <h3 className="text-xl md:text-2xl font-bold text-secondary dark:text-white text-center mb-6 md:mb-8 uppercase tracking-tight">Preguntas Frecuentes</h3>
                     <div className="space-y-3 md:space-y-4">
-                        {["¿La garantía es transferible si vendo mi casa?", "¿Qué implica el mantenimiento preventivo?", "¿Qué pasa si olvido programar el mantenimiento?"].map((q, i) => (
-                            <div key={i} className="bg-white dark:bg-slate-900 p-3 md:p-4 rounded-xl border border-border dark:border-slate-800 flex justify-between items-center cursor-pointer hover:border-primary/50 transition-colors">
-                                <span className="text-sm md:text-base font-medium text-secondary dark:text-slate-300">{q}</span>
-                                <ChevronDown className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-                            </div>
+                        {faqs.map((faq, i) => (
+                            <FAQItem
+                                key={i}
+                                question={faq.question}
+                                answer={faq.answer}
+                                isOpen={openIndex === i}
+                                onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                            />
                         ))}
                     </div>
                 </div>

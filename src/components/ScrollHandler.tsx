@@ -1,28 +1,29 @@
 'use client';
 
 import { useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 export default function ScrollHandler() {
     const pathname = usePathname();
+    const router = useRouter();
 
     useEffect(() => {
-        // LEGACY HASH REDIRECT: If someone enters via /#something, redirect to /something
+        // Handle Hash Redirection (Legacy)
         if (pathname === '/' && window.location.hash) {
             const hash = window.location.hash.replace('#', '');
             const validRoutes = ['sistemas', 'garantia', 'sucursales', 'cotizador', 'blog'];
 
             if (validRoutes.includes(hash)) {
-                // Remove hash and navigate to clean URL
-                window.location.replace(`/${hash}`);
+                // We use replace instead of push to avoid history bloat
+                router.replace(`/${hash}`);
                 return;
             }
         }
 
-        // Map routes to section IDs for internal scrolling (SPA feel)
         const routeMap: Record<string, string> = {
             '/': 'inicio',
             '/sistemas': 'sistemas',
+            '/metodo': 'metodo',
             '/garantia': 'garantia',
             '/sucursales': 'sucursales',
             '/cotizador': 'cotizador',
@@ -31,21 +32,37 @@ export default function ScrollHandler() {
         const targetId = routeMap[pathname];
 
         if (targetId) {
-            // Small timeout to ensure DOM is ready and layout is stable (especially for dynamic imports)
-            const timer = setTimeout(() => {
+            const scrollToElement = () => {
                 const element = document.getElementById(targetId);
                 if (element) {
                     const rect = element.getBoundingClientRect();
-                    // If we are already near the top of the element, don't scroll again
-                    if (Math.abs(rect.top) > 10) {
-                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    if (Math.abs(rect.top) > 5) {
+                        element.scrollIntoView({
+                            behavior: pathname === '/' && !window.location.hash ? 'auto' : 'smooth',
+                            block: 'start'
+                        });
                     }
+                    return true;
                 }
-            }, 500);
+                return false;
+            };
 
-            return () => clearTimeout(timer);
+            // Delay execution slightly to ensure DOM is ready and avoid "update while rendering" errors
+            const timeoutId = setTimeout(() => {
+                if (!scrollToElement()) {
+                    let attempts = 0;
+                    const intervalId = setInterval(() => {
+                        if (scrollToElement() || attempts > 10) {
+                            clearInterval(intervalId);
+                        }
+                        attempts++;
+                    }, 100);
+                }
+            }, 100);
+
+            return () => clearTimeout(timeoutId);
         }
-    }, [pathname]);
+    }, [pathname, router]);
 
     return null;
 }
