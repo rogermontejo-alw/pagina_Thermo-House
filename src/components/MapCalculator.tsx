@@ -226,6 +226,9 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                     // Re-enable drawing mode after search
                     if (dm) dm.setDrawingMode(window.google.maps.drawing.OverlayType.POLYGON);
 
+                    // DISMISS INSTRUCTIONS ON SEARCH
+                    setShowInstructions(false);
+
                     // AUTO-SCROLL TO MAP
                     setTimeout(() => {
                         map.setZoom(20);
@@ -599,40 +602,50 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
             {/* Map Mode */}
             <div className={`${mode === 'map' ? 'block' : 'hidden'} space-y-4 animate-in fade-in slide-in-from-top-4 duration-300 max-w-5xl mx-auto w-full`}>
                 {/* Search Bar & Prompt Container */}
-                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full">
-                    <div className="relative flex-grow">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <Search className={`h-5 w-5 ${(!manualLocation.address && showAddressPrompt) ? 'text-primary animate-pulse' : 'text-muted-foreground'}`} />
-                        </div>
-                        <input
-                            ref={searchInputRef}
-                            id="map-search-input"
-                            type="text"
-                            value={searchText}
-                            onChange={(e) => setSearchText(e.target.value)}
-                            placeholder={mapLoaded ? "Busque su dirección para centrar el mapa..." : "Cargando mapa..."}
-                            className={`w-full bg-muted dark:bg-slate-800 border-2 text-secondary dark:text-white text-sm md:text-base font-bold rounded-xl block pl-12 p-3.5 focus:ring-4 focus:ring-primary/20 focus:border-primary placeholder-muted-foreground transition-all shadow-sm ${(!manualLocation.address && showAddressPrompt && searchText.length < 3) ? 'border-primary/50 ring-2 ring-primary/10' : 'border-border dark:border-slate-700'}`}
-                            disabled={!mapLoaded}
-                        />
-                    </div>
+                <AnimatePresence>
+                    {!showInstructions && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -20, height: 0, marginBottom: 0 }}
+                            animate={{ opacity: 1, y: 0, height: 'auto', marginBottom: 16 }}
+                            exit={{ opacity: 0, y: -20, height: 0, marginBottom: 0 }}
+                            className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full overflow-hidden"
+                        >
+                            <div className="relative flex-grow">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <Search className={`h-5 w-5 ${(!manualLocation.address && showAddressPrompt) ? 'text-primary animate-pulse' : 'text-muted-foreground'}`} />
+                                </div>
+                                <input
+                                    ref={searchInputRef}
+                                    id="map-search-input"
+                                    type="text"
+                                    value={searchText}
+                                    onChange={(e) => setSearchText(e.target.value)}
+                                    placeholder={mapLoaded ? "Busque su dirección para centrar el mapa..." : "Cargando mapa..."}
+                                    className={`w-full bg-muted dark:bg-slate-800 border-2 text-secondary dark:text-white text-sm md:text-base font-bold rounded-xl block pl-12 p-3.5 focus:ring-4 focus:ring-primary/20 focus:border-primary placeholder-muted-foreground transition-all shadow-sm ${(!manualLocation.address && showAddressPrompt && searchText.length < 3) ? 'border-primary/50 ring-2 ring-primary/10' : 'border-border dark:border-slate-700'}`}
+                                    disabled={!mapLoaded}
+                                    autoFocus
+                                />
+                            </div>
 
-                    {/* Side Prompt - Hidden when active searching (3+ chars) or address found */}
-                    <AnimatePresence>
-                        {(!manualLocation.address && showAddressPrompt && searchText.length < 3 && mapLoaded) && (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.95 }}
-                                className="flex items-center justify-center gap-3 bg-primary text-white px-6 py-3.5 rounded-xl shadow-lg border border-white/10 shrink-0"
-                            >
-                                <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                                <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.1em] leading-none">
-                                    ESCRIBE TU DIRECCIÓN AQUÍ
-                                </span>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
+                            {/* Side Prompt - Hidden when active searching (3+ chars) or address found */}
+                            <AnimatePresence>
+                                {(!manualLocation.address && showAddressPrompt && searchText.length < 3 && mapLoaded) && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        className="flex items-center justify-center gap-3 bg-primary text-white px-6 py-3.5 rounded-xl shadow-lg border border-white/10 shrink-0"
+                                    >
+                                        <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                                        <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.1em] leading-none">
+                                            ESCRIBE TU DIRECCIÓN AQUÍ
+                                        </span>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Map Container */}
                 <div id="map-viewport-container" className="relative w-full h-[450px] sm:h-[550px] rounded-2xl overflow-hidden shadow-2xl border border-border dark:border-slate-800 bg-slate-100 dark:bg-slate-900">
@@ -662,7 +675,7 @@ export default function MapCalculator({ onAreaCalculated, onLocationUpdated, onA
                                     </div>
                                     <h4 className="text-xl font-bold text-secondary dark:text-white mb-2">¡Ubica tu Techo!</h4>
                                     <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
-                                        Para una cotización precisa, <span className="text-primary font-bold">primero escribe tu dirección</span> en el buscador de arriba. <br /><br />Luego, haz clic en las esquinas de tu techo para medir los m².
+                                        Para una cotización precisa, <span className="text-primary font-bold">primero busca tu dirección</span> para centrar el mapa. <br /><br />Luego, haz clic en las esquinas de tu techo para medir los m².
                                     </p>
                                     <button
                                         onClick={(e) => {
