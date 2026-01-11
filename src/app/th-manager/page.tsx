@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { getQuotes, updateQuote, purgeQuotes, getQuote, createQuote } from '@/app/actions/get-quotes';
+import React, { useState, useEffect, useMemo } from 'react';
+import { getQuotes, updateQuote, purgeQuotes, getQuote, createQuote, deleteQuote } from '@/app/actions/get-quotes';
 import { supabase } from '@/lib/supabase';
 import { logoutAdmin, getAdminSession } from '@/app/actions/admin-auth';
 import { getAdminUsers, createAdminUser, updateAdminUser, deleteAdminUser, resetAdminPassword } from '@/app/actions/admin-users';
@@ -14,7 +14,7 @@ import {
     Shield, Mail, UserCircle, Package, Edit3, Plus, Globe, Save, X, Key, Building2, Facebook,
     Download, CheckSquare, Square, FileText, Cake, Receipt, FileSignature,
     LayoutGrid, ListOrdered, Navigation, Map, AlertTriangle, Printer, FileCheck, PencilRuler,
-    PieChart, BarChart3, ShieldAlert, Sun, Moon, Loader2, Power
+    PieChart, BarChart3, ShieldAlert, Sun, Moon, Loader2, Power, Zap, Radio
 } from 'lucide-react';
 import { getLocations, createLocation, deleteLocation, updateLocation } from '@/app/actions/admin-locations';
 import { getAppConfig, updateAppConfig } from '@/app/actions/get-config';
@@ -74,7 +74,7 @@ const getFolio = (quote: any) => {
 
 export default function AdminDashboard() {
     const [session, setSession] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'quotes' | 'users' | 'prices' | 'locations' | 'products' | 'config' | 'blog'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'quotes' | 'users' | 'prices' | 'locations' | 'products' | 'config' | 'blog' | 'marketing'>('dashboard');
     const [quotes, setQuotes] = useState<any[]>([]);
     const [users, setUsers] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
@@ -99,9 +99,13 @@ export default function AdminDashboard() {
     const [isUserFormOpen, setIsUserFormOpen] = useState(false);
     const [fbPixelId, setFbPixelId] = useState(''); // Legacy fallback compatibility
     const [isSavingPixel, setIsSavingPixel] = useState(false);
-    const [marketingScripts, setMarketingScripts] = useState<any[]>([]);
-    const [isAddingScript, setIsAddingScript] = useState(false);
     const [newScript, setNewScript] = useState({ platform: 'facebook', pixel_id: '', is_active: true });
+    const [marketingScripts, setMarketingScripts] = useState<any[]>([]);
+    const [marketingExpenses, setMarketingExpenses] = useState<any[]>([]);
+    const [isSavingSpend, setIsSavingSpend] = useState(false);
+    const [showExpenseModal, setShowExpenseModal] = useState(false);
+    const [newExpense, setNewExpense] = useState({ source: 'facebook', campaign: '', amount: 0, startDate: '', endDate: '' });
+    const [showAttributionOverlay, setShowAttributionOverlay] = useState(false);
 
     const dashboardQuotes = useMemo(() => {
         let filtered = [...quotes];
@@ -168,7 +172,7 @@ export default function AdminDashboard() {
     const [newPassword, setNewPassword] = useState('');
     const [deleteModal, setDeleteModal] = useState<{
         open: boolean,
-        type: 'user' | 'product' | 'location' | 'master' | 'marketing' | 'toggle',
+        type: 'user' | 'product' | 'location' | 'master' | 'marketing' | 'toggle' | 'lead',
         id: string | null,
         name: string,
         details?: string
@@ -268,7 +272,7 @@ export default function AdminDashboard() {
                 return;
             }
             setSession(userSession);
-            if (userSession.role !== 'admin') {
+            if (userSession.role !== 'admin' && userSession.role !== 'manager' && userSession.role !== 'direccion') {
                 setActiveTab('quotes');
             }
             // After session is set, fetch initial data
@@ -340,11 +344,39 @@ export default function AdminDashboard() {
         };
     }, [session]);
 
+    const handleUpdateExpenses = async (updatedExpenses: any[]) => {
+        setIsSavingSpend(true);
+        const res = await updateAppConfig('marketing_expenses_json', JSON.stringify(updatedExpenses));
+        if (res.success) {
+            setMarketingExpenses(updatedExpenses);
+            showToast('Registro de gastos actualizado');
+        } else {
+            showToast('Error: ' + res.message, 'error');
+        }
+        setIsSavingSpend(false);
+    };
+
+    const handleAddExpense = () => {
+        if (!newExpense.amount || !newExpense.startDate || !newExpense.endDate) {
+            showToast('Por favor completa todos los campos obligatorios', 'error');
+            return;
+        }
+        const updated = [...marketingExpenses, { ...newExpense, id: Date.now().toString() }];
+        handleUpdateExpenses(updated);
+        setNewExpense({ source: 'facebook', campaign: '', amount: 0, startDate: '', endDate: '' });
+        setShowExpenseModal(false);
+    };
+
+    const handleDeleteExpense = (id: string) => {
+        const updated = marketingExpenses.filter(e => e.id !== id);
+        handleUpdateExpenses(updated);
+    };
+
     const fetchData = async (currSession: any) => {
         setLoading(true);
         const cityFilter = (currSession.role === 'admin' || currSession.role === 'manager') ? 'Todas' : currSession.ciudad;
 
-        const [qRes, uRes, pRes, mRes, lRes, configKey, pixelKey, scriptsRes] = await Promise.all([
+        const [qRes, uRes, pRes, mRes, lRes, configKey, pixelKey, expensesVal, scriptsRes] = await Promise.all([
             getQuotes(cityFilter),
             (currSession.role === 'admin' || currSession.role === 'manager') ? getAdminUsers() : Promise.resolve({ success: true, data: [] }),
             getProducts(cityFilter),
@@ -352,6 +384,7 @@ export default function AdminDashboard() {
             getLocations(),
             currSession.role === 'admin' ? getAppConfig('GOOGLE_MAPS_KEY') : Promise.resolve(null),
             currSession.role === 'admin' ? getAppConfig('facebook_pixel_id') : Promise.resolve(null),
+            currSession.role === 'admin' ? getAppConfig('marketing_expenses_json') : Promise.resolve(null),
             currSession.role === 'admin' ? getMarketingScripts() : Promise.resolve({ success: true, data: [] })
         ]);
 
@@ -367,6 +400,13 @@ export default function AdminDashboard() {
         }
         if (configKey) setMapsKey(configKey);
         if (pixelKey) setFbPixelId(pixelKey);
+        if (expensesVal) {
+            try {
+                setMarketingExpenses(JSON.parse(expensesVal));
+            } catch (e) {
+                setMarketingExpenses([]);
+            }
+        }
         if (scriptsRes.success) setMarketingScripts(scriptsRes.data || []);
 
         // Sales team (editor) view only their city's prices by default
@@ -429,14 +469,20 @@ export default function AdminDashboard() {
             postal_code: selectedLeadForDetail.postal_code,
             contact_info: selectedLeadForDetail.contact_info,
             manual_unit_price: selectedLeadForDetail.manual_unit_price,
-            assigned_to: selectedLeadForDetail.assigned_to
+            assigned_to: selectedLeadForDetail.assigned_to,
+            manual_source: selectedLeadForDetail.manual_source || null,
+            utm_source: selectedLeadForDetail.utm_source,
+            utm_medium: selectedLeadForDetail.utm_medium,
+            utm_campaign: selectedLeadForDetail.utm_campaign,
+            referrer: selectedLeadForDetail.referrer,
+            secondary_sources: selectedLeadForDetail.secondary_sources || []
         };
 
         let res;
 
         if (selectedLeadForDetail.id === 'new') {
-            if (!payload.contact_info.name || !payload.contact_info.phone || !payload.ciudad || !payload.solution_id || !payload.address) {
-                showToast('Por favor completa: Nombre, Teléfono, Ciudad, Sistema y Dirección.', 'error');
+            if (!payload.contact_info.name || !payload.contact_info.phone || !payload.ciudad || !payload.solution_id || !payload.address || !payload.manual_source) {
+                showToast('Por favor completa: Nombre, Teléfono, Ciudad, Sistema, Dirección y Fuente de Adquisición.', 'error');
                 setIsSavingDetail(false);
                 return;
             }
@@ -446,6 +492,11 @@ export default function AdminDashboard() {
             payload.is_out_of_zone = !products.some(p => p.ciudad === payload.ciudad);
             res = await createQuote(payload);
         } else {
+            if (!payload.manual_source) {
+                showToast('Por favor selecciona la fuente de adquisición.', 'error');
+                setIsSavingDetail(false);
+                return;
+            }
             payload.status = selectedLeadForDetail.status;
             payload.created_by = selectedLeadForDetail.created_by || session.id;
             res = await updateQuote(selectedLeadForDetail.id, payload);
@@ -475,6 +526,7 @@ export default function AdminDashboard() {
             estado: 'Yucatán',
             postal_code: '',
             area: 0,
+            secondary_sources: [],
             solution_id: defaultSolution?.id || '',
             costo_logistico: 0,
             precio_total_contado: 0,
@@ -617,11 +669,18 @@ export default function AdminDashboard() {
                 const newStatus = user.active === false;
                 res = await updateAdminUser(user.id, { active: newStatus } as any);
             }
+        } else if (deleteModal.type === 'lead') {
+            res = await deleteQuote(deleteModal.id!);
         }
 
         if (res?.success) {
             setDeleteModal({ ...deleteModal, open: false });
-            fetchData(session);
+            if (deleteModal.type === 'lead') {
+                setQuotes(prev => prev.filter(q => q.id !== deleteModal.id));
+                showToast('Registro eliminado correctamente');
+            } else {
+                fetchData(session);
+            }
             if (deleteModal.type === 'toggle') {
                 showToast('Estado del usuario actualizado');
             }
@@ -940,9 +999,12 @@ export default function AdminDashboard() {
         try {
             const res = await purgeQuotes(purgePasswordInput);
             if (res.success) {
-                setQuotes(prev => prev.filter(q => !selectedLeads.has(q.id)));
+                setQuotes([]);
                 setSelectedLeads(new Set());
-                showToast('Leads eliminados exitosamente');
+                showToast('Base de datos limpiada exitosamente');
+                setShowPurgeModal(false);
+                setPurgePasswordInput('');
+                setConfirmPurge(false);
             } else {
                 showToast(res?.message || 'Error al eliminar leads', 'error');
             }
@@ -951,6 +1013,16 @@ export default function AdminDashboard() {
         } finally {
             setIsPurging(false);
         }
+    };
+
+    const handleDeleteSingleLead = (id: string, name: string) => {
+        setDeleteModal({
+            open: true,
+            type: 'lead',
+            id: id,
+            name: name,
+            details: 'Se eliminará permanentemente este registro de la base de datos.'
+        });
     };
 
     const handleUpdatePurgePassword = async () => {
@@ -1112,7 +1184,7 @@ export default function AdminDashboard() {
                                         {session.role === 'admin' ? 'Acceso Total' : session.role === 'direccion' ? 'Dirección General' : session.role === 'manager' ? 'Gerencia Global' : `Zona: ${session.ciudad}`}
                                     </span>
                                 </div>
-                                <h1 className="text-2xl sm:text-3xl font-black text-secondary dark:text-white uppercase tracking-tight">Management</h1>
+                                <h1 className="text-2xl sm:text-3xl font-black text-secondary dark:text-white uppercase tracking-tight">Nexus Admin <span className="text-primary">v1.9</span></h1>
                                 <p className="text-slate-400 dark:text-slate-300 text-xs hidden sm:block">Sesión iniciada como {session.name}</p>
                             </div>
                         </div>
@@ -1154,6 +1226,15 @@ export default function AdminDashboard() {
                             >
                                 <Package className="w-3.5 h-3.5" />
                                 <span>Productos</span>
+                            </button>
+                        )}
+                        {session.role === 'admin' && (
+                            <button
+                                onClick={() => setActiveTab('marketing')}
+                                className={`flex items-center justify-center lg:justify-start gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'marketing' ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-lg' : 'text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/10'}`}
+                            >
+                                <Globe className="w-3.5 h-3.5" />
+                                <span>Marketing</span>
                             </button>
                         )}
                         {(session.role === 'admin' || session.role === 'manager' || session.role === 'editor') && (
@@ -1205,7 +1286,7 @@ export default function AdminDashboard() {
                 </div>
 
 
-                {activeTab === 'dashboard' && (session.role === 'admin' || session.role === 'manager') && (
+                {activeTab === 'dashboard' && (session.role === 'admin' || session.role === 'manager' || session.role === 'direccion') && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
                         {/* Dashboard Header with Range Selectors */}
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1538,11 +1619,11 @@ export default function AdminDashboard() {
                                                                 <div className="text-[11px] font-black text-secondary dark:text-white">${Math.round(amt / 1000)}k</div>
                                                             </div>
                                                         );
-                                                    })}
+                                                    }) /* status map */}
                                                 </div>
                                             </div>
                                         );
-                                    })}
+                                    }) /* advisor map */}
                                 {(quotes.filter(q => q.assigned_user || q.advisor).length === 0) && (
                                     <div className="col-span-full p-12 text-center text-slate-300 font-bold italic border-2 border-dashed border-slate-100 rounded-[2rem]">
                                         Aún no hay asignaciones registradas.
@@ -1553,7 +1634,232 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {activeTab === 'blog' && (session.role === 'admin' || session.role === 'manager') && (
+                {activeTab === 'marketing' && session.role === 'admin' && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h2 className="text-xl font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tight flex items-center gap-2">
+                                    <Globe className="w-5 h-5" />
+                                    Inteligencia de Marketing
+                                </h2>
+                                <p className="text-slate-400 dark:text-slate-200 text-[10px] font-bold uppercase tracking-widest">Análisis de origen, presupuestos y retorno</p>
+                            </div>
+                            <button
+                                onClick={() => setShowExpenseModal(true)}
+                                className="px-6 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20"
+                            >
+                                <Plus className="w-4 h-4" /> Registrar Gasto/Inversión
+                            </button>
+                        </div>
+
+                        {/* Efficiency Period Stats */}
+                        {(() => {
+                            const periodExpenses = marketingExpenses.filter(e => {
+                                if (rangeType === 'all') return true;
+                                const expenseStart = new Date(e.startDate);
+                                const expenseEnd = new Date(e.endDate);
+                                const viewStart = startDate ? new Date(startDate) : new Date(0);
+                                const viewEnd = endDate ? new Date(endDate) : new Date();
+                                return (expenseStart <= viewEnd && expenseEnd >= viewStart);
+                            });
+                            const totalSpend = periodExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+                            const digitalLeads = dashboardQuotes.filter(q => q.utm_source).length;
+
+                            return (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {[
+                                        { label: 'Inversión en Periodo', val: `$${totalSpend.toLocaleString()}`, sub: `${periodExpenses.length} Asignaciones de Gasto`, icon: <TrendingUp />, color: 'text-emerald-500' },
+                                        { label: 'CPL Global (Filtro)', val: `$${dashboardQuotes.length > 0 ? Math.round(totalSpend / dashboardQuotes.length) : 0}`, sub: 'Promedio general periodo', icon: <TrendingUp />, color: 'text-emerald-500' },
+                                        { label: 'CPL Digital (Filtro)', val: `$${digitalLeads > 0 ? Math.round(totalSpend / digitalLeads) : 0}`, sub: 'Tráfico con UTM detectado', icon: <Zap />, color: 'text-indigo-500' },
+                                    ].map((stat, i) => (
+                                        <div key={i} className="bg-slate-900 dark:bg-slate-900 border border-slate-800 p-6 rounded-[2rem] text-white shadow-xl shadow-indigo-500/5 transition-all hover:scale-[1.02]">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className={`p-3 rounded-2xl bg-white/5 ${stat.color}`}>
+                                                    {React.cloneElement(stat.icon as React.ReactElement, { className: 'w-5 h-5' })}
+                                                </div>
+                                            </div>
+                                            <div className="text-2xl font-black">{stat.val}</div>
+                                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</div>
+                                            <div className="text-[8px] font-bold text-slate-500 uppercase mt-1">{stat.sub}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {[
+                                { label: 'Leads en Periodo', val: dashboardQuotes.length, icon: <Users />, color: 'text-blue-500' },
+                                { label: 'Origen Digital', val: dashboardQuotes.filter(q => q.utm_source).length, icon: <Zap />, color: 'text-indigo-500' },
+                                { label: 'Origen Manual', val: dashboardQuotes.filter(q => q.manual_source).length, icon: <Radio />, color: 'text-orange-500' },
+                                { label: 'Conversion Cerrada', val: dashboardQuotes.filter(q => q.status === 'Cerrado').length, icon: <CheckCircle2 />, color: 'text-emerald-500' }
+                            ].map((stat, i) => (
+                                <div key={i} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className={`p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 ${stat.color}`}>
+                                            {React.cloneElement(stat.icon as React.ReactElement, { className: 'w-5 h-5' })}
+                                        </div>
+                                    </div>
+                                    <div className="text-2xl font-black text-secondary dark:text-white">{stat.val}</div>
+                                    <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{stat.label}</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            {/* Sources Breakdown */}
+                            <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+                                <h3 className="text-lg font-black text-secondary dark:text-white uppercase tracking-tight">Fuentes de Adquisición</h3>
+                                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {(() => {
+                                        const sourcesMap: Record<string, number> = {};
+                                        dashboardQuotes.forEach(q => {
+                                            const s = q.manual_source || q.utm_source || 'Desconocido / Directo';
+                                            sourcesMap[s] = (sourcesMap[s] || 0) + 1;
+                                        });
+                                        return Object.entries(sourcesMap)
+                                            .sort((a, b) => b[1] - a[1])
+                                            .map(([source, count], i) => (
+                                                <div key={i} className="space-y-2">
+                                                    <div className="flex justify-between text-xs font-bold uppercase tracking-tight">
+                                                        <span className="text-secondary dark:text-slate-300">{source}</span>
+                                                        <span className="text-primary">{count} Leads</span>
+                                                    </div>
+                                                    <div className="h-2 bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-indigo-500 rounded-full"
+                                                            style={{ width: `${(count / (dashboardQuotes.length || 1)) * 100}%` }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                            ));
+                                    })()}
+                                </div>
+                            </div>
+
+                            {/* Secondary Reach (Memory) */}
+                            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+                                <h3 className="text-lg font-black text-secondary dark:text-white uppercase tracking-tight">Alcance de Memoria (Branding)</h3>
+                                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {(() => {
+                                        const memoryMap: Record<string, number> = {};
+                                        dashboardQuotes.forEach(q => {
+                                            const sources = q.secondary_sources || [];
+                                            sources.forEach((s: string) => {
+                                                memoryMap[s] = (memoryMap[s] || 0) + 1;
+                                            });
+                                        });
+                                        const sorted = Object.entries(memoryMap).sort((a, b) => b[1] - a[1]);
+                                        if (sorted.length === 0) return (
+                                            <div className="py-12 text-center text-slate-300 font-bold italic border-2 border-dashed border-slate-100 rounded-[2rem] flex flex-col items-center gap-2">
+                                                <AlertCircle className="w-5 h-5" />
+                                                <span>Pendiente de recolección en Ventas</span>
+                                            </div>
+                                        );
+
+                                        return sorted.slice(0, 6).map(([source, count], i) => (
+                                            <div key={i} className="space-y-2">
+                                                <div className="flex justify-between text-xs font-bold uppercase tracking-tight">
+                                                    <span className="text-secondary dark:text-slate-300">{source}</span>
+                                                    <span className="text-emerald-500">{Math.round((count / (dashboardQuotes.length || 1)) * 100)}% Presencia</span>
+                                                </div>
+                                                <div className="h-2 bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-emerald-500 rounded-full"
+                                                        style={{ width: `${(count / (dashboardQuotes.length || 1)) * 100}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        ));
+                                    })()}
+                                </div>
+                            </div>
+
+                            {/* Campaign Performance */}
+                            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+                                <h3 className="text-lg font-black text-secondary dark:text-white uppercase tracking-tight">Rendimiento por Campaña (UTM)</h3>
+                                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {(() => {
+                                        const calculateQuoteValue = (q: any) => {
+                                            const base = q.pricing_type === 'lista' ? (q.precio_total_msi || 0) : (q.precio_total_contado || 0);
+                                            const logistics = Number(q.costo_logistico || 0);
+                                            return (base + logistics) * (q.factura ? 1.16 : 1);
+                                        };
+
+                                        const campaignStats: Record<string, { count: number, value: number }> = {};
+                                        dashboardQuotes.filter(q => q.utm_campaign).forEach(q => {
+                                            const campaign = q.utm_campaign || 'Sin Campaña';
+                                            if (!campaignStats[campaign]) campaignStats[campaign] = { count: 0, value: 0 };
+                                            campaignStats[campaign].count++;
+                                            campaignStats[campaign].value += calculateQuoteValue(q);
+                                        });
+
+                                        const sorted = Object.entries(campaignStats).sort((a, b) => b[1].count - a[1].count);
+                                        if (sorted.length === 0) return <div className="py-20 text-center text-slate-300 font-bold italic border-2 border-dashed border-slate-100 rounded-[2rem]">No se detectan campañas en este periodo.</div>;
+
+                                        return sorted.map(([campaign, stats]) => (
+                                            <div key={campaign} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 transition-all hover:bg-white dark:hover:bg-slate-800 group">
+                                                <div className="flex-1">
+                                                    <div className="text-xs font-black text-secondary dark:text-white uppercase group-hover:text-indigo-600 transition-colors line-clamp-1">{campaign}</div>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{stats.count} Leads</span>
+                                                        <span className="text-[8px] text-slate-300">•</span>
+                                                        <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">{Math.round((stats.count / (dashboardQuotes.length || 1)) * 100)}% del Mix</span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-sm font-black text-indigo-600 dark:text-indigo-400">${Math.round(stats.value / 1000)}k</div>
+                                                    <div className="text-[9px] font-bold text-slate-400 uppercase">Potencial</div>
+                                                </div>
+                                            </div>
+                                        ));
+                                    })()}
+                                </div>
+                            </div>
+
+                            {/* Investment History Registry */}
+                            <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-lg font-black text-secondary dark:text-white uppercase tracking-tight">Historial de Inversiones / Gastos</h3>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{marketingExpenses.length} Registros</span>
+                                </div>
+                                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {marketingExpenses.length === 0 ? (
+                                        <div className="py-20 text-center text-slate-300 font-bold italic border-2 border-dashed border-slate-100 rounded-[2rem]">No hay gastos registrados.</div>
+                                    ) : (
+                                        marketingExpenses.map((expense, idx) => (
+                                            <div key={idx} className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-transparent hover:border-indigo-100 dark:hover:border-indigo-900/50 transition-all group">
+                                                <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center">
+                                                    {expense.source === 'facebook' || expense.source === 'instagram' ? <Facebook className="w-5 h-5 text-indigo-500" /> : <Globe className="w-5 h-5 text-slate-400" />}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-xs font-black text-secondary dark:text-white uppercase tracking-tight">{expense.campaign || 'Gasto General'}</span>
+                                                        <span className="text-xs font-black text-indigo-600">${Number(expense.amount).toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="flex justify-between mt-1">
+                                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{expense.source}</span>
+                                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                                                            {new Date(expense.startDate).toLocaleDateString()} - {new Date(expense.endDate).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleDeleteExpense(expense.id)}
+                                                    className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'blog' && (session.role === 'admin' || session.role === 'manager' || session.role === 'direccion') && (
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                         <div className="mb-8">
                             <h2 className="text-2xl font-black text-secondary dark:text-white uppercase tracking-tight flex items-center gap-3">
@@ -1729,6 +2035,11 @@ export default function AdminDashboard() {
                                                             {q.is_out_of_zone && <span className="hidden sm:inline-block px-2 py-0.5 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-800/50 rounded-lg text-[8px] font-black tracking-widest">FORÁNEO</span>}
                                                             {q.is_manual && <span className="hidden sm:inline-block px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/50 rounded-lg text-[8px] font-black tracking-widest uppercase">Manual</span>}
                                                             {q.factura && <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50 rounded-lg text-[8px] font-black tracking-widest uppercase">Factura</span>}
+                                                            {q.utm_source && (
+                                                                <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/50 rounded-lg text-[8px] font-black tracking-widest uppercase flex items-center gap-1">
+                                                                    <Globe className="w-2.5 h-2.5" /> {q.utm_source}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
 
@@ -1791,6 +2102,15 @@ export default function AdminDashboard() {
                                                             <button onClick={() => setSelectedLeadForDetail(q)} className="p-2.5 bg-secondary dark:bg-primary text-white rounded-xl shadow-sm hover:scale-110 active:scale-95 transition-all"><FileText className="w-4 h-4" /></button>
                                                             {q.google_maps_link && <a href={q.google_maps_link} target="_blank" className="p-2.5 bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/30 rounded-xl hover:bg-blue-600 dark:hover:bg-blue-600 hover:text-white transition-all"><ExternalLink className="w-4 h-4" /></a>}
                                                             {q.contact_info.phone && <a href={`https://wa.me/52${q.contact_info.phone}`} target="_blank" className="p-2.5 bg-green-50 dark:bg-slate-800 text-green-600 dark:text-green-400 border border-green-100 dark:border-green-900/30 rounded-xl hover:bg-green-600 dark:hover:bg-green-600 hover:text-white transition-all"><Phone className="w-4 h-4" /></a>}
+                                                            {(session.role === 'admin' || session.role === 'direccion') && (
+                                                                <button
+                                                                    onClick={() => handleDeleteSingleLead(q.id, q.contact_info.name)}
+                                                                    className="p-2.5 bg-red-50 dark:bg-slate-800 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30 rounded-xl hover:bg-red-600 dark:hover:bg-red-600 hover:text-white transition-all"
+                                                                    title="Eliminar Registro"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -2506,6 +2826,8 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
 
+
+
                                 <div className="md:col-span-2 bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-8">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
@@ -2706,7 +3028,7 @@ export default function AdminDashboard() {
                                         {selectedLeadForDetail.id === 'new' ? 'Captura Inicial' : `Folio: ${getFolio(selectedLeadForDetail)}`}
                                     </p>
                                 </div>
-                                <button onClick={() => setSelectedLeadForDetail(null)} className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all text-slate-400 dark:text-slate-300">
+                                <button onClick={() => { setSelectedLeadForDetail(null); setShowAttributionOverlay(false); }} className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all text-slate-400 dark:text-slate-300">
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
@@ -2791,6 +3113,91 @@ export default function AdminDashboard() {
                                         />
                                     </div>
                                     <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">¿Cómo nos conoció? (Obligatorio)</label>
+                                        <select
+                                            className={`w-full px-4 py-3 bg-white dark:bg-slate-800 border-2 border-primary/20 dark:border-primary/10 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 dark:bg-slate-900' : ''}`}
+                                            value={selectedLeadForDetail.manual_source || ''}
+                                            disabled={!canEditQuote(selectedLeadForDetail)}
+                                            onChange={e => {
+                                                setSelectedLeadForDetail({ ...selectedLeadForDetail, manual_source: e.target.value });
+                                                if (e.target.value) setShowAttributionOverlay(true);
+                                            }}
+                                        >
+                                            <option value="">Seleccione Opción...</option>
+                                            <option value="Facebook">Facebook (Anuncio)</option>
+                                            <option value="Instagram">Instagram</option>
+                                            <option value="Google">Google Search</option>
+                                            <option value="TikTok">TikTok</option>
+                                            <option value="TV">Campaña TV</option>
+                                            <option value="OTT">Plataformas OTT</option>
+                                            <option value="Radio">Radio</option>
+                                            <option value="Recomendacion">Recomendación</option>
+                                            <option value="Espectacular">Espectacular / Lona</option>
+                                            <option value="Otro">Otro</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Attribution Overlay Trigger Script */}
+                                    <script dangerouslySetInnerHTML={{ __html: "" }} />
+
+                                    {/* Multi-Touch Attribution Capture Overlay */}
+                                    {showAttributionOverlay && (
+                                        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-secondary/40 backdrop-blur-md animate-in fade-in duration-300">
+                                            <motion.div
+                                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                                className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-[3rem] shadow-2xl p-10 border border-white/20 dark:border-slate-800 space-y-8"
+                                            >
+                                                <div className="flex items-center gap-5">
+                                                    <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                                                        <PieChart className="w-7 h-7 text-white" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-2xl font-black text-secondary dark:text-white uppercase tracking-tight">Impacto Multicanal</h4>
+                                                        <p className="text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.2em] mt-1">¿En qué otros medios nos ha visto el cliente?</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                    {['Radio', 'Televisión', 'Espectacular', 'Facebook', 'Instagram', 'Google', 'YouTube', 'TikTok', 'Recomendación', 'Periódico', 'Evento/Expo'].map(source => {
+                                                        const isSelected = (selectedLeadForDetail.secondary_sources || []).includes(source);
+                                                        return (
+                                                            <button
+                                                                type="button"
+                                                                key={source}
+                                                                onClick={() => {
+                                                                    const current = selectedLeadForDetail.secondary_sources || [];
+                                                                    const next = isSelected
+                                                                        ? current.filter((s: string) => s !== source)
+                                                                        : [...current, source];
+                                                                    setSelectedLeadForDetail({ ...selectedLeadForDetail, secondary_sources: next });
+                                                                }}
+                                                                className={`px-4 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2 flex items-center justify-center gap-2 ${isSelected
+                                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xl shadow-indigo-500/30 scale-[1.02]'
+                                                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-transparent hover:border-indigo-300'
+                                                                    }`}
+                                                            >
+                                                                {isSelected && <CheckSquare className="w-3 h-3" />}
+                                                                {source}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowAttributionOverlay(false)}
+                                                        className="col-span-full mt-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-5 rounded-2xl text-[11px] font-black uppercase tracking-[0.3em] hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-all border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-indigo-500/50"
+                                                    >
+                                                        Finalizar / Ninguno de los anteriores
+                                                    </button>
+                                                </div>
+
+                                                <p className="text-center text-[9px] font-bold text-slate-300 dark:text-slate-500 uppercase tracking-widest">Puedes seleccionar múltiples opciones para un rastreo más exacto</p>
+                                            </motion.div>
+                                        </div>
+                                    )}
+
+
+                                    <div className="space-y-1">
                                         <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Estado</label>
                                         <select
                                             className={`w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none ${!canEditQuote(selectedLeadForDetail) ? 'bg-slate-50 dark:bg-slate-900' : ''}`}
@@ -2863,7 +3270,37 @@ export default function AdminDashboard() {
                                             onChange={e => setSelectedLeadForDetail({ ...selectedLeadForDetail, address: e.target.value })}
                                         />
                                     </div>
-                                    {/* Factura control hidden as per request */}
+                                    {/* Marketing Origin Section */}
+                                    {(selectedLeadForDetail.utm_source || selectedLeadForDetail.referrer) && (
+                                        <div className="md:col-span-2 mt-4 p-5 bg-blue-50/30 dark:bg-blue-900/10 rounded-[2rem] border border-blue-100 dark:border-blue-900/30 space-y-4">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <Globe className="w-4 h-4 text-blue-500" />
+                                                <h4 className="font-black text-secondary dark:text-white uppercase text-[10px] tracking-tight">Origen de la Cotización</h4>
+                                            </div>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Fuente</label>
+                                                    <div className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase truncate">{selectedLeadForDetail.utm_source || 'Directo / Orgánico'}</div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Campaña</label>
+                                                    <div className="text-xs font-black text-secondary dark:text-white uppercase truncate">{selectedLeadForDetail.utm_campaign || '-'}</div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Canal / Medio</label>
+                                                    <div className="text-xs font-black text-secondary dark:text-white uppercase truncate">{selectedLeadForDetail.utm_medium || '-'}</div>
+                                                </div>
+                                                {selectedLeadForDetail.referrer && (
+                                                    <div className="space-y-1">
+                                                        <label className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Referido de</label>
+                                                        <div className="text-xs font-black text-secondary dark:text-white truncate" title={selectedLeadForDetail.referrer}>
+                                                            {selectedLeadForDetail.referrer.replace('https://', '').replace('http://', '').split('/')[0]}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Negotiation Section */}
@@ -3970,6 +4407,98 @@ export default function AdminDashboard() {
                         </motion.div>
                     </div>
                 )
+            }
+
+            {/* Expense Modal */}
+            {showExpenseModal && (
+                <div className="fixed inset-0 bg-secondary/80 dark:bg-slate-950/90 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-800">
+                        <div className="bg-slate-50 dark:bg-slate-800/50 p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                            <div>
+                                <h3 className="text-2xl font-black text-secondary dark:text-white uppercase tracking-tight flex items-center gap-3">
+                                    <TrendingUp className="w-7 h-7 text-indigo-600" />
+                                    Registrar Inversión
+                                </h3>
+                                <p className="text-slate-400 dark:text-slate-300 text-xs font-bold uppercase tracking-widest mt-1">Control de costos de adquisición</p>
+                            </div>
+                            <button onClick={() => setShowExpenseModal(false)} className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-secondary dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-8 space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Medio / Canal</label>
+                                    <select
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                        value={newExpense.source}
+                                        onChange={e => setNewExpense({ ...newExpense, source: e.target.value })}
+                                    >
+                                        <option value="facebook">Facebook Ads</option>
+                                        <option value="google">Google Ads</option>
+                                        <option value="radio">Radio</option>
+                                        <option value="tv">Televisión</option>
+                                        <option value="spectacular">Espectacular</option>
+                                        <option value="other">Otro</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Monto ($ MXN)</label>
+                                    <input
+                                        type="number"
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                        placeholder="0.00"
+                                        value={newExpense.amount}
+                                        onChange={e => setNewExpense({ ...newExpense, amount: Number(e.target.value) })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Nombre de Campaña (Opcional)</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                    placeholder="Ej: Hot Sale 2025"
+                                    value={newExpense.campaign}
+                                    onChange={e => setNewExpense({ ...newExpense, campaign: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Fecha Inicio</label>
+                                    <input
+                                        type="date"
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                        value={newExpense.startDate}
+                                        onChange={e => setNewExpense({ ...newExpense, startDate: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest ml-1">Fecha Fin</label>
+                                    <input
+                                        type="date"
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-secondary dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                        value={newExpense.endDate}
+                                        onChange={e => setNewExpense({ ...newExpense, endDate: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleAddExpense}
+                                disabled={isSavingSpend}
+                                className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/20 flex items-center justify-center gap-2"
+                            >
+                                {isSavingSpend ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                Guardar Registro de Inversión
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )
             }
 
             {/* Print Styles */}

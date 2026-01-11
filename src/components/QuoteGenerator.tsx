@@ -27,8 +27,24 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
     const [dbLoaded, setDbLoaded] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null);
+    const [utms, setUtms] = useState<Record<string, string>>({});
     const containerRef = useRef<HTMLDivElement>(null);
     const isFirstRender = useRef(true);
+
+    // Capture UTMs from URL
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const capturedUtms: Record<string, string> = {};
+            ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(key => {
+                const val = params.get(key);
+                if (val) capturedUtms[key] = val;
+            });
+            // Also capture referrer if available
+            if (document.referrer) capturedUtms['referrer'] = document.referrer;
+            setUtms(capturedUtms);
+        }
+    }, []);
 
     // Auto-scroll on step change
     useEffect(() => {
@@ -114,6 +130,11 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
         startSaveTransition(async () => {
             if (savedQuoteId) formData.append('quoteId', savedQuoteId);
             formData.append('last_step', 'finalizado');
+
+            // Append UTMs to Final Save
+            Object.entries(utms).forEach(([key, value]) => {
+                formData.append(key, value);
+            });
 
             const result = await saveQuote(null, formData);
             if (result.success) {
@@ -442,6 +463,11 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                     draftData.append('conversion_value', quote.totalCash.toString());
                                 }
                                 if (savedQuoteId) draftData.append('quoteId', savedQuoteId);
+
+                                // Append UTMs to Draft
+                                Object.entries(utms).forEach(([key, value]) => {
+                                    draftData.append(key, value);
+                                });
 
                                 startSaveTransition(async () => {
                                     const result = await saveQuote(null, draftData);

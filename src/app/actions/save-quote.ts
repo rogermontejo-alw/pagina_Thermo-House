@@ -25,6 +25,12 @@ export async function saveQuote(prevState: any, formData: FormData) {
             isOutOfZone: formData.get('isOutOfZone') === 'true',
             postalCode: formData.get('postalCode') as string,
             pricing_type: formData.get('pricing_type') as string || 'contado',
+            utm_source: formData.get('utm_source') as string || null,
+            utm_medium: formData.get('utm_medium') as string || null,
+            utm_campaign: formData.get('utm_campaign') as string || null,
+            utm_term: formData.get('utm_term') as string || null,
+            utm_content: formData.get('utm_content') as string || null,
+            referrer: formData.get('referrer') as string || null,
         };
 
         // Basic Validation
@@ -108,6 +114,12 @@ export async function saveQuote(prevState: any, formData: FormData) {
             created_by: createdBy,
             postal_code: rawData.postalCode || '',
             pricing_type: rawData.pricing_type,
+            utm_source: rawData.utm_source,
+            utm_medium: rawData.utm_medium,
+            utm_campaign: rawData.utm_campaign,
+            utm_term: rawData.utm_term,
+            utm_content: rawData.utm_content,
+            referrer: rawData.referrer
         };
 
         let result;

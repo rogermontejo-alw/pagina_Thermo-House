@@ -204,3 +204,23 @@ export async function purgeQuotes(password: string) {
         return { success: false, message: err.message || 'Error al limpiar la base de datos.' };
     }
 }
+
+export async function deleteQuote(id: string) {
+    try {
+        const session = await getAdminSession();
+        if (!session || (session.role !== 'admin' && session.role !== 'direccion')) {
+            return { success: false, message: 'No tienes permisos para eliminar registros.' };
+        }
+
+        const { error } = await supabaseAdmin
+            .from('cotizaciones')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        return { success: true, message: 'Registro eliminado correctamente.' };
+    } catch (err: any) {
+        console.error('Error deleting individual quote:', err);
+        return { success: false, message: err.message || 'Error al eliminar el registro.' };
+    }
+}
