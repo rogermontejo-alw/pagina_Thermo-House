@@ -2,10 +2,12 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-export default function SectionWrapper({ children, className, bg = "white" }: { children: React.ReactNode, className?: string, bg?: "white" | "slate" }) {
+export default function SectionWrapper({ children, className, bg = "white", id }: { children: React.ReactNode, className?: string, bg?: "white" | "slate", id?: string }) {
     return (
         <motion.section
+            id={id}
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
@@ -20,14 +22,11 @@ export default function SectionWrapper({ children, className, bg = "white" }: { 
 }
 
 export function CTASection() {
+    const router = useRouter();
+
     const handleNavigation = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-        if (window.location.pathname === '/') {
-            e.preventDefault();
-            const elem = document.getElementById('cotizador');
-            if (elem) {
-                elem.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
+        e.preventDefault();
+        router.push(href, { scroll: false });
     };
 
     return (

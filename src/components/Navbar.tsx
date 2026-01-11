@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getLocations } from '@/app/actions/admin-locations';
@@ -16,6 +16,7 @@ export default function Navbar() {
     const [branches, setBranches] = useState<string[]>([]);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const pathname = usePathname();
+    const router = useRouter();
 
     useEffect(() => {
         const fetchBranches = async () => {
@@ -43,31 +44,28 @@ export default function Navbar() {
     // ... (useEffect remains)
 
     const handleNavigation = (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>, href: string) => {
-        // IDs map for the landing page sections
+        setIsOpen(false);
         const routeToId: Record<string, string> = {
+            '/': 'inicio',
             '/sistemas': 'sistemas',
             '/garantia': 'garantia',
             '/cotizador': 'cotizador',
             '/sucursales': 'sucursales',
-            '/blog': 'blog'
         };
 
         const targetId = routeToId[href];
+        const elem = targetId ? document.getElementById(targetId) : null;
 
-        // If we are already on the HOME page and the target is a section on the home page, scroll.
-        // Otherwise, let the normal navigation happen to the clean URL /cotizador, /sistemas, etc.
-        if (pathname === '/' && targetId) {
-            const elem = document.getElementById(targetId);
-            if (elem) {
+        if (elem) {
+            e.preventDefault();
+            elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            router.push(href, { scroll: false });
+        } else if (href.startsWith('/')) {
+            const managedRoutes = ['/', '/sistemas', '/garantia', '/cotizador', '/sucursales'];
+            if (managedRoutes.includes(href)) {
                 e.preventDefault();
-                setIsOpen(false);
-                elem.scrollIntoView({ behavior: 'smooth' });
-                // Update URL WITHOUT the hash for clean history if possible, or just stay as /
-                // window.history.pushState(null, '', href); 
+                router.push(href, { scroll: false });
             }
-        } else {
-            // Let the Link component handle the real navigation to /cotizador
-            setIsOpen(false);
         }
     };
 

@@ -21,6 +21,7 @@ export default function ScrollHandler() {
 
         // Map routes to section IDs for internal scrolling (SPA feel)
         const routeMap: Record<string, string> = {
+            '/': 'inicio',
             '/sistemas': 'sistemas',
             '/garantia': 'garantia',
             '/sucursales': 'sucursales',
@@ -30,11 +31,15 @@ export default function ScrollHandler() {
         const targetId = routeMap[pathname];
 
         if (targetId) {
-            // Small timeout to ensure DOM is ready and layout is stable
+            // Small timeout to ensure DOM is ready and layout is stable (especially for dynamic imports)
             const timer = setTimeout(() => {
                 const element = document.getElementById(targetId);
                 if (element) {
-                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    const rect = element.getBoundingClientRect();
+                    // If we are already near the top of the element, don't scroll again
+                    if (Math.abs(rect.top) > 10) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
                 }
             }, 500);
 

@@ -5,13 +5,15 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { getCloudinaryUrl, getCloudinaryVideoUrl } from '@/lib/cloudinary-client';
+
 
 import SourceIndicator from './SourceIndicator';
 
 export default function Hero() {
     const pathname = usePathname();
+    const router = useRouter();
 
     // Only render video on desktop to save ~2MB on mobile
     const [isDesktop, setIsDesktop] = React.useState(false);
@@ -44,16 +46,23 @@ export default function Hero() {
 
     const handleNavigation = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
         const routeToId: Record<string, string> = {
+            '/': 'inicio',
             '/sistemas': 'sistemas',
             '/cotizador': 'cotizador'
         };
 
         const targetId = routeToId[href];
-        if (pathname === '/' && targetId) {
+        const elem = targetId ? document.getElementById(targetId) : null;
+
+        if (elem) {
             e.preventDefault();
-            const elem = document.getElementById(targetId);
-            if (elem) {
-                elem.scrollIntoView({ behavior: 'smooth' });
+            elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            router.push(href, { scroll: false });
+        } else if (href.startsWith('/')) {
+            const managedRoutes = ['/', '/sistemas', '/cotizador'];
+            if (managedRoutes.includes(href)) {
+                e.preventDefault();
+                router.push(href, { scroll: false });
             }
         }
     };

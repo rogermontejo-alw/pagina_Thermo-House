@@ -51,7 +51,7 @@ export default function LandingPage() {
                     <BranchesSection />
                 </SectionWrapper>
 
-                <SectionWrapper bg="slate">
+                <SectionWrapper bg="slate" id="blog">
                     <BlogPreviewSection />
                 </SectionWrapper>
 

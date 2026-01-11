@@ -74,6 +74,16 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+section[id] {
+  scroll-margin-top: 5rem;
+  /* ~80px for Navbar */
+}
+
+section#inicio {
+  scroll-margin-top: 0;
+}
+
+
 /* Utilidad para Secciones Oscuras (Hero, Footer - Coincide con Image 3, 4) */
 .dark-section {
   --background: #0f172a;

@@ -4,12 +4,15 @@ import { useState, useEffect } from 'react';
 import { getLocations } from '@/app/actions/admin-locations';
 import { Location } from '@/types';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import Link from 'next/link';
+
 import packageInfo from '../../package.json';
 
 export default function Footer() {
     const [branches, setBranches] = useState<Location[]>([]);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchBranches = async () => {
@@ -24,19 +27,24 @@ export default function Footer() {
 
     const handleNavigation = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
         const routeToId: Record<string, string> = {
+            '/': 'inicio',
             '/sistemas': 'sistemas',
             '/garantia': 'garantia',
             '/cotizador': 'cotizador',
             '/sucursales': 'sucursales',
-            '/blog': 'blog'
         };
         const targetId = routeToId[href];
+        const elem = targetId ? document.getElementById(targetId) : null;
 
-        if (window.location.pathname === '/' && targetId) {
+        if (elem) {
             e.preventDefault();
-            const elem = document.getElementById(targetId);
-            if (elem) {
-                elem.scrollIntoView({ behavior: 'smooth' });
+            elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            router.push(href, { scroll: false });
+        } else if (href.startsWith('/')) {
+            const managedRoutes = ['/', '/sistemas', '/garantia', '/cotizador', '/sucursales'];
+            if (managedRoutes.includes(href)) {
+                e.preventDefault();
+                router.push(href, { scroll: false });
             }
         }
     };
