@@ -26,10 +26,10 @@ export default async function BlogPage() {
                             <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.25em] rounded-full mb-4">
                                 Biblioteca de Soluciones
                             </span>
-                            <h1 className="text-4xl md:text-6xl font-black text-secondary dark:text-white uppercase tracking-tight leading-none mb-6">
+                            <h1 className="text-3xl md:text-5xl font-black text-secondary dark:text-white uppercase tracking-tight leading-none mb-6">
                                 Blog <span className="text-primary italic">Thermo</span> House
                             </h1>
-                            <p className="text-slate-500 dark:text-slate-400 max-w-2xl text-lg font-medium leading-relaxed">
+                            <p className="text-slate-500 dark:text-slate-400 max-w-2xl text-base md:text-lg font-medium leading-relaxed">
                                 Encuentra respuestas rápidas sobre mantenimiento, ahorro energético y técnicas de impermeabilización profesional.
                             </p>
                         </div>

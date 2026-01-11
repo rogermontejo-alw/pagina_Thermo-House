@@ -71,7 +71,7 @@ export default function MethodSection() {
         {
             id: 1,
             title: "Preparación Meticulosa",
-            description: "Nuestro proceso comienza con una limpieza profunda de la superficie, reparación de grietas e imprimación. Este primer paso crítico asegura una adhesión óptima para un sellado impecable y duradero.",
+            description: "Nuestro proceso comienza con una limpieza profunda de la superficie, la protección de las estructuras de su techo y la detección de áreas críticas. Este primer paso crítico asegura una adhesión óptima para un sellado impecable y duradero.",
             videoPublicId: "paso1_f5nssr",
             posterPublicId: "paso1_dptq3n",
             folder: "",
@@ -80,7 +80,7 @@ export default function MethodSection() {
         {
             id: 2,
             title: "Aplicación de Poliuretano",
-            description: "Utilizando equipos especializados, aplicamos una capa continua de espuma de poliuretano de alta densidad, creando una barrera monolítica que proporciona un aislamiento térmico y una impermeabilización excepcionales.",
+            description: "Utilizando equipos especializados, sellamos las grietas existentes aplicamos una capa continua de espuma de poliuretano de alta densidad, creando una barrera monolítica que proporciona un aislamiento térmico y una impermeabilización excepcionales.",
             videoPublicId: "paso2_rddtso",
             posterPublicId: "paso2_hg2pps",
             folder: "",

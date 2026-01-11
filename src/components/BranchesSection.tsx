@@ -84,7 +84,7 @@ export default function BranchesSection() {
 
                                 <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
                                     <Clock className="w-5 h-5 text-primary flex-shrink-0" />
-                                    <span>Lun - Vie: 9:00 - 18:30</span>
+                                    <span>Lun - Vie: 9:00 - 18:00</span>
                                 </div>
 
                                 {/* Social Icons Row (Orange Icons Only) */}

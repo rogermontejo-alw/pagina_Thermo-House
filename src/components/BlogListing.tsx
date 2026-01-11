@@ -35,34 +35,21 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
 
     return (
         <div className="space-y-12">
-            {/* Filters & Search */}
-            <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-6 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm backdrop-blur-sm">
-                <div className="flex flex-wrap items-center gap-2 justify-start">
-                    {categories.map((cat) => (
-                        <button
-                            key={cat.id}
-                            onClick={() => setActiveCategory(cat.id)}
-                            aria-label={`Filtrar por ${cat.name}`}
-                            className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id
-                                ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105'
-                                : 'bg-slate-200/50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-secondary dark:hover:text-white'
-                                }`}
-                        >
-                            {cat.name}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="relative w-full lg:max-w-xs">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Buscar por tema..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-transparent pl-12 pr-4 py-3 rounded-2xl text-sm focus:ring-2 ring-primary transition-all text-secondary dark:text-white"
-                    />
-                </div>
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-2 justify-center bg-slate-50 dark:bg-slate-900/50 p-6 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm backdrop-blur-sm">
+                {categories.map((cat) => (
+                    <button
+                        key={cat.id}
+                        onClick={() => setActiveCategory(cat.id)}
+                        aria-label={`Filtrar por ${cat.name}`}
+                        className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.id
+                            ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105'
+                            : 'bg-slate-200/50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-secondary dark:hover:text-white'
+                            }`}
+                    >
+                        {cat.name}
+                    </button>
+                ))}
             </div>
 
             {/* Results */}

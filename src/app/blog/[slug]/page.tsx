@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { optimizeCloudinaryUrl } from '@/lib/cloudinary-client';
 import SourceIndicator from '@/components/SourceIndicator';
+import BlogShareSection from '@/components/BlogShareSection';
 
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -78,18 +79,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                             </div>
                         </div>
 
-                        <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-secondary dark:text-white uppercase tracking-tight leading-tight mb-8">
+                        <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-secondary dark:text-white uppercase tracking-tight leading-tight mb-8">
                             {post.title}
                         </h1>
 
-                        <p className="text-xl md:text-2xl text-slate-500 dark:text-slate-400 font-medium leading-relaxed italic border-l-4 border-primary pl-6">
+                        <p className="text-base md:text-lg text-slate-500 dark:text-slate-400 font-medium leading-relaxed italic border-l-4 border-primary pl-6">
                             {post.subtitle}
                         </p>
                     </div>
 
                     {/* Main Image */}
                     {post.image_url && (
-                        <div className="relative aspect-[21/9] rounded-[3rem] overflow-hidden mb-16 border border-slate-100 dark:border-slate-800 shadow-2xl">
+                        <div className="relative aspect-video rounded-2xl overflow-hidden mb-16 border border-slate-100 dark:border-slate-800 shadow-2xl">
                             <img
                                 src={optimizeCloudinaryUrl(post.image_url)}
                                 alt={post.title}
@@ -125,17 +126,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                     <div className="pt-12 border-t border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-8">
                         <div>
                             <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Compartir artículo</h4>
-                            <div className="flex gap-4">
-                                <button className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all">
-                                    <Facebook className="w-5 h-5" />
-                                </button>
-                                <button className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all">
-                                    <Twitter className="w-5 h-5" />
-                                </button>
-                                <button className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all">
-                                    <LinkIcon className="w-5 h-5" />
-                                </button>
-                            </div>
+                            <BlogShareSection slug={post.slug} title={post.title} />
                         </div>
 
                         <div className="flex flex-col md:items-end">
