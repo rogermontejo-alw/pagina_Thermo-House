@@ -2,9 +2,14 @@
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAdminSession } from './admin-auth';
+import { headers } from 'next/headers';
+import { trackFacebookEvent } from '@/lib/facebook-capi';
 
 export async function saveQuote(prevState: any, formData: FormData) {
     try {
+        const quoteId = formData.get('quoteId') as string;
+        const lastStep = formData.get('last_step') as string || 'finalizado';
+
         const rawData = {
             name: formData.get('name') as string,
             phone: formData.get('phone') as string,
@@ -15,7 +20,7 @@ export async function saveQuote(prevState: any, formData: FormData) {
             state: formData.get('state') as string,
             maps_link: formData.get('maps_link') as string,
             solutionId: formData.get('solutionId') as string,
-            totalCash: Number(formData.get('totalCash')),
+            totalCash: Number(formData.get('totalCash') || formData.get('conversion_value')),
             totalMsi: Number(formData.get('totalMsi')),
             isOutOfZone: formData.get('isOutOfZone') === 'true',
             postalCode: formData.get('postalCode') as string,
@@ -25,7 +30,9 @@ export async function saveQuote(prevState: any, formData: FormData) {
         // Basic Validation
         const errors: Record<string, string> = {};
         if (!rawData.name || rawData.name.length < 3) errors.name = 'El nombre es muy corto.';
-        if (!rawData.area || rawData.area <= 0) {
+
+        // Validation for Area (only skip if we are just saving contact info draft)
+        if (lastStep !== 'datos_contacto' && (!rawData.area || rawData.area <= 0)) {
             errors.area = 'El área medida debe ser mayor a 0.';
         }
 
@@ -37,9 +44,8 @@ export async function saveQuote(prevState: any, formData: FormData) {
             // Clean phone number (keep only digits)
             const cleanPhone = rawData.phone.replace(/\D/g, '');
             if (cleanPhone.length !== 10) {
-                errors.phone = 'El número debe tener exactamente 10 dígitos.';
+                errors.phone = 'El WhatsApp debe tener exactamente 10 dígitos.';
             } else {
-                // Update rawData with cleaned phone for DB consistency
                 rawData.phone = cleanPhone;
             }
         }
@@ -49,7 +55,6 @@ export async function saveQuote(prevState: any, formData: FormData) {
         }
 
         if (Object.keys(errors).length > 0) {
-            console.warn('[SAVE] Validation failed:', errors);
             return { success: false, errors, message: 'Por favor corrige los errores.' };
         }
 
@@ -58,76 +63,109 @@ export async function saveQuote(prevState: any, formData: FormData) {
         const targetCityNorm = norm(rawData.city || 'Mérida');
         const meridaNorm = norm('Mérida');
 
-        // Fetch all possible variations for this internal_id
-        const { data: allSols, error: solError } = await supabaseAdmin
+        // Fetch solution data
+        const { data: allSols } = await supabaseAdmin
             .from('soluciones_precios')
             .select('id, internal_id, ciudad')
             .eq('internal_id', rawData.solutionId);
 
-        if (solError || !allSols || allSols.length === 0) {
-            console.error('CRITICAL: No solutions found for:', rawData.solutionId);
-            return { success: false, message: `Error: No se encontró el sistema ${rawData.solutionId} en el catálogo base.` };
+        let solution = null;
+        if (allSols && allSols.length > 0) {
+            solution = allSols.find(s => s.ciudad && norm(s.ciudad) === targetCityNorm) ||
+                allSols.find(s => s.ciudad && norm(s.ciudad) === meridaNorm) ||
+                allSols[0];
         }
 
-        // 1. Try to find the specific city match
-        let solution = allSols.find(s => s.ciudad && norm(s.ciudad) === targetCityNorm);
+        // Prices
+        const finalTotalCash = rawData.totalCash || 0;
+        const finalTotalMsi = rawData.totalMsi || 0;
 
-        // 2. If not found and not already Mérida, try to find Mérida fallback
-        if (!solution && targetCityNorm !== meridaNorm) {
-            solution = allSols.find(s => s.ciudad && norm(s.ciudad) === meridaNorm);
-        }
-
-        // 3. Last resort: just take any if still missing (shouldn't happen with Mérida default)
-        if (!solution) solution = allSols[0];
-
-
-        // Final safety check for prices (Minimum 5900 MXN)
-        const MIN_PRICE = 5900;
-        const finalTotalCash = Math.max(rawData.totalCash || 0, MIN_PRICE);
-        const finalTotalMsi = Math.max(rawData.totalMsi || 0, MIN_PRICE);
-
-        console.log('Attempting to save quote to Supabase:', {
-            name: rawData.name,
-            area: rawData.area,
-            system: solution.internal_id,
-            totalCash: finalTotalCash
-        });
-
-        // Generate standard UTC timestamp
-        const utcDate = new Date().toISOString();
-
-        // Detect creator (if logged in)
+        // Detecting creator
         const session = await getAdminSession();
         const createdBy = session?.id || null;
 
-        // Insert into DB
-        const { error: insertError } = await supabaseAdmin.from('cotizaciones').insert({
+        const quotePayload = {
             address: rawData.address || 'Pendiente',
             ciudad: rawData.city || 'Mérida',
             estado: rawData.state || 'Yucatán',
             google_maps_link: rawData.maps_link || '',
             area: rawData.area,
-            solution_id: solution.id,
+            solution_id: solution?.id || null,
             precio_total_contado: finalTotalCash,
             precio_total_msi: finalTotalMsi,
             contact_info: {
                 name: rawData.name,
                 phone: rawData.phone,
-                email: rawData.email
+                email: rawData.email,
+                last_step: lastStep // Guardado dentro del JSON como respaldo
             },
-            status: 'Nuevo',
-            created_at: utcDate,
-            notas: rawData.isOutOfZone ? '⚠️ ZONA FORÁNEA: El cliente cotizó fuera de Mérida. Revisar costos de logística.' : '',
+            status: lastStep === 'datos_contacto' ? 'Borrador' : 'Nuevo',
+            last_step: lastStep,
+            conversion_value: finalTotalCash,
+            created_at: new Date().toISOString(),
+            notas: rawData.isOutOfZone ? '⚠️ ZONA FORÁNEA' : '',
             is_out_of_zone: rawData.isOutOfZone,
             created_by: createdBy,
             postal_code: rawData.postalCode || '',
-            pricing_type: rawData.pricing_type
-        });
+            pricing_type: rawData.pricing_type,
+        };
 
-        if (insertError) {
-            console.error('Error creating quote in Supabase:', insertError);
-            return { success: false, message: `Error al guardar: ${insertError.message}` };
+        let result;
+        if (quoteId) {
+            // Update existing draft
+            result = await supabaseAdmin
+                .from('cotizaciones')
+                .update(quotePayload)
+                .eq('id', quoteId)
+                .select('id')
+                .single();
+        } else {
+            // Insert new record
+            result = await supabaseAdmin
+                .from('cotizaciones')
+                .insert(quotePayload)
+                .select('id')
+                .single();
         }
+
+        if (result.error) {
+            console.error('Error in Supabase operation:', result.error);
+            return { success: false, message: `Error: ${result.error.message}` };
+        }
+
+        if (!result.error) {
+            const finalId = result.data?.id || quoteId;
+
+            // Background Facebook CAPI tracking
+            const headersList = await headers();
+            const clientIp = headersList.get('x-forwarded-for')?.split(',')[0] || headersList.get('x-real-ip') || '';
+            const userAgent = headersList.get('user-agent') || '';
+
+            // We only track "Lead" for both drafts and finals, but with different metadata if needed
+            trackFacebookEvent({
+                eventName: 'Lead',
+                eventSourceUrl: 'https://thermohouse.mx/cotizador',
+                userData: {
+                    email: rawData.email,
+                    phone: rawData.phone,
+                    clientIpAddress: clientIp,
+                    clientUserAgent: userAgent,
+                    externalId: finalId
+                },
+                customData: {
+                    value: finalTotalCash,
+                    currency: 'MXN',
+                    content_name: rawData.solutionId || 'Sistema Thermo House',
+                    status: lastStep === 'datos_contacto' ? 'Draft' : 'Finalized'
+                }
+            }).catch(e => console.error('CAPI Background Error:', e));
+        }
+
+        return {
+            success: true,
+            message: lastStep === 'datos_contacto' ? 'Borrador iniciado' : 'Cotización guardada correctamente.',
+            quoteId: result.data.id || quoteId
+        };
 
         // TODO: Send WhatsApp notification here using process.env.WHATSAPP_TOKEN
 

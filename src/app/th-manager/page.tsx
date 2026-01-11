@@ -1052,7 +1052,13 @@ export default function AdminDashboard() {
 
     const filteredQuotes = quotes.filter(q => {
         const matchesSearch = q.contact_info.name.toLowerCase().includes(searchTerm.toLowerCase()) || q.ciudad.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'All' || q.status === statusFilter;
+
+        let matchesStatus = true;
+        if (statusFilter === 'Rescatar') {
+            matchesStatus = q.last_step === 'datos_contacto' || q.status === 'Borrador';
+        } else {
+            matchesStatus = statusFilter === 'All' || q.status === statusFilter;
+        }
 
         // Range Date Filtering (Same as dashboard)
         let matchesDate = true;
@@ -1074,17 +1080,18 @@ export default function AdminDashboard() {
         }
 
         return matchesSearch && matchesStatus && matchesDate;
-    }).sort((a, b) => {
-        // Multi-level sort: 1. City (ASC), 2. Time (ASC - Most recent at the end)
-        const cityA = (a.ciudad || '').toLowerCase();
-        const cityB = (b.ciudad || '').toLowerCase();
+    })
+        .sort((a, b) => {
+            // Multi-level sort: 1. City (ASC), 2. Time (ASC - Most recent at the end)
+            const cityA = (a.ciudad || '').toLowerCase();
+            const cityB = (b.ciudad || '').toLowerCase();
 
-        if (cityA < cityB) return -1;
-        if (cityA > cityB) return 1;
+            if (cityA < cityB) return -1;
+            if (cityA > cityB) return 1;
 
-        // Within same city, sort by date/time ascending (newest at the bottom)
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-    });
+            // Within same city, sort by date/time ascending (newest at the bottom)
+            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        });
 
     if (!session) return <div className="h-screen flex items-center justify-center font-black text-slate-200 uppercase tracking-widest animate-pulse">Cargando Sesión...</div>;
 
@@ -1232,7 +1239,7 @@ export default function AdminDashboard() {
                                         <TrendingUp className="w-5 h-5 text-primary" />
                                         Pipeline de Ventas
                                     </h3>
-                                    <p className="text-slate-400 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest mt-1">Estado del embudo por cantidad e importe total</p>
+                                    <p className="text-slate-400 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest mt-1">Estado del embudo y valor proyectado</p>
                                 </div>
                                 {session.role === 'admin' && (
                                     <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
@@ -1241,28 +1248,32 @@ export default function AdminDashboard() {
                                             ${Math.round(dashboardQuotes.reduce((sum, q) => {
                                                 const base = q.pricing_type === 'lista' ? (q.precio_total_msi || 0) : (q.precio_total_contado || 0);
                                                 const logistics = Number(q.costo_logistico || 0);
-                                                return sum + ((base + logistics) * (q.factura ? 1.16 : 1));
+                                                const convValue = q.conversion_value || base;
+                                                return sum + ((convValue + logistics) * (q.factura ? 1.16 : 1));
                                             }, 0)).toLocaleString()}
                                         </span>
                                     </div>
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                {['Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado'].map((status) => {
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                                {['Borrador', 'Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado'].map((status) => {
                                     const quotes = dashboardQuotes.filter(q => q.status === status);
                                     const amount = quotes.reduce((sum, q) => {
                                         const base = q.pricing_type === 'lista' ? (q.precio_total_msi || 0) : (q.precio_total_contado || 0);
                                         const logistics = Number(q.costo_logistico || 0);
-                                        return sum + ((base + logistics) * (q.factura ? 1.16 : 1));
+                                        const convValue = q.conversion_value || base;
+                                        return sum + ((convValue + logistics) * (q.factura ? 1.16 : 1));
                                     }, 0);
                                     const colors = {
+                                        'Borrador': 'bg-rose-400',
                                         'Nuevo': 'bg-blue-500',
                                         'Contactado': 'bg-amber-500',
                                         'Visita Técnica': 'bg-purple-500',
                                         'Cerrado': 'bg-green-500'
                                     };
                                     const lightColors = {
+                                        'Borrador': 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400',
                                         'Nuevo': 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400',
                                         'Contactado': 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400',
                                         'Visita Técnica': 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400',
@@ -1273,7 +1284,7 @@ export default function AdminDashboard() {
                                         <div key={status} className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-700/50 space-y-4 hover:shadow-lg transition-all group">
                                             <div className="flex justify-between items-start">
                                                 <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${lightColors[status as keyof typeof lightColors]}`}>
-                                                    {status}
+                                                    {status === 'Borrador' ? 'POR RESCATAR' : status}
                                                 </div>
                                                 <div className="text-xs font-black text-slate-400 group-hover:text-primary transition-colors">{quotes.length} Leads</div>
                                             </div>
@@ -1617,16 +1628,16 @@ export default function AdminDashboard() {
 
                                 {/* 4. Selecciones de Status Clientes */}
                                 <div className="flex flex-wrap gap-2 w-full md:w-auto mt-2 md:mt-0">
-                                    {['All', 'Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado'].map(status => (
+                                    {['All', 'Rescatar', 'Nuevo', 'Contactado', 'Visita Técnica', 'Cerrado'].map(status => (
                                         <button
                                             key={status}
                                             onClick={() => setStatusFilter(status)}
                                             className={`flex-1 md:flex-none px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${statusFilter === status
-                                                ? 'bg-secondary dark:bg-primary text-white shadow-md'
+                                                ? (status === 'Rescatar' ? 'bg-rose-500 text-white shadow-md' : 'bg-secondary dark:bg-primary text-white shadow-md')
                                                 : 'bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-300 border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
                                                 }`}
                                         >
-                                            {status}
+                                            {status === 'Rescatar' ? '⚠️ POR RESCATAR' : status}
                                         </button>
                                     ))}
                                 </div>

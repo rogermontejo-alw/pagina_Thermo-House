@@ -26,6 +26,7 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
     const [allDbSolutions, setAllDbSolutions] = useState<Solution[]>([]);
     const [dbLoaded, setDbLoaded] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const isFirstRender = useRef(true);
 
@@ -111,8 +112,20 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
         formData.append('isOutOfZone', isOutOfZone ? 'true' : 'false');
 
         startSaveTransition(async () => {
+            if (savedQuoteId) formData.append('quoteId', savedQuoteId);
+            formData.append('last_step', 'finalizado');
+
             const result = await saveQuote(null, formData);
             if (result.success) {
+                // Facebook Pixel: Track Lead completion with real value
+                if (typeof window !== 'undefined' && (window as any).fbq) {
+                    (window as any).fbq('track', 'Lead', {
+                        value: cash,
+                        currency: 'MXN',
+                        content_name: selectedSolution?.title || 'Sistema Thermo House',
+                        status: paymentOption
+                    });
+                }
                 setShowSuccessModal(true);
             } else {
                 setSaveState(result);
@@ -412,6 +425,31 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                                 setLeadName(name);
                                 setContactData({ phone: cleanPhone, email });
                                 setSaveState(null);
+
+                                // Create/Update Draft Lead in Background
+                                const draftData = new FormData();
+                                draftData.append('name', name);
+                                draftData.append('phone', cleanPhone);
+                                draftData.append('email', email);
+                                draftData.append('area', initialArea.toString());
+                                draftData.append('address', address || '');
+                                draftData.append('city', city || '');
+                                draftData.append('state', stateName || '');
+                                draftData.append('maps_link', mapsLink || '');
+                                draftData.append('solutionId', selectedSolutionId || '');
+                                draftData.append('last_step', 'datos_contacto');
+                                if (quote?.totalCash) {
+                                    draftData.append('conversion_value', quote.totalCash.toString());
+                                }
+                                if (savedQuoteId) draftData.append('quoteId', savedQuoteId);
+
+                                startSaveTransition(async () => {
+                                    const result = await saveQuote(null, draftData);
+                                    if (result.success && result.quoteId) {
+                                        setSavedQuoteId(result.quoteId);
+                                    }
+                                });
+
                                 setCurrentStep('result');
                             }}>
                                 <div className="grid md:grid-cols-2 gap-6">
@@ -626,10 +664,14 @@ export default function QuoteGenerator({ initialArea, address, city, stateName, 
                     <div className="fixed inset-0 bg-secondary/90 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
                         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[3rem] overflow-hidden shadow-2xl p-10 md:p-14 text-center space-y-6 border border-slate-100 dark:border-slate-800">
                             <div className="w-20 h-20 bg-green-50 dark:bg-green-900/30 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-green-100 dark:border-green-800/50"><CheckCircle2 className="w-10 h-10" /></div>
-                            <h4 className="text-3xl md:text-4xl font-black text-secondary dark:text-white uppercase tracking-tighter leading-none">¡Gracias por <br /> <span className="text-primary">Considerarnos!</span></h4>
-                            <p className="text-slate-500 dark:text-slate-200 font-medium text-base md:text-lg">Tu cotización ha sido registrada con éxito.</p>
-                            <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700"><p className="text-slate-600 dark:text-slate-300 font-bold text-sm">En breve uno de nuestros especialistas te enviará la información detallada al medio de contacto que nos proporcionaste.</p></div>
-                            <button onClick={() => { window.location.href = '/'; }} className="w-full bg-secondary dark:bg-primary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-primary/90 transition-all">Entendido</button>
+                            <h4 className="text-3xl md:text-4xl font-black text-secondary dark:text-white uppercase tracking-tighter leading-none">¡Tu presupuesto <br /> <span className="text-primary text-2xl md:text-3xl">ha sido reservado!</span></h4>
+                            <p className="text-slate-500 dark:text-slate-200 font-medium text-base md:text-lg">Tu cotización por <span className="text-secondary dark:text-white font-bold">${quote?.totalCash.toLocaleString()}</span> ha sido registrada.</p>
+                            <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700">
+                                <p className="text-slate-600 dark:text-slate-300 font-bold text-sm">
+                                    Un especialista técnico revisará los detalles de tu proyecto y se pondrá en contacto contigo a la brevedad para brindarte la mejor asesoría técnica.
+                                </p>
+                            </div>
+                            <button onClick={() => { window.location.href = '/'; }} className="w-full bg-secondary dark:bg-primary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-primary/90 transition-all shadow-xl shadow-secondary/10 dark:shadow-primary/20">Finalizar</button>
                         </motion.div>
                     </div>
                 )
